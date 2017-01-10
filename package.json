@@ -1,0 +1,28 @@
+{
+  "name": "eslint-plugin-straight-requires",
+  "version": "0.0.1",
+  "description": "Enfore straight require statements",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThisIsManta/eslint-plugin-levitate.git"
+  },
+  "keywords": [
+    "eslint",
+    "eslint-plugin",
+    "require"
+  ],
+  "author": "Anantachai Saothong <thisismanta@outlook.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ThisIsManta/eslint-plugin-levitate/issues"
+  },
+  "homepage": "https://github.com/ThisIsManta/eslint-plugin-levitate#readme",
+  "devDependencies": {
+    "eslint": "~3.13.0",
+    "lodash": "~4.17.4"
+  }
+}
