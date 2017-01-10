@@ -16,7 +16,7 @@ module.exports = {
 
 		return {
 			VariableDeclaration: function (rootNode) {
-				if (rootNode.declarations[0].type !== 'VariableDeclarator' || rootNode.declarations[0].init.callee.name !== 'require' || rootNode.declarations[0].init.arguments.length === 0 || rootNode.declarations[0].init.arguments[0].type !== 'Literal') {
+				if (rootNode.declarations[0].type !== 'VariableDeclarator' || rootNode.declarations[0].init.callee === undefined || rootNode.declarations[0].init.callee.name !== 'require' || rootNode.declarations[0].init.arguments.length === 0 || rootNode.declarations[0].init.arguments[0].type !== 'Literal') {
 					return null
 				}
 
