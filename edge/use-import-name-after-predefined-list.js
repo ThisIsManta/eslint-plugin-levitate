@@ -34,7 +34,7 @@ module.exports = {
 					context.report({
 						node: name ? rootNode.specifiers[0].local : rootNode,
 						message: `Expected "${name}" to be "${nameDict[path]}".`,
-						fix: fixer => fixer.replaceText(rootNode, `import ${nameDict[path]} from ${path}`)
+						fix: fixer => fixer.replaceText(rootNode, `import ${nameDict[path]} from '${path}'`)
 					})
 				}
 			}
