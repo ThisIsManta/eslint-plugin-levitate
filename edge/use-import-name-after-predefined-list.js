@@ -16,7 +16,7 @@ module.exports = {
 	create: function (context) {
 		let nameDict = {}
 		if (context.options.length > 0 && _.isObject(context.options[0])) {
-			 _.forEach(context.options[0], function (path, name) {
+			_.forEach(context.options[0], function (path, name) {
 				nameDict[path] = name
 			})
 		}
@@ -58,9 +58,7 @@ module.exports = {
 				code: `import XXX from 'aaa'`,
 				options: [{ AAA: 'aaa' }],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected "XXX" to be "AAA".' }
-				],
+				errors: [{ message: 'Expected "XXX" to be "AAA".' }],
 			},
 		]
 	}

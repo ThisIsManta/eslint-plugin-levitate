@@ -52,18 +52,14 @@ module.exports = {
 				code: `const x = require('z')`,
 				options: [5],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected "x" to have a trailing white-space of 4.' }
-				],
+				errors: [{ message: 'Expected "x" to have a trailing white-space of 4.' }],
 				output: `const x     = require('z')`
 			},
 			{
 				code: `const x        = require('z')`,
 				options: [5],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected "x" to have a trailing white-space of 4.' }
-				],
+				errors: [{ message: 'Expected "x" to have a trailing white-space of 4.' }],
 				output: `const x     = require('z')`
 			},
 		]

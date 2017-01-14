@@ -202,9 +202,7 @@ const e = 3.14
 import 'aa'
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected import statements to be placed at the top of the module.' }
-				],
+				errors: [{ message: 'Expected import statements to be placed at the top of the module.' }],
 			},
 			{
 				code: `
@@ -213,9 +211,7 @@ const e = 3.14
 import 'aa'
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected import statements to be placed after "use strict".' }
-				],
+				errors: [{ message: 'Expected import statements to be placed after "use strict".' }],
 			},
 			{
 				code: `
@@ -224,9 +220,7 @@ const e = 3.14
 import 'bb'
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected import statements to be placed consecutively.' }
-				],
+				errors: [{ message: 'Expected import statements to be placed consecutively.' }],
 			},
 			{
 				code: `
@@ -244,9 +238,7 @@ import 'a'
 				`,
 				options: ['module'],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected import statements to be sorted in orderly fashion.' }
-				],
+				errors: [{ message: 'Expected import statements to be sorted in orderly fashion.' }],
 				output: `
 import 'a'
 
@@ -272,9 +264,7 @@ import './a'
 				`,
 				options: ['module'],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected a blank line before this import statement.' }
-				],
+				errors: [{ message: 'Expected a blank line before this import statement.' }],
 				output: `
 import 'a'
 
@@ -289,9 +279,7 @@ import './b'
 				`,
 				options: ['module'],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Unexpected a blank line before this import statement.' }
-				],
+				errors: [{ message: 'Unexpected a blank line before this import statement.' }],
 				output: `
 import './a'
 import './b'

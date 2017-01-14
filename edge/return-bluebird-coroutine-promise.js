@@ -48,15 +48,11 @@ module.exports = {
 			{
 				code: `function x() { return Promise.coroutine() }`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected "Promise.coroutine" to be called immediately.' }
-				],
-			},{
+				errors: [{ message: 'Expected "Promise.coroutine" to be called immediately.' }],
+			}, {
 				code: `var x = () => Promise.coroutine()`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected "Promise.coroutine" to be called immediately.' }
-				],
+				errors: [{ message: 'Expected "Promise.coroutine" to be called immediately.' }],
 			},
 		]
 	}

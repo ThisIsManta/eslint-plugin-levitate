@@ -1,4 +1,6 @@
 const _ = require('lodash')
+const path = require('path')
+const glob = require('glob').sync
 
 module.exports = {
 	meta: {
@@ -6,6 +8,14 @@ module.exports = {
 			description: 'enforce writing variable name from the file name of `require` statements',
 			category: 'Variables',
 		},
+		schema: [
+			{
+				type: 'array',
+				items: {
+					type: 'string'
+				}
+			}
+		],
 		fixable: 'code'
 	},
 	create: function (context) {
@@ -24,6 +34,22 @@ module.exports = {
 				const actualName = workNode.id.name
 				const properName = _.chain(filePath.split('/')).last().camelCase().value().replace(/^\w/, char => char.toUpperCase())
 
+				if (context.options.length > 0 && context.options[0].length > 0) {
+					const fullPath = path.resolve(context.getFilename())/*.split(/\\|\//g)*/
+					let index = -1
+					let found = false
+					while (++index < context.options[0].length) {
+						const testPaths = glob(context.options[0][index]).map(item => path.resolve(item))
+						if (testPaths.some(item => item === fullPath)) {
+							found = true
+							break
+						}
+					}
+					if (!found) {
+						return null
+					}
+				}
+
 				if (actualName !== properName) {
 					return context.report({
 						node: workNode.id,
@@ -35,12 +61,28 @@ module.exports = {
 	},
 	test: {
 		valid: [
+			'var something = require("shawn-mendes")',
 			'var JamesArthur = require("./james-arthur")',
-			'var anything = require("shawn-mendes")',
+			{
+				code: 'var JamesArthur = require("./james-arthur")',
+				filename: './edge/use-require-name-after-file-path.js',
+				options: [['./edge/*.js']],
+			},
+			{
+				code: 'var something = require("./james-arthur")',
+				filename: './edge/use-require-name-after-file-path.js',
+				options: [['./nada.js']],
+			},
 		],
 		invalid: [
 			{
 				code: 'var something = require("./james-arthur")',
+				errors: [{ message: 'Expected "something" to be "JamesArthur".', }]
+			},
+			{
+				code: 'var something = require("./james-arthur")',
+				filename: './edge/use-require-name-after-file-path.js',
+				options: [['./edge/*.js']],
 				errors: [{ message: 'Expected "something" to be "JamesArthur".', }]
 			},
 		]
