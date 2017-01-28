@@ -1,4 +1,5 @@
 module.exports = [
+	'auto-import',
 	'align-requires',
 	'return-bluebird-coroutine-promise',
 	'sort-imports',
