@@ -16,7 +16,7 @@ const SORT_TYPES = {
 		(node, { longestDotCount }) => {
 			const currentDotCount = (node.source.value.match(/\./g) || []).length
 			const reverseDotCount = Math.abs(currentDotCount - longestDotCount)
-			return padLeft(reverseDotCount, longestDotCount.toString().length) + node.source.value.toLowerCase()
+			return _.padStart(reverseDotCount, longestDotCount.toString().length, '0') + node.source.value.toLowerCase()
 		},
 	],
 	manta: [
@@ -287,12 +287,4 @@ import './b'
 			},
 		]
 	}
-}
-
-function padLeft(text, numb) {
-	text = (text || '').toString()
-	while (text.length < numb) {
-		text = '0' + text
-	}
-	return text
 }
