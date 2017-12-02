@@ -28,6 +28,9 @@ module.exports = {
 				}
 
 				const path = root.source.value
+				if (nameDict[path] === undefined) {
+					return null
+				}
 
 				if (root.specifiers.length > 1 || root.specifiers.some(node => node.type === 'ImportDefaultSpecifier') === false) {
 					return context.report({
@@ -38,8 +41,7 @@ module.exports = {
 				}
 
 				const name = root.specifiers.find(node => node.type === 'ImportDefaultSpecifier').local.name
-
-				if (nameDict[path] !== undefined && nameDict[path] !== name) {
+				if (nameDict[path] !== name) {
 					return context.report({
 						node: name ? root.specifiers[0].local : root,
 						message: `Expected "${name}" to be "${nameDict[path]}".`,
@@ -58,6 +60,11 @@ module.exports = {
 			},
 			{
 				code: `import XXX from './aaa'`,
+				options: [{ AAA: 'aaa' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
+			{
+				code: `import XXX from './xxx'`,
 				options: [{ AAA: 'aaa' }],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
