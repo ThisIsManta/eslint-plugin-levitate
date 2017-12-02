@@ -22,19 +22,28 @@ module.exports = {
 		}
 
 		return {
-			ImportDeclaration: function (rootNode) {
-				if (rootNode.specifiers.length === 0) {
+			ImportDeclaration: function (root) {
+				if (!root.specifiers || root.specifiers.length === 0) {
 					return null
 				}
 
-				const name = rootNode.specifiers[0] && rootNode.specifiers[0].type === 'ImportDefaultSpecifier' && rootNode.specifiers[0].local.name || ''
-				const path = rootNode.source.value
+				const path = root.source.value
+
+				if (root.specifiers.length > 1 || root.specifiers.some(node => node.type === 'ImportDefaultSpecifier') === false) {
+					return context.report({
+						node: root,
+						message: `Expected to import "${nameDict[path]}".`,
+						fix: fixer => fixer.replaceText(root, `import ${nameDict[path]} from '${path}'`)
+					})
+				}
+
+				const name = root.specifiers.find(node => node.type === 'ImportDefaultSpecifier').local.name
 
 				if (nameDict[path] !== undefined && nameDict[path] !== name) {
-					context.report({
-						node: name ? rootNode.specifiers[0].local : rootNode,
+					return context.report({
+						node: name ? root.specifiers[0].local : root,
 						message: `Expected "${name}" to be "${nameDict[path]}".`,
-						fix: fixer => fixer.replaceText(rootNode, `import ${nameDict[path]} from '${path}'`)
+						fix: fixer => fixer.replaceText(root, `import ${nameDict[path]} from '${path}'`)
 					})
 				}
 			}
@@ -59,6 +68,14 @@ module.exports = {
 				options: [{ AAA: 'aaa' }],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "AAA".' }],
+			},
+			{
+				code: `import { AAA } from 'aaa'`,
+				options: [{ AAA: 'aaa' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [
+					{ message: 'Expected to import "AAA".' }
+				],
 			},
 		]
 	}
