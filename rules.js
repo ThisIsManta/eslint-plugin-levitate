@@ -5,4 +5,5 @@ module.exports = [
 	'sort-imports',
 	'use-import-name-after-predefined-list',
 	'use-require-name-after-file-path',
+	'use-require-name-after-predefined-list',
 ]

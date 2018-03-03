@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-levitate",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A set of useful ESLint rules",
   "main": "index.js",
   "scripts": {
@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/ThisIsManta/eslint-plugin-levitate#readme",
   "devDependencies": {
-    "eslint": "^4.12.1",
+    "eslint": "^4.18.2",
     "glob": "^7.1.1",
     "lodash": "^4.17.4"
   }
