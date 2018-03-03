@@ -37,10 +37,6 @@ module.exports = {
 
 				const workNode = rootNode.declarations[0]
 
-				if (workNode.id.type !== 'Identifier') {
-					return null
-				}
-
 				let workPath = workNode.init.arguments[0].value
 				if (/^\.\.?\/.+/.test(workPath)) {
 					workPath = workPath.replace(/\.js$/, '')
@@ -60,7 +56,7 @@ module.exports = {
 						}
 
 						return context.report({
-							node: rootNode,
+							node: workNode.id,
 							message: `Expected "${actualVariableName}" to be "${expectVariableName}".`,
 							fix: fixer => fixer.replaceText(workNode.id, expectVariableName)
 						})
@@ -113,6 +109,12 @@ module.exports = {
 				options: [{ AAA: 'aaa' }],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "AAA".' }],
+			},
+			{
+				code: `const { AAA } = require('aaa')`,
+				options: [{ AAA: 'aaa' }],
+				parserOptions: { ecmaVersion: 9, sourceType: 'module' },
+				errors: [{ message: 'Expected "{ AAA }" to be "AAA".' }],
 			},
 		]
 	}
