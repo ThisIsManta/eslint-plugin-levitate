@@ -4,7 +4,10 @@
   "description": "A set of useful ESLint rules",
   "main": "index.js",
   "scripts": {
-    "test": "node tests.js"
+    "test": "node tests.js",
+    "preversion": "npm install && npm run test",
+    "version": "npm publish",
+    "postpublish": "git push --tags origin"
   },
   "repository": {
     "type": "git",
