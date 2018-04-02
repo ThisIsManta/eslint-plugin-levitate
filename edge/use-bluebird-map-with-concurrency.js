@@ -19,9 +19,9 @@ const REQUIRE_BLUEBIRD = {
 	}
 }
 
-const METHOD_ALL = {
+const METHOD_MAP = {
 	type: 'Identifier',
-	name: 'all',
+	name: 'map',
 }
 
 module.exports = {
@@ -40,7 +40,7 @@ module.exports = {
 				}
 			},
 			CallExpression: function (workNode) {
-				if (_.isMatch(workNode.callee.property, METHOD_ALL) === false) {
+				if (_.isMatch(workNode.callee.property, METHOD_MAP) === false) {
 					return null
 				}
 
@@ -57,10 +57,17 @@ module.exports = {
 					return null
 				}
 
-				if (workNode.arguments[0].type !== 'ArrayExpression' || workNode.arguments[0].elements.some(node => node.type === 'SpreadElement')) {
+				if (workNode.arguments.length === 1) {
 					return context.report({
-						node: workNode.arguments[0],
-						message: `Expected ${identifier}.all() to have a parameter of a static array.`,
+						node: workNode.callee.property,
+						message: `Expected ${identifier}.map() to have a concurrency limit.`,
+					})
+				}
+
+				if (workNode.arguments[1].type !== 'ObjectExpression' || workNode.arguments[1].properties.some(node => node.type === 'Property' && node.key && node.key.type === 'Identifier' && node.key.name === 'concurrency') === false) {
+					return context.report({
+						node: workNode.arguments[1],
+						message: `Expected ${identifier}.map() to have a concurrency limit.`,
 					})
 				}
 			}
@@ -68,43 +75,38 @@ module.exports = {
 	},
 	test: {
 		valid: [
-			'Promise.all()',
-			'Promise.all([])',
-			'Promise.all([1, 2, 3])',
 			{
 				code: `
 					const Bluebird = require('bluebird')
-					Bluebird.all([1, 2, 3])
+					Bluebird.map([1, 2, 3], { concurrency: 2 })
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
-				code: 'Promise.all([1, 2, 3, ...x])',
+				code: `
+					const Bluebird = require('bluebird')
+					Bluebird.map([1, 2, 3])
+				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected Promise.all() to have a parameter of a static array.', }]
-			},
-			{
-				code: 'Promise.all(x)',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected Promise.all() to have a parameter of a static array.', }]
+				errors: [{ message: 'Expected Bluebird.map() to have a concurrency limit.', }]
 			},
 			{
 				code: `
 					const Bluebird = require('bluebird')
-					Bluebird.all([1, 2, 3, ...x])
+					Bluebird.map([1, 2, 3], x)
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected Bluebird.all() to have a parameter of a static array.', }]
+				errors: [{ message: 'Expected Bluebird.map() to have a concurrency limit.', }]
 			},
 			{
 				code: `
 					const Bluebird = require('bluebird')
-					Bluebird.all(x)
+					Bluebird.map([1, 2, 3], {})
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected Bluebird.all() to have a parameter of a static array.', }]
+				errors: [{ message: 'Expected Bluebird.map() to have a concurrency limit.', }]
 			},
 		]
 	}

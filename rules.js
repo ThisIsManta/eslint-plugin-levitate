@@ -3,6 +3,7 @@ module.exports = [
 	'align-requires',
 	'return-bluebird-coroutine-promise',
 	'sort-imports',
+	'use-bluebird-map-with-concurrency',
 	'use-catch-parameter-after-predefined-name',
 	'use-import-name-after-predefined-list',
 	'use-promise-all-with-static-array',
