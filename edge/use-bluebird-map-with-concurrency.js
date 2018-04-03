@@ -57,16 +57,16 @@ module.exports = {
 					return null
 				}
 
-				if (workNode.arguments.length === 1) {
+				if (workNode.arguments.length < 3) {
 					return context.report({
 						node: workNode.callee.property,
 						message: `Expected ${identifier}.map() to have a concurrency limit.`,
 					})
 				}
 
-				if (workNode.arguments[1].type !== 'ObjectExpression' || workNode.arguments[1].properties.some(node => node.type === 'Property' && node.key && node.key.type === 'Identifier' && node.key.name === 'concurrency') === false) {
+				if (workNode.arguments[2].type !== 'ObjectExpression' || workNode.arguments[2].properties.some(node => node.type === 'Property' && node.key && node.key.type === 'Identifier' && node.key.name === 'concurrency') === false) {
 					return context.report({
-						node: workNode.arguments[1],
+						node: workNode.arguments[2],
 						message: `Expected ${identifier}.map() to have a concurrency limit.`,
 					})
 				}
@@ -78,7 +78,14 @@ module.exports = {
 			{
 				code: `
 					const Bluebird = require('bluebird')
-					Bluebird.map([1, 2, 3], { concurrency: 2 })
+					Bluebird.map()
+				`,
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
+			{
+				code: `
+					const Bluebird = require('bluebird')
+					Bluebird.map([1, 2, 3], x, { concurrency: 2 })
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
@@ -103,7 +110,7 @@ module.exports = {
 			{
 				code: `
 					const Bluebird = require('bluebird')
-					Bluebird.map([1, 2, 3], {})
+					Bluebird.map([1, 2, 3], x, {})
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected Bluebird.map() to have a concurrency limit.', }]
