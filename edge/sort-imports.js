@@ -100,7 +100,8 @@ module.exports = {
 							message: 'Expected import statements to be sorted in orderly fashion.',
 							fix: fixer => (
 								fixer.replaceTextRange(
-									[totalImportList[0].start, totalImportList[totalImportList.length - 1].end],
+									// Note that typescript-eslint-parser generates range instead of start/end
+									[totalImportList[0].start || totalImportList[0].range[0], totalImportList[totalImportList.length - 1].end || totalImportList[totalImportList.length - 1].range[1]],
 									nestedImportList
 										.map(list => ['', ...list.map(node => context.getSourceCode().getText(node))].join('\n'))
 										.join('\n')
@@ -112,7 +113,8 @@ module.exports = {
 						const prevNode = sortedImportList[index - 1]
 						const workNode = sortedImportList[index]
 						const workLine = context.getSourceCode().getText(workNode)
-						const prevTillWorkLine = context.getSourceCode().getText(workNode, workNode.start - prevNode.end)
+						// Note that typescript-eslint-parser generates range instead of start/end
+						const prevTillWorkLine = context.getSourceCode().getText(workNode, (workNode.start || workNode.range[0]) - (prevNode.end || prevNode.range[1]))
 						const newLineCount = (prevTillWorkLine.substring(0, prevTillWorkLine.length - workLine.length).match(/\n/g) || []).length
 						if (sortedImportHead.includes(workNode)) {
 							if (newLineCount < 2) {
@@ -127,7 +129,7 @@ module.exports = {
 								context.report({
 									node: workNode,
 									message: 'Unexpected a blank line before this import statement.',
-									fix: fixer => fixer.replaceTextRange([prevNode.end, workNode.start], '\n')
+									fix: fixer => fixer.replaceTextRange([prevNode.end || prevNode.range[1], workNode.start || workNode.range[0]], '\n')
 								})
 							}
 						}
@@ -138,6 +140,16 @@ module.exports = {
 	},
 	test: {
 		valid: [
+			{
+				code: `
+import crypto from 'crypto'
+
+import Config from '../../config/main'
+import UserConstants from './UserConstants'
+				`,
+				options: ['module'],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module', parser: 'typescript-eslint-parser' },
+			},
 			{
 				code: `
 import 'a'
