@@ -51,15 +51,15 @@ module.exports = {
 							? workPath.replace(requirePathMatcher, variableName)
 							: variableName
 
-						if (expectVariableName === actualVariableName) {
-							break
+						if (expectVariableName !== actualVariableName) {
+							return context.report({
+								node: workNode.id,
+								message: `Expected "${actualVariableName}" to be "${expectVariableName}".`,
+								fix: fixer => fixer.replaceText(workNode.id, expectVariableName)
+							})
 						}
 
-						return context.report({
-							node: workNode.id,
-							message: `Expected "${actualVariableName}" to be "${expectVariableName}".`,
-							fix: fixer => fixer.replaceText(workNode.id, expectVariableName)
-						})
+						break
 					}
 				}
 			}

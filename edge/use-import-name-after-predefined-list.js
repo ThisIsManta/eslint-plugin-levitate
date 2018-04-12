@@ -51,6 +51,8 @@ module.exports = {
 								message: `Expected "${workNode.local.name}" to be "${variableName}".`,
 							})
 						}
+
+						break
 					}
 				}
 			}
