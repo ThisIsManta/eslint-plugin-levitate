@@ -19,31 +19,12 @@ module.exports = {
           return null
         }
 
-        const rootPath = process.cwd()
-
-        const supportedExtensions = pt.extname(context.getFilename()) === '.ts' ? [ '.ts', '.js' ] : [ '.js' ]
-
-        let fullPath = pt.resolve(pt.dirname(context.getFilename()), relativePath)
-        if (fs.existsSync(fullPath) && fs.lstatSync(fullPath).isDirectory()) {
-          for (const extension of supportedExtensions) {
-            const actualPath = pt.join(fullPath, 'index' + extension)
-            if (fs.existsSync(actualPath)) {
-              fullPath = actualPath
-              break
-            }
-          }
-        } else if (pt.extname(fullPath) === '') {
-          for (const extension of supportedExtensions) {
-            if (fs.existsSync(fullPath + extension)) {
-              fullPath = fullPath + extension
-              break
-            }
-          }
-        }
-        if (fs.existsSync(fullPath) === false || fullPath === undefined) {
+        const fullPath = getImportFullPath(context.getFilename(), relativePath)
+        if (fullPath === null) {
           return null
         }
 
+        const rootPath = process.cwd()
         const workPath = fullPath.substring(rootPath.length)
 
         const workPathList = _.compact(workPath.split(/\\|\//))
@@ -66,5 +47,31 @@ module.exports = {
         }
       }
     }
+  },
+  getImportFullPath,
+}
+
+function getImportFullPath(currentFullPath, importRelativePath) {
+  const supportedExtensions = pt.extname(currentFullPath) === '.ts' ? ['.ts', '.js'] : ['.js']
+
+  const fullPath = pt.resolve(pt.dirname(currentFullPath), importRelativePath)
+  if (fs.existsSync(fullPath) && fs.lstatSync(fullPath).isDirectory()) {
+    for (const extension of supportedExtensions) {
+      const actualPath = pt.join(fullPath, 'index' + extension)
+      if (fs.existsSync(actualPath)) {
+        return actualPath
+      }
+    }
+
+  } else if (pt.extname(fullPath) === '') {
+    for (const extension of supportedExtensions) {
+      if (fs.existsSync(fullPath + extension)) {
+        return fullPath + extension
+      }
+    }
+  }
+
+  if (fs.existsSync(fullPath) === false || fullPath === undefined) {
+    return null
   }
 }
