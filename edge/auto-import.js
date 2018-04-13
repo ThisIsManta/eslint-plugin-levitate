@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const fs = require('fs')
-const path = require('path')
+const pt = require('path')
 const glob = require('glob')
 
 module.exports = {
@@ -19,19 +19,19 @@ module.exports = {
 					return null
 				}
 
-				const workPath = path.resolve(context.getFilename(), '..')
-				const testPath = path.resolve(workPath, filePath)
+				const workPath = pt.resolve(context.getFilename(), '..')
+				const testPath = pt.resolve(workPath, filePath)
 				if (fs.existsSync(testPath) || fs.existsSync(testPath + '.js')) {
 					return null
 				}
 
 				const rootPath = (function () {
-					const parts = workPath.split(path.sep)
+					const parts = workPath.split(pt.sep)
 					let index = parts.length
 					while (--index > 0) {
-						const temp = path.join(parts.slice(0, index).join(path.sep), 'package.json')
+						const temp = pt.join(parts.slice(0, index).join(pt.sep), 'package.json')
 						if (fs.existsSync(temp)) {
-							return path.resolve(temp, '..')
+							return pt.resolve(temp, '..')
 						}
 					}
 					return null
@@ -43,8 +43,8 @@ module.exports = {
 				const check = function (pattern, extension) {
 					const files = glob.sync(pattern + extension, { cwd: rootPath })
 					if (files.length === 1) {
-						const workGrab = _.trimStart(workPath.substring(rootPath.length), path.sep).split(path.sep)
-						const fileGrab = _.trimStart(path.resolve(rootPath, files[0]).substring(rootPath.length), path.sep).split(path.sep)
+						const workGrab = _.trimStart(workPath.substring(rootPath.length), pt.sep).split(pt.sep)
+						const fileGrab = _.trimStart(pt.resolve(rootPath, files[0]).substring(rootPath.length), pt.sep).split(pt.sep)
 						let index = -1
 						while (++index < workGrab.length) {
 							if (workGrab[index] !== fileGrab[index]) {

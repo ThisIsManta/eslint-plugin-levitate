@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const path = require('path')
+const pt = require('path')
 const glob = require('glob').sync
 
 module.exports = {
@@ -35,11 +35,11 @@ module.exports = {
 				const properName = _.chain(filePath.split('/')).last().camelCase().value().replace(/^\w/, char => char.toUpperCase())
 
 				if (context.options.length > 0 && context.options[0].length > 0) {
-					const fullPath = path.resolve(context.getFilename())/*.split(/\\|\//g)*/
+					const fullPath = pt.resolve(context.getFilename())/*.split(/\\|\//g)*/
 					let index = -1
 					let found = false
 					while (++index < context.options[0].length) {
-						const testPaths = glob(context.options[0][index]).map(item => path.resolve(item))
+						const testPaths = glob(context.options[0][index]).map(item => pt.resolve(item))
 						if (testPaths.some(item => item === fullPath)) {
 							found = true
 							break
