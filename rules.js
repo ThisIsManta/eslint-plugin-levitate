@@ -6,6 +6,7 @@ module.exports = [
 	'use-bluebird-map-with-concurrency',
 	'use-catch-parameter-after-predefined-name',
 	'use-import-name-after-predefined-list',
+	'use-import-path-from-the-closest-index',
 	'use-import-path-without-mentioning-index',
 	'use-promise-all-with-static-array',
 	'use-require-name-after-file-path',
