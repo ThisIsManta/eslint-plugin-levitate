@@ -24,6 +24,8 @@ module.exports = {
           return null
         }
 
+        const supportedExtensions = getSupportedExtensions(fullPath)
+
         const rootPath = process.cwd()
         const workPath = fullPath.substring(rootPath.length)
 
@@ -33,6 +35,10 @@ module.exports = {
           for (const extension of supportedExtensions) {
             const expectedPath = pt.join(rootPath, testPath, 'index' + extension)
             if (fs.existsSync(expectedPath)) {
+              if (fullPath.startsWith(pt.dirname(expectedPath))) {
+                return null
+              }
+
               if (expectedPath !== fullPath) {
                 const unixPath = _.trim(expectedPath.substring(rootPath.length).replace(/\\/, '/'), '/')
                 return context.report({
@@ -48,11 +54,16 @@ module.exports = {
       }
     }
   },
+  getSupportedExtensions,
   getImportFullPath,
 }
 
-function getImportFullPath(currentFullPath, importRelativePath) {
-  const supportedExtensions = pt.extname(currentFullPath) === '.ts' ? ['.ts', '.js'] : ['.js']
+function getSupportedExtensions (currentFullPath) {
+  return pt.extname(currentFullPath) === '.ts' ? [ '.ts', '.js' ] : [ '.js' ]
+}
+
+function getImportFullPath (currentFullPath, importRelativePath) {
+  const supportedExtensions = getSupportedExtensions(currentFullPath)
 
   const fullPath = pt.resolve(pt.dirname(currentFullPath), importRelativePath)
   if (fs.existsSync(fullPath) && fs.lstatSync(fullPath).isDirectory()) {
