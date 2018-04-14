@@ -7,7 +7,7 @@
     "test": "node tests.js",
     "preversion": "npm install && npm run test",
     "version": "npm publish",
-    "postversion": "git push --tags origin"
+    "postversion": "git push --tags origin master"
   },
   "repository": {
     "type": "git",
