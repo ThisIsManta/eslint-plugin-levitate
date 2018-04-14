@@ -8,7 +8,7 @@ const { getImportFullPath } = require('./use-import-path-from-the-closest-index'
 module.exports = {
   meta: {
     docs: {
-      description: 'enforce importing using a namespace',
+      description: 'enforce importing using a namespace only if the target module does not export default',
       category: 'ECMAScript 6',
     },
   },
@@ -19,7 +19,7 @@ module.exports = {
           return null
         }
 
-        if (root.specifiers[ 0 ].type === 'ImportNamespaceSpecifier') {
+        if (root.specifiers[0].type === 'ImportNamespaceSpecifier') {
           return null
         }
 
@@ -42,9 +42,13 @@ module.exports = {
           return null
         }
 
+        if (targetTree.body.some(node => node.type === 'ExportDefaultDeclaration')) {
+          return null
+        }
+
         if (targetTree.body.some(node => node.type === 'ExportNamedDeclaration')) {
           return context.report({
-            node: root.specifiers[ 0 ],
+            node: root.specifiers[0],
             message: `Expected to import a namespace.`,
           })
         }
