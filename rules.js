@@ -5,6 +5,7 @@ module.exports = [
 	'sort-imports',
 	'use-bluebird-map-with-concurrency',
 	'use-catch-parameter-after-predefined-name',
+	'use-import-name-after-file-or-directory-name',
 	'use-import-name-after-predefined-list',
 	'use-import-namespace',
 	'use-import-path-from-the-closest-index',
