@@ -2,6 +2,9 @@
 
 const pt = require('path')
 const _ = require('lodash')
+const { getImportFullPath } = require('./use-import-path-from-the-closest-index')
+
+const ALPHANUMERIC = /[A-Za-z0-9]/
 
 module.exports = {
 	meta: {
@@ -27,11 +30,12 @@ module.exports = {
 					return null
 				}
 
-				const fileName = pt.basename(workPath, pt.extname(workPath))
-				const directoryName = pt.basename(pt.dirname(workPath))
-				const expectedName = fileName === 'index'
-					? directoryName.charAt(0).toUpperCase() + _.camelCase(directoryName).substring(1)
-					: fileName.charAt(0) + _.camelCase(fileName).substring(1)
+				const fullPath = getImportFullPath(context.getFilename(), workPath) || workPath
+				const fileNameWithoutExtension = pt.basename(fullPath, pt.extname(fullPath))
+				const directoryName = pt.basename(pt.dirname(fullPath))
+				const expectedName = fileNameWithoutExtension === 'index'
+					? _.get(directoryName.match(ALPHANUMERIC), '0', '').toUpperCase() + _.camelCase(directoryName).substring(1)
+					: _.get(fileNameWithoutExtension.match(ALPHANUMERIC), '0', '') + _.camelCase(fileNameWithoutExtension).substring(1)
 				if (workNode.local.name !== expectedName) {
 					return context.report({
 						node: workNode.local,
