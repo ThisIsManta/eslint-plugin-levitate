@@ -68,16 +68,6 @@ module.exports = {
 					}
 				}
 
-				for (let index = firstImportIndex + 1; index < totalImportList.length; index++) {
-					const workNode = totalImportList[index]
-					if (rootNode.body.indexOf(workNode) !== firstImportIndex + index) {
-						return context.report({
-							node: workNode,
-							message: 'Expected import statements to be placed consecutively.',
-						})
-					}
-				}
-
 				let workingImportList = _.clone(totalImportList)
 
 				const longestDotCount = _.chain(totalImportList).map(node => (node.source.value.match(/\./g) || []).length).max().value()
@@ -91,32 +81,29 @@ module.exports = {
 
 				const sortedImportList = _.flatten(nestedImportList)
 
-				const sortedImportHead = nestedImportList.map(list => list[0])
+				const firstOfGroupImportList = nestedImportList.map(list => list[0])
 
-				for (let index = 0; index < totalImportList.length; index++) {
-					if (totalImportList[index] !== sortedImportList[index]) {
-						return context.report({
-							node: totalImportList[index],
-							message: 'Expected import statements to be sorted in orderly fashion.',
-							fix: fixer => (
-								fixer.replaceTextRange(
-									// Note that typescript-eslint-parser generates range instead of start/end
-									[totalImportList[0].start || totalImportList[0].range[0], totalImportList[totalImportList.length - 1].end || totalImportList[totalImportList.length - 1].range[1]],
-									nestedImportList
-										.map(list => ['', ...list.map(node => context.getSourceCode().getText(node))].join('\n'))
-										.join('\n')
-										.trim()
-								)
-							)
-						})
-					} else if (index > 0) {
-						const prevNode = sortedImportList[index - 1]
-						const workNode = sortedImportList[index]
+				const totalMixedList = rootNode.body.slice(rootNode.body.indexOf(_.first(totalImportList)), rootNode.body.indexOf(_.last(totalImportList)) + 1)
+
+				const sortedOtherList = totalMixedList.filter(node => node.type !== 'ImportDeclaration')
+
+				const sortedMixedList = [...sortedImportList, ...sortedOtherList]
+
+				for (let index = 0; index < sortedMixedList.length; index++) {
+					const realNode = totalMixedList[index]
+					const sortNode = sortedMixedList[index]
+
+					if (realNode === sortNode) {
+						if (index === 0 || realNode.type !== 'ImportDeclaration') {
+							continue
+						}
+
+						const prevNode = sortedMixedList[index - 1]
+						const workNode = sortNode
 						const workLine = context.getSourceCode().getText(workNode)
-						// Note that typescript-eslint-parser generates range instead of start/end
-						const betweenTheLines = context.getSourceCode().getText(workNode, (workNode.start || workNode.range[0]) - (prevNode.end || prevNode.range[1]))
+						const betweenTheLines = context.getSourceCode().getText(workNode, workNode.range[0] - prevNode.range[1])
 						const newLineCount = (betweenTheLines.substring(0, betweenTheLines.length - workLine.length).match(/\n/g) || []).length
-						if (sortedImportHead.includes(workNode)) {
+						if (firstOfGroupImportList.includes(workNode)) {
 							if (newLineCount < 2) {
 								context.report({
 									node: workNode,
@@ -124,24 +111,52 @@ module.exports = {
 									fix: fixer => fixer.replaceText(workNode, '\n' + context.getSourceCode().getText(workNode))
 								})
 							}
+
 						} else {
 							if (newLineCount > 1) {
 								context.report({
 									node: workNode,
 									message: 'Unexpected a blank line before this import statement.',
-									fix: fixer => fixer.replaceTextRange([prevNode.end || prevNode.range[1], workNode.start || workNode.range[0]], '\n')
+									fix: fixer => fixer.replaceTextRange([prevNode.range[1], workNode.range[0]], '\n')
 								})
 							}
 						}
+
+						continue
 					}
+
+					let reportedNode
+					let reportedMessage
+					if (realNode.type === 'ImportDeclaration') {
+						reportedNode = realNode
+						reportedMessage = 'Expected import statements to be sorted in orderly fashion.'
+
+					} else {
+						reportedNode = totalMixedList.slice(index).find(node => node.type === 'ImportDeclaration')
+						reportedMessage = 'Expected import statements to be placed consecutively.'
+					}
+
+					return context.report({
+						node: reportedNode,
+						message: reportedMessage,
+						fix: fixer => (
+							fixer.replaceTextRange(
+								[_.first(totalMixedList).range[0], _.last(totalMixedList).range[1]],
+								(
+									nestedImportList.map(list => ['', ...list.map(node => context.getSourceCode().getText(node))].join('\n')).join('\n').trim() +
+									'\n' + '\n' +
+									sortedOtherList.map(node => context.getSourceCode().getText(node)).join('\n')
+								).trim()
+							)
+						)
+					})
 				}
 
 				const lastImport = _.last(sortedImportList)
 				const afterLastImport = rootNode.body[rootNode.body.indexOf(lastImport) + 1]
 				if (afterLastImport) {
 					const afterLastImportText = context.getSourceCode().getText(afterLastImport)
-					// Note that typescript-eslint-parser generates range instead of start/end
-					const betweenTheLines = context.getSourceCode().getText(afterLastImport, (afterLastImport.start || afterLastImport.range[0]) - (lastImport.end || lastImport.range[1]))
+					const betweenTheLines = context.getSourceCode().getText(afterLastImport, afterLastImport.range[0] - lastImport.range[1])
 					const newLineCount = (betweenTheLines.substring(0, betweenTheLines.length - afterLastImportText.length).match(/\n/g) || []).length
 					if (newLineCount < 2) {
 						context.report({
@@ -249,6 +264,12 @@ import 'bb'
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected import statements to be placed consecutively.' }],
+				output: `
+import 'aa'
+import 'bb'
+
+const e = 3.14
+				`
 			},
 			{
 				code: `
