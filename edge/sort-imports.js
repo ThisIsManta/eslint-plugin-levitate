@@ -114,8 +114,8 @@ module.exports = {
 						const workNode = sortedImportList[index]
 						const workLine = context.getSourceCode().getText(workNode)
 						// Note that typescript-eslint-parser generates range instead of start/end
-						const prevTillWorkLine = context.getSourceCode().getText(workNode, (workNode.start || workNode.range[0]) - (prevNode.end || prevNode.range[1]))
-						const newLineCount = (prevTillWorkLine.substring(0, prevTillWorkLine.length - workLine.length).match(/\n/g) || []).length
+						const betweenTheLines = context.getSourceCode().getText(workNode, (workNode.start || workNode.range[0]) - (prevNode.end || prevNode.range[1]))
+						const newLineCount = (betweenTheLines.substring(0, betweenTheLines.length - workLine.length).match(/\n/g) || []).length
 						if (sortedImportHead.includes(workNode)) {
 							if (newLineCount < 2) {
 								context.report({
@@ -133,6 +133,22 @@ module.exports = {
 								})
 							}
 						}
+					}
+				}
+
+				const lastImport = _.last(sortedImportList)
+				const afterLastImport = rootNode.body[rootNode.body.indexOf(lastImport) + 1]
+				if (afterLastImport) {
+					const afterLastImportText = context.getSourceCode().getText(afterLastImport)
+					// Note that typescript-eslint-parser generates range instead of start/end
+					const betweenTheLines = context.getSourceCode().getText(afterLastImport, (afterLastImport.start || afterLastImport.range[0]) - (lastImport.end || lastImport.range[1]))
+					const newLineCount = (betweenTheLines.substring(0, betweenTheLines.length - afterLastImportText.length).match(/\n/g) || []).length
+					if (newLineCount < 2) {
+						context.report({
+							node: lastImport,
+							message: 'Expected a blank line after the last import statement.',
+							fix: fixer => fixer.replaceText(lastImport, context.getSourceCode().getText(lastImport) + '\n')
+						})
 					}
 				}
 			}
