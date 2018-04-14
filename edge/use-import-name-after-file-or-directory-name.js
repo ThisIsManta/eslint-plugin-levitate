@@ -28,13 +28,14 @@ module.exports = {
 				}
 
 				const fileName = pt.basename(workPath, pt.extname(workPath))
-				const dirxName = pt.dirname(workPath)
-				const camelName = _.camelCase(fileName === 'index' ? dirxName : fileName)
-				const pascalName = camelName.charAt(0).toUpperCase() + camelName.substring(1)
-				if (workNode.local.name !== pascalName) {
+				const directoryName = pt.basename(pt.dirname(workPath))
+				const expectedName = fileName === 'index'
+					? directoryName.charAt(0).toUpperCase() + _.camelCase(directoryName).substring(1)
+					: fileName.charAt(0) + _.camelCase(fileName).substring(1)
+				if (workNode.local.name !== expectedName) {
 					return context.report({
 						node: workNode.local,
-						message: `Expected "${workNode.local.name}" to be "${pascalName}".`,
+						message: `Expected "${workNode.local.name}" to be "${expectedName}".`,
 					})
 				}
 			}
@@ -47,19 +48,19 @@ module.exports = {
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
-				code: `import * as Aaa from './aaa'`,
+				code: `import * as aaa from './aaa'`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
-				code: `import Aaa from './aaa'`,
+				code: `import aaa from './aaa'`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
-				code: `import Aaa from './aaa.js'`,
+				code: `import aaa from './aaa.js'`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
-				code: `import Aaa from '../xxx-yyy/aaa'`,
+				code: `import aaa from '../xxx-yyy/aaa'`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -71,13 +72,20 @@ module.exports = {
 			{
 				code: `import XXX from './aaa'`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected "XXX" to be "Aaa".' }],
+				errors: [{ message: 'Expected "XXX" to be "aaa".' }],
 			},
 			{
 				code: `import * as XXX from './aaa'`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [
-					{ message: 'Expected "XXX" to be "Aaa".' }
+					{ message: 'Expected "XXX" to be "aaa".' }
+				],
+			},
+			{
+				code: `import * as XXX from '../xxx-yyy/index'`,
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [
+					{ message: 'Expected "XXX" to be "XxxYyy".' }
 				],
 			},
 		]
