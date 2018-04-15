@@ -2,7 +2,7 @@
 
 const _ = require('lodash')
 const fs = require('fs')
-const pt = require('path')
+const fp = require('path')
 
 module.exports = {
 	meta: {
@@ -31,11 +31,11 @@ module.exports = {
 
 				const workPathList = _.compact(workPath.split(/\\|\//))
 				for (let count = 1; count <= workPathList.length; count++) {
-					const testPath = workPathList.slice(0, count).join(pt.sep)
+					const testPath = workPathList.slice(0, count).join(fp.sep)
 					for (const extension of supportedExtensions) {
-						const expectedPath = pt.join(rootPath, testPath, 'index' + extension)
+						const expectedPath = fp.join(rootPath, testPath, 'index' + extension)
 						if (fs.existsSync(expectedPath)) {
-							if (fullPath.startsWith(pt.dirname(expectedPath))) {
+							if (fullPath.startsWith(fp.dirname(expectedPath))) {
 								return null
 							}
 
@@ -59,7 +59,7 @@ module.exports = {
 }
 
 function getSupportedExtensions(currentFullPath) {
-	return pt.extname(currentFullPath) === '.ts' ? ['.ts', '.js'] : ['.js']
+	return fp.extname(currentFullPath) === '.ts' ? ['.ts', '.js'] : ['.js']
 }
 
 function getImportFullPath(currentFullPath, importRelativePath) {

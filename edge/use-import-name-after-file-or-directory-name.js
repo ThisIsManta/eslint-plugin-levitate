@@ -1,6 +1,6 @@
 'use strict'
 
-const pt = require('path')
+const fp = require('path')
 const _ = require('lodash')
 const { getImportFullPath } = require('./use-import-path-from-the-closest-index')
 
@@ -31,8 +31,8 @@ module.exports = {
 				}
 
 				const fullPath = getImportFullPath(context.getFilename(), workPath) || workPath
-				const fileNameWithoutExtension = pt.basename(fullPath, pt.extname(fullPath))
-				const directoryName = pt.basename(pt.dirname(fullPath))
+				const fileNameWithoutExtension = fp.basename(fullPath, fp.extname(fullPath))
+				const directoryName = fp.basename(fp.dirname(fullPath))
 				const expectedName = fileNameWithoutExtension === 'index'
 					? _.get(directoryName.match(ALPHANUMERIC), '0', '').toUpperCase() + _.camelCase(directoryName).substring(1)
 					: _.get(fileNameWithoutExtension.match(ALPHANUMERIC), '0', '') + _.camelCase(fileNameWithoutExtension).substring(1)
