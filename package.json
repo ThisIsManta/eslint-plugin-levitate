@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-levitate",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "A set of useful ESLint rules",
   "main": "index.js",
   "scripts": {
