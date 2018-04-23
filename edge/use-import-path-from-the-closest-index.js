@@ -14,33 +14,34 @@ module.exports = {
 	create: function (context) {
 		return {
 			ImportDeclaration: function (root) {
-				const relativePath = root.source.value
-				if (relativePath.startsWith('.') === false) {
+				const importRelativePath = root.source.value
+				if (importRelativePath.startsWith('.') === false) {
 					return null
 				}
 
-				const fullPath = getImportFullPath(context.getFilename(), relativePath)
-				if (fullPath === null) {
+				const currentFullPath = context.getFilename()
+				const importFullPath = getImportFullPath(currentFullPath, importRelativePath)
+				if (importFullPath === null) {
 					return null
 				}
 
-				const supportedExtensions = getSupportedExtensions(fullPath)
+				const supportedExtensions = getSupportedExtensions(importFullPath)
 
-				const rootPath = process.cwd()
-				const workPath = fullPath.substring(rootPath.length)
+				const repositoryPath = process.cwd()
+				const importPartialPathFromRepository = importFullPath.substring(repositoryPath.length)
+				const pathList = _.compact(importPartialPathFromRepository.split(/\\|\//))
 
-				const workPathList = _.compact(workPath.split(/\\|\//))
-				for (let count = 1; count <= workPathList.length; count++) {
-					const testPath = workPathList.slice(0, count).join(fp.sep)
+				for (let count = 1; count <= pathList.length; count++) {
+					const workPath = pathList.slice(0, count).join(fp.sep)
 					for (const extension of supportedExtensions) {
-						const expectedPath = fp.join(rootPath, testPath, 'index' + extension)
-						if (fs.existsSync(expectedPath)) {
-							if (fullPath.startsWith(fp.dirname(expectedPath))) {
+						const indexFullPath = fp.join(repositoryPath, workPath, 'index' + extension)
+						if (fs.existsSync(indexFullPath)) {
+							if (currentFullPath.startsWith(fp.dirname(indexFullPath))) {
 								return null
 							}
 
-							if (expectedPath !== fullPath) {
-								const unixPath = _.trim(expectedPath.substring(rootPath.length).replace(/\\/, '/'), '/')
+							if (indexFullPath !== importFullPath) {
+								const unixPath = _.trim(indexFullPath.substring(repositoryPath.length).replace(/\\/, '/'), '/')
 								return context.report({
 									node: root.source,
 									message: `Expected to import "${unixPath}".`,
