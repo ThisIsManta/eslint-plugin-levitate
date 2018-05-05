@@ -13,7 +13,7 @@ module.exports = {
       category: 'ECMAScript 6',
       schema: [
         {
-          enum: ['all', 'exceptFilesInSameDirectory'],
+          enum: ['all', 'exceptFilesInSameDirectory', 'exceptFilesInSameDirectoryAndSubdirectories'],
           default: 'all'
         }
       ]
@@ -35,7 +35,11 @@ module.exports = {
           return null
         }
 
-        if (context.options[0] === 'exceptFilesInSameDirectory' && fullPath.startsWith(fp.dirname(context.getFilename()) + fp.sep)) {
+        if (context.options[0] === 'exceptFilesInSameDirectory' && fp.dirname(fullPath) === fp.dirname(context.getFilename())) {
+          return null
+        }
+
+        if (context.options[0] === 'exceptFilesInSameDirectoryAndSubdirectories' && fullPath.startsWith(fp.dirname(context.getFilename()))) {
           return null
         }
 
