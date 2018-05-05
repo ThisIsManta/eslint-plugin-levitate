@@ -1,6 +1,7 @@
 'use strict'
 
 const fs = require('fs')
+const fp = require('path')
 const ts = require('typescript-eslint-parser');
 const es = require('espree')
 const { getImportFullPath } = require('./use-import-path-from-the-closest-index')
@@ -10,6 +11,12 @@ module.exports = {
     docs: {
       description: 'enforce importing using a namespace only if the target module does not export default',
       category: 'ECMAScript 6',
+      schema: [
+        {
+          enum: ['all', 'exceptFilesInSameDirectory'],
+          default: 'all'
+        }
+      ]
     },
   },
   create: function (context) {
@@ -25,6 +32,10 @@ module.exports = {
 
         const fullPath = getImportFullPath(context.getFilename(), root.source.value)
         if (/\.(js|ts)$/.test(fullPath) === false) {
+          return null
+        }
+
+        if (context.options[0] === 'exceptFilesInSameDirectory' && fullPath.startsWith(fp.dirname(context.getFilename()) + fp.sep)) {
           return null
         }
 
