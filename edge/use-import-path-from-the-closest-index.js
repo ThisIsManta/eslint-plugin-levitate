@@ -60,7 +60,9 @@ module.exports = {
 }
 
 function getSupportedExtensions(currentFullPath) {
-	return fp.extname(currentFullPath) === '.ts' ? ['.ts', '.js'] : ['.js']
+	return fp.extname(currentFullPath) === '.ts'
+		? ['.ts', '.tsx', '.js', '.jsx']
+		: ['.js', '.jsx', '.ts', '.tsx']
 }
 
 function getImportFullPath(currentFullPath, importRelativePath) {
@@ -87,8 +89,7 @@ function getImportFullPath(currentFullPath, importRelativePath) {
 		} else {
 			return fullPath
 		}
-
-	} else {
-		return null
 	}
+
+	return null
 }
