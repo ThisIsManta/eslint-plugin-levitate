@@ -1,8 +1,8 @@
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce ',
-			category: 'ECMAScript 6',
+			description: 'enforce writing the parameter at a catch block consistently',
+			category: 'Stylistic Issues',
 		},
 		schema: [
 			{ type: 'string' }
@@ -18,7 +18,7 @@ module.exports = {
 				if (rootNode.param.type === 'Identifier' && rootNode.param.name !== context.options[0]) {
 					return context.report({
 						node: rootNode.param,
-						message: `Expected catch-parameter to be named "${context.options[0]}".`,
+						message: `Expected the catch-parameter to be named "${context.options[0]}".`,
 					})
 				}
 			}
@@ -41,7 +41,7 @@ module.exports = {
 				code: `try {} catch (e) {}`,
 				options: ['error'],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected catch-parameter to be named "error".' }],
+				errors: [{ message: 'Expected the catch-parameter to be named "error".' }],
 			},
 		]
 	}
