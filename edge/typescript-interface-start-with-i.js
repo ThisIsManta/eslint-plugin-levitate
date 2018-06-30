@@ -10,7 +10,7 @@ module.exports = {
 			TSInterfaceDeclaration: function (root) {
 				if (root.id && root.id.type === 'Identifier' && /^I[A-Z]/.test(root.id.name) === false) {
 					context.report({
-						node: root.declaration,
+						node: root.id,
 						message: `Expected an interface name must start with a capital I.`,
 					})
 				}
@@ -23,6 +23,7 @@ module.exports = {
 				code: `
 					interface IName {}
 				`,
+				parser: 'typescript-eslint-parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
@@ -31,6 +32,7 @@ module.exports = {
 				code: `
 					interface Inter {}
 				`,
+				parser: 'typescript-eslint-parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an interface name must start with a capital I.' }],
 			},
