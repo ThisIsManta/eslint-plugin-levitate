@@ -1,2 +1,2 @@
 const fs = require('fs')
-module.exports = fs.readdirSync('./edge')
+module.exports = fs.readdirSync(__dirname + '/edge')
