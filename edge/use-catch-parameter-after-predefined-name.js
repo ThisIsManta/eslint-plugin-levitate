@@ -28,6 +28,7 @@ module.exports = {
 		valid: [
 			{
 				code: `try {} catch (e) {}`,
+				// Check nothing if no options given
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{

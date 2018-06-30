@@ -179,7 +179,7 @@ import Config from '../../config/main'
 import UserConstants from './UserConstants'
 				`,
 				options: ['module'],
-				parserOptions: { ecmaVersion: 6, sourceType: 'module', parser: 'typescript-eslint-parser' },
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
