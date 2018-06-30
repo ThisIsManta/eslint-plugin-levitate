@@ -1,16 +1,2 @@
-module.exports = [
-	'auto-import',
-	'align-requires',
-	'return-bluebird-coroutine-promise',
-	'sort-imports',
-	'use-bluebird-map-with-concurrency',
-	'use-catch-parameter-after-predefined-name',
-	'use-import-name-after-file-or-directory-name',
-	'use-import-name-after-predefined-list',
-	'use-import-namespace',
-	'use-import-path-from-the-closest-index',
-	'use-import-path-without-mentioning-index',
-	'use-promise-all-with-static-array',
-	'use-require-name-after-file-path',
-	'use-require-name-after-predefined-list',
-]
+const fs = require('fs')
+module.exports = fs.readdirSync('./edge')
