@@ -9,6 +9,10 @@ module.exports = {
 		const untypedFunctionHash = {}
 		return {
 			ExportNamedDeclaration: function (root) {
+				if (!root.declaration) {
+					return null
+				}
+
 				if (root.declaration.type === 'FunctionDeclaration' && !root.declaration.returnType) {
 					context.report({
 						node: root.declaration,
@@ -47,7 +51,10 @@ module.exports = {
 				}
 			},
 			VariableDeclarator: function (root) {
-				if (root.id && root.id.type === 'Identifier' && root.init && (root.init.type === 'FunctionExpression' || root.init.type === 'ArrowFunctionExpression') && !root.init.returnType) {
+				if (
+					root.id && root.id.type === 'Identifier' && !root.id.typeAnnotation &&
+					root.init && (root.init.type === 'FunctionExpression' || root.init.type === 'ArrowFunctionExpression') && !root.init.returnType
+				) {
 					untypedFunctionHash[root.id.name] = root.init
 				}
 			},
@@ -63,13 +70,13 @@ module.exports = {
 	},
 	test: {
 		valid: [
-			/* {
+			{
 				code: `
 					export function x(): string {}
 				`,
 				parser: 'typescript-eslint-parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-			}, */
+			},
 			{
 				code: `
 					export const x: () => string = () => ''
@@ -77,7 +84,7 @@ module.exports = {
 				parser: 'typescript-eslint-parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
-			/* {
+			{
 				code: `
 					const x = function(): string {}
 					export default x
@@ -92,7 +99,15 @@ module.exports = {
 				`,
 				parser: 'typescript-eslint-parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-			}, */
+			},
+			{
+				code: `
+					const x = (): () => string => ''
+					export default x
+				`,
+				parser: 'typescript-eslint-parser',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
 		],
 		invalid: [
 			{
