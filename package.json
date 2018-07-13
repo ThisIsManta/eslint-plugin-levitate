@@ -28,7 +28,7 @@
     "espree": "^4.0.0",
     "glob": "^7.1.2",
     "lodash": "^4.17.10",
-    "typescript": "^2.7.1",
+    "typescript": "~2.9.1",
     "typescript-eslint-parser": "^16.0.1"
   }
 }
