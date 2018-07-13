@@ -30,18 +30,16 @@ module.exports = {
 							continue
 						}
 
-						if (!node.init) {
+						if (!node.init || node.init.type !== 'ArrowFunctionExpression' && node.init.type !== 'FunctionExpression') {
 							continue
 						}
 
-						if ((node.init.type === 'ArrowFunctionExpression' || node.init.type === 'FunctionExpression') && node.init.returnType) {
-							continue
+						if (!node.init.returnType) {
+							context.report({
+								node: node,
+								message: `Expected an exported function must have a return type.`,
+							})
 						}
-
-						context.report({
-							node: node,
-							message: `Expected an exported function must have a return type.`,
-						})
 					}
 				}
 			},
