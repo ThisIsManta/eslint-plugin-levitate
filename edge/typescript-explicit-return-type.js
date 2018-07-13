@@ -254,7 +254,10 @@ module.exports = {
 }
 
 function countReturns(node) {
-	if (node.type === 'ReturnStatement') {
+	if (!node) {
+		return 0
+
+	} else if (node.type === 'ReturnStatement') {
 		return 1
 
 	} else if (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
