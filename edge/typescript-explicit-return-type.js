@@ -23,8 +23,8 @@ module.exports = {
 					return null
 				}
 
-				if (root.declaration.type === 'FunctionDeclaration' && !root.declaration.returnType) {
-					context.report({
+				if (root.declaration.type === 'FunctionDeclaration' && !root.declaration.returnType && checkForReturnViolation(root.declaration)) {
+					return context.report({
 						node: root.declaration,
 						message: `Expected an exported function must have a return type.`,
 					})
@@ -48,7 +48,7 @@ module.exports = {
 							continue
 						}
 
-						if (checkReturns(node.init)) {
+						if (checkForReturnViolation(node.init)) {
 							context.report({
 								node: node,
 								message: `Expected an exported function must have a return type.`,
@@ -58,7 +58,7 @@ module.exports = {
 				}
 			},
 			FunctionDeclaration: function (root) {
-				if (root.id && root.id.type === 'Identifier' && !root.returnType && checkReturns(root)) {
+				if (root.id && root.id.type === 'Identifier' && !root.returnType && checkForReturnViolation(root)) {
 					untypedFunctionHash[root.id.name] = root
 				}
 			},
@@ -66,7 +66,7 @@ module.exports = {
 				if (
 					root.id && root.id.type === 'Identifier' && !root.id.typeAnnotation &&
 					root.init && (root.init.type === 'FunctionExpression' || root.init.type === 'ArrowFunctionExpression') && !root.init.returnType &&
-					checkReturns(root.init)
+					checkForReturnViolation(root.init)
 				) {
 					untypedFunctionHash[root.id.name] = root.init
 				}
@@ -82,7 +82,7 @@ module.exports = {
 		}
 
 		// Return true, if and only if it violates the option
-		function checkReturns(node) {
+		function checkForReturnViolation(node) {
 			if (context.options[0] !== CONDITION) {
 				return true
 			}
@@ -117,6 +117,14 @@ module.exports = {
 				code: `
 					export function x(): string {}
 				`,
+				parser: 'typescript-eslint-parser',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
+			{
+				code: `
+					export function x() { return '' }
+				`,
+				options: [CONDITION],
 				parser: 'typescript-eslint-parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
@@ -201,6 +209,15 @@ module.exports = {
 			},
 			{
 				code: `
+					export function x() { if (true) return 1; else return 2; }
+				`,
+				options: [CONDITION],
+				parser: 'typescript-eslint-parser',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [{ message: 'Expected an exported function must have a return type.' }],
+			},
+			{
+				code: `
 					const x = function() {}
 					export default x
 				`,
@@ -266,7 +283,7 @@ function countReturns(node) {
 
 	let count = 0
 	for (const name in node) {
-		if (name === 'loc' || name === 'range') {
+		if (name === 'loc' || name === 'range' || name == 'parent') {
 			continue
 		}
 
