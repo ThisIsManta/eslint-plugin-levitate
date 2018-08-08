@@ -31,10 +31,15 @@ module.exports = {
 					root.typeName && root.typeName.type === 'Identifier' && root.typeName.name === 'Array' &&
 					root.typeParameters && root.typeParameters.type === 'TSTypeParameterInstantiation' && root.typeParameters.params.length === 1
 				) {
+					const innerTypeNotation = root.typeParameters.params[0]
+					let innerTypeText = sourceCode.getText(innerTypeNotation)
+					if (innerTypeNotation.type === 'TSTypeReference' && innerTypeText.startsWith('(') === false) {
+						innerTypeText = '(' + innerTypeText + ')'
+					}
 					return context.report({
 						node: root,
 						message: `Expected an array type must be written in a generic type.`,
-						fix: fixer => fixer.replaceText(root, `${sourceCode.getText(root.typeParameters.params[0])}[]`)
+						fix: fixer => fixer.replaceText(root, `${innerTypeText}[]`)
 					})
 				}
 			},
@@ -88,6 +93,22 @@ module.exports = {
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an array type must be written in a generic type.' }],
 				output: `type x = any[]`,
+			},
+			{
+				code: `type x = Array<number | string>`,
+				options: ['bracket'],
+				parser: 'typescript-eslint-parser',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [{ message: 'Expected an array type must be written in a generic type.' }],
+				output: `type x = (number | string)[]`,
+			},
+			{
+				code: `type x = Array<(number | string)>`,
+				options: ['bracket'],
+				parser: 'typescript-eslint-parser',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [{ message: 'Expected an array type must be written in a generic type.' }],
+				output: `type x = (number | string)[]`,
 			},
 		],
 	},
