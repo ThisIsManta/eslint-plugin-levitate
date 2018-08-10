@@ -91,11 +91,18 @@ module.exports = {
 				return false
 			}
 
-			const numberOfReturns = countReturns(node.body)
-			if (numberOfReturns === 0) {
+			const returnNodes = getReturns(node.body)
+			if (returnNodes.length === 0) {
 				return false
 
-			} else if (numberOfReturns === 1) {
+			} else if (returnNodes.every(workNode =>
+				workNode.argument === null ||
+				workNode.argument.type === 'Identifier' && workNode.argument.name === 'undefined' ||
+				workNode.argument.type === 'UnaryExpression' && workNode.argument.operator === 'void'
+			)) {
+				return false
+
+			} else if (returnNodes.length === 1) {
 				// In case that the only `return` is not written in the main block
 				return node.body.body.find(node => node.type === 'ReturnStatement') === undefined
 
@@ -197,6 +204,17 @@ module.exports = {
 				parser: 'typescript-eslint-parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
+			{
+				code: `
+					export function x() {
+						if (true) return
+						if (false) return
+					}
+				`,
+				options: [CONDITION],
+				parser: 'typescript-eslint-parser',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
 		],
 		invalid: [
 			{
@@ -266,30 +284,54 @@ module.exports = {
 				parserOptions: { ecmaVersion: 6, sourceType: 'module', parser: 'typescript-eslint-parser' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
+			{
+				code: `
+					export function x() {
+						if (true) return 1
+						if (false) return 2
+					}
+				`,
+				options: [CONDITION],
+				parser: 'typescript-eslint-parser',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [{ message: 'Expected an exported function must have a return type.' }],
+			},
+			{
+				code: `
+					export function x() {
+						if (true) return
+						if (false) return 2
+					}
+				`,
+				options: [CONDITION],
+				parser: 'typescript-eslint-parser',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [{ message: 'Expected an exported function must have a return type.' }],
+			},
 		],
 	},
 }
 
-function countReturns(node) {
+function getReturns(node) {
 	if (!node) {
-		return 0
+		return []
 
 	} else if (node.type === 'ReturnStatement') {
-		return 1
+		return [node]
 
 	} else if (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
-		return 0
+		return []
 	}
 
-	let count = 0
+	let results = []
 	for (const name in node) {
 		if (name === 'loc' || name === 'range' || name == 'parent') {
 			continue
 		}
 
 		if (typeof node[name] === 'object') {
-			count += countReturns(node[name])
+			results = results.concat(getReturns(node[name]))
 		}
 	}
-	return count
+	return results
 }
