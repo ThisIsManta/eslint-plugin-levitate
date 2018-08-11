@@ -94,21 +94,24 @@ module.exports = {
 			const returnNodes = getReturns(node.body)
 			if (returnNodes.length === 0) {
 				return false
+			}
 
-			} else if (returnNodes.every(workNode =>
-				workNode.argument === null ||
-				workNode.argument.type === 'Identifier' && workNode.argument.name === 'undefined' ||
-				workNode.argument.type === 'UnaryExpression' && workNode.argument.operator === 'void'
+			const mainReturnNode = node.body.body.find(node => node.type === 'ReturnStatement')
+			const earlyReturnNodes = returnNodes.filter(node => node !== mainReturnNode)
+
+			if (earlyReturnNodes.length === 0) {
+				return false
+			}
+
+			if (earlyReturnNodes.every(node =>
+				node.argument === null ||
+				node.argument.type === 'Identifier' && node.argument.name === 'undefined' ||
+				node.argument.type === 'UnaryExpression' && node.argument.operator === 'void'
 			)) {
 				return false
-
-			} else if (returnNodes.length === 1) {
-				// In case that the only `return` is not written in the main block
-				return node.body.body.find(node => node.type === 'ReturnStatement') === undefined
-
-			} else {
-				return true
 			}
+
+			return true
 		}
 	},
 	test: {
@@ -207,8 +210,10 @@ module.exports = {
 			{
 				code: `
 					export function x() {
-						if (true) return
-						if (false) return
+						if (a) return
+						if (b) return undefined
+						if (c) return void(0)
+						return 1
 					}
 				`,
 				options: [CONDITION],
@@ -287,20 +292,9 @@ module.exports = {
 			{
 				code: `
 					export function x() {
-						if (true) return 1
-						if (false) return 2
-					}
-				`,
-				options: [CONDITION],
-				parser: 'typescript-eslint-parser',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
-			},
-			{
-				code: `
-					export function x() {
-						if (true) return
-						if (false) return 2
+						if (a) return
+						if (b) return 2
+						return 3
 					}
 				`,
 				options: [CONDITION],
