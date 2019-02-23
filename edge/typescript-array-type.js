@@ -38,10 +38,7 @@ module.exports = {
 				) {
 					const innerType = root.typeParameters.params[0]
 					let innerText = sourceCode.getText(innerType).trim()
-					if (
-						innerType.type === 'TSTypeReference' &&
-						(innerType.typeName.type === 'TSUnionType' || innerType.typeName.type === 'TSIntersectionType')
-					) {
+					if (innerType.type === 'TSUnionType' || innerType.type === 'TSIntersectionType') {
 						innerText = '(' + innerText + ')'
 					}
 
