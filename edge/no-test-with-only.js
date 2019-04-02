@@ -1,6 +1,6 @@
 'use strict'
 
-const errorMessage = 'Test cannot be suffix with ".only"'
+const errorMessage = 'Expected the test not to call "only" function.'
 
 module.exports = {
   meta: {
