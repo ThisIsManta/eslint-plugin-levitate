@@ -55,31 +55,31 @@ module.exports = {
 		valid: [
 			{
 				code: `type x = any`,
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `type x = Array<any>`,
 				options: ['generic'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `type x = Array<Array<any>>`,
 				options: ['generic'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `type x = Promise<any>`,
 				options: ['generic'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `type x = any[]`,
 				options: ['bracket'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
@@ -87,7 +87,7 @@ module.exports = {
 			{
 				code: `type x = any[]`,
 				options: ['generic'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an array type must be written in the square bracket notation.' }],
 				output: `type x = Array<any>`,
@@ -95,7 +95,7 @@ module.exports = {
 			{
 				code: `type x = (number | string)[]`,
 				options: ['generic'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an array type must be written in the square bracket notation.' }],
 				output: `type x = Array<number | string>`,
@@ -103,7 +103,7 @@ module.exports = {
 			{
 				code: `type x = Array<any>`,
 				options: ['bracket'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an array type must be written in a generic type.' }],
 				output: `type x = any[]`,
@@ -111,7 +111,7 @@ module.exports = {
 			{
 				code: `type x = Array<IType>`,
 				options: ['bracket'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an array type must be written in a generic type.' }],
 				output: `type x = IType[]`,
@@ -119,7 +119,7 @@ module.exports = {
 			{
 				code: `type x = Array<number | string>`,
 				options: ['bracket'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an array type must be written in a generic type.' }],
 				output: `type x = (number | string)[]`,
@@ -127,7 +127,7 @@ module.exports = {
 			{
 				code: `type x = Array<(number | string)>`,
 				options: ['bracket'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an array type must be written in a generic type.' }],
 				output: `type x = (number | string)[]`,

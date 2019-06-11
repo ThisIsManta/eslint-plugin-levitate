@@ -49,25 +49,25 @@ module.exports = {
 		valid: [
 			{
 				code: `enum PascalCase {}`,
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `enum PascalCase {}`,
 				options: ['PascalCase'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `enum camelCase {}`,
 				options: ['camelCase'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `enum SNAKE_CASE {}`,
 				options: ['SNAKE_CASE'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
@@ -75,7 +75,7 @@ module.exports = {
 			{
 				code: `enum SNAKE_CASE {}`,
 				options: ['PascalCase'],
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the enumeration to be named "SnakeCase".' }],
 			},

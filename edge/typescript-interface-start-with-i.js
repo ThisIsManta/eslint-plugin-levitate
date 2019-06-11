@@ -23,7 +23,7 @@ module.exports = {
 				code: `
 					interface IName {}
 				`,
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
@@ -32,7 +32,7 @@ module.exports = {
 				code: `
 					interface Inter {}
 				`,
-				parser: 'typescript-eslint-parser',
+				parser: '@typescript-eslint/parser',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an interface name must start with a capital I.' }],
 			},

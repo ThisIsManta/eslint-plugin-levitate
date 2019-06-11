@@ -2,7 +2,7 @@
 
 const fs = require('fs')
 const fp = require('path')
-const ts = require('typescript-eslint-parser');
+const ts = require('@typescript-eslint/parser');
 const es = require('espree')
 const { getImportFullPath } = require('./use-import-path-from-the-closest-index')
 
@@ -47,7 +47,7 @@ module.exports = {
 				try {
 					if (!context.parserPath || context.parserPath.toLowerCase() === 'espree') {
 						targetTree = es.parse(fs.readFileSync(fullPath, 'utf-8'), context.parserOptions)
-					} else if (context.parserPath === 'typescript-eslint-parser') {
+					} else if (context.parserPath === '@typescript-eslint/parser') {
 						targetTree = ts.parse(fs.readFileSync(fullPath, 'utf-8'))
 					}
 				} catch (ex) {
