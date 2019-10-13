@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node tests.js",
-    "preversion": "npm install && npm run test",
+    "docs": "node generateREADME.js",
+    "preversion": "npm install && npm run test && npm run docs && git push --dry-run origin master",
     "version": "npm publish",
     "postversion": "git push --tags origin master"
   },

@@ -5,7 +5,7 @@ const glob = require('glob').sync
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce writing variable name from the file name of `require` statements',
+			description: 'enforce naming an identifier after the file name of its `require` statement',
 			category: 'Variables',
 		},
 		schema: [

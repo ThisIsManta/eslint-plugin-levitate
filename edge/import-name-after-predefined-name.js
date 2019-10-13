@@ -5,7 +5,7 @@ const _ = require('lodash')
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce writing variable name after the user-defined list',
+			description: 'enforce naming an imported identifier after the user-defined list, for example given `["error", { "classnames": "cx" }]` `import cx from "classnames"`',
 			category: 'Variables',
 		},
 		schema: [

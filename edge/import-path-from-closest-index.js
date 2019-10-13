@@ -7,7 +7,7 @@ const fp = require('path')
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce importing the closest index file',
+			description: 'enforce writing an import path pointing to the closest index file',
 			category: 'ECMAScript 6',
 		},
 	},

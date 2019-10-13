@@ -27,7 +27,7 @@ const METHOD_ALL = {
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce passing a static array to Promise.all()',
+			description: 'enforce passing a static array to `Promise.all()`',
 			category: 'Best Practices',
 		},
 	},

@@ -15,16 +15,19 @@ const STYLES = {
 	}
 }
 
+const options = Object.keys(STYLES)
+const defaultOption = options[0]
+
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce naming enumerations consistently',
+			description: 'enforce naming enumerations consistently; the possible options are ' + options.map(option => '`"' + option + '"`' + (option === defaultOption ? ' (default)' : '')).join(', '),
 			category: 'Stylistic Issues',
 		},
 		schema: [
 			{
-				enum: Object.keys(STYLES),
-				default: Object.keys(STYLES)[0]
+				enum: options,
+				default: defaultOption
 			}
 		],
 	},

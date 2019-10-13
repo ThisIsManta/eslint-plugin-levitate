@@ -11,7 +11,8 @@ const URL = /^\s\w+:\/\/.+/
 module.exports = {
   meta: {
     docs: {
-      description: 'enforce writing consistent single-line comments',
+      description: 'enforce starting a single-line comment with either `TODO:`, `HACK:`, `See {url}`, or a first-capitalized word',
+      category: 'Stylistic Issues',
     },
     fixable: 'code',
   },

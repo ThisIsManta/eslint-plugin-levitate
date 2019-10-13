@@ -27,7 +27,7 @@ const METHOD_MAP = {
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce passing a concurrency number to Bluebird.map()',
+			description: 'enforce passing a concurrency number to [`Bluebird.map`](http://bluebirdjs.com/docs/api/promise.map.html), for example `Bluebird.map([promise], { concurrency: 5 })`',
 			category: 'Best Practices',
 		},
 	},

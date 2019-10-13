@@ -8,7 +8,8 @@ const NODE_APIS = [
 }, {})
 
 const SORT_TYPES = {
-	module: [ // See https://github.com/renke/import-sort/tree/master/packages/import-sort-style-module
+	module: [
+		// See https://github.com/renke/import-sort/tree/master/packages/import-sort-style-module
 		node => node.specifiers.length === 0 && node.source.value.startsWith('.') === false,
 		node => node.specifiers.length === 0,
 		node => NODE_APIS[node.source.value] && node.source.value.toLowerCase(),
@@ -29,7 +30,7 @@ const SORT_TYPES = {
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce sorting `import` statements',
+			description: 'enforce sorting `import` statements. By default, this will sort according to [Renke](https://github.com/renke/import-sort/tree/master/packages/import-sort-style-module)',
 			category: 'ECMAScript 6',
 		},
 		schema: [

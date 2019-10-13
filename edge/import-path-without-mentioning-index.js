@@ -7,7 +7,7 @@ const INDEX_INTERNAL = /^\.\.?(\/\.\.)*\/index/
 module.exports = {
 	meta: {
 		docs: {
-			description: 'disallow writing index file in an import path, except for "./index"',
+			description: 'enforce writing an import path to an index file without mentioning "index.js"',
 			category: 'ECMAScript 6',
 		},
 		fixable: 'code',

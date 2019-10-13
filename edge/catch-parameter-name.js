@@ -1,7 +1,7 @@
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce writing the parameter at a catch block consistently',
+			description: 'enforce naming the parameter inside `catch` block consistently, for example given `["error", "err"]` then `try {} catch (err) {}`',
 			category: 'Stylistic Issues',
 		},
 		schema: [

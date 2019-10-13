@@ -5,7 +5,8 @@ const _ = require('lodash')
 module.exports = {
   meta: {
     docs: {
-      description: 'enforce writing consistent test case titles',
+      description: 'enforce writing consistent test case titles for `it` and `test` function calls; this applies to _*.{test,spec}_ files only; the pattern of the test case title is `"(does not) return/render/call/fetch/set/throw(s) ... (, given ...)"`',
+      category: 'Stylistic Issues',
     },
     messages: {
       naming:

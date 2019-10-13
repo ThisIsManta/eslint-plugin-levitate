@@ -5,7 +5,8 @@ const _ = require('lodash')
 module.exports = {
   meta: {
     docs: {
-      description: 'enforce writing a new line between test case titles',
+      description: 'enforce having a new line between `it`, `test`, and `describe` function calls; this applies to _*.{test,spec}_ files only',
+      category: 'Stylistic Issues',
     },
     messages: {
       blankLine: 'Expected to have a new line before this',
