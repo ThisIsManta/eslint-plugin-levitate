@@ -26,44 +26,11 @@ const SORT_TYPES = {
 	]
 }
 
-const USE_STRICT = {
-	type: 'ExpressionStatement',
-	expression: {
-		value: 'use strict',
-	}
-}
-
-const JEST_MOCK = {
-	type: 'ExpressionStatement',
-	expression: {
-		type: 'CallExpression',
-		callee: {
-			type: 'MemberExpression',
-			object: {
-				type: 'Identifier',
-				name: 'jest',
-			},
-			property: {
-				type: 'Identifier',
-				name: 'mock',
-			},
-		}
-	}
-}
-
 module.exports = {
 	meta: {
 		docs: {
 			description: 'enforce sorting `import` statements',
 			category: 'ECMAScript 6',
-		},
-		messages: {
-			first: 'Expected import statements to be here.',
-			blankLineBefore: 'Expected a blank line before this import statement.',
-			blankLineNot: 'Unexpected a blank line before this import statement.',
-			blankLineAfter: 'Expected a blank line after the last import statement.',
-			orderlyFashion: 'Expected import statements to be sorted in orderly fashion.',
-			consecutive: 'Expected import statements to be placed consecutively.',
 		},
 		schema: [
 			{ enum: Object.keys(SORT_TYPES) }
@@ -71,26 +38,45 @@ module.exports = {
 		fixable: 'code'
 	},
 	create: function (context) {
+		const rightComments = new Map()
+		const aboveComments = new Map()
+
 		return {
-			Program: function (root) {
-				if (root.sourceType !== 'module' || root.body.length === 0) {
+			Program: function (rootNode) {
+				if (rootNode.sourceType !== 'module' || rootNode.body.length === 0) {
 					return null
 				}
 
-				const totalImportList = root.body.filter(node => node.type === 'ImportDeclaration')
+				const totalImportList = rootNode.body.filter(node => node.type === 'ImportDeclaration')
 				if (totalImportList.length === 0) {
 					return null
 				}
 
-				const firstImportIndex = root.body.indexOf(totalImportList[0])
-				if (firstImportIndex > 0) {
-					const nonImportList = _.dropWhile(root.body.slice(0, firstImportIndex), node => _.isMatch(node, USE_STRICT) || _.isMatch(node, JEST_MOCK))
-					if (nonImportList.length > 0) {
+				if (rootNode.body.indexOf(totalImportList[0]) !== 0) {
+					if (rootNode.body[0].type === 'ExpressionStatement' && rootNode.body[0].expression.value === 'use strict') {
+						if (rootNode.body[1].type !== 'ImportDeclaration') {
+							return context.report({
+								node: rootNode.body[0],
+								message: 'Expected import statements to be placed after "use strict".',
+							})
+						}
+					} else {
 						return context.report({
-							node: nonImportList[0],
-							messageId: 'first',
+							node: rootNode.body[0],
+							message: 'Expected import statements to be placed at the top of the module.',
 						})
 					}
+				}
+
+				for (let index = 0; index < totalImportList.length; index++) {
+					const workNode = totalImportList[index]
+					rightComments.set(workNode, context.getCommentsAfter(workNode).filter(node => node.loc.start.line === workNode.loc.end.line))
+				}
+
+				for (let index = 0; index < totalImportList.length; index++) {
+					const workNode = totalImportList[index]
+					const prevNode = totalImportList[index - 1]
+					aboveComments.set(workNode, _.differenceWith(context.getCommentsBefore(workNode), rightComments.get(prevNode) || [], (a, b) => _.isEqual(a.loc, b.loc)))
 				}
 
 				let workingImportList = _.clone(totalImportList)
@@ -108,7 +94,7 @@ module.exports = {
 
 				const firstOfGroupImportList = nestedImportList.map(list => list[0])
 
-				const totalMixedList = root.body.slice(root.body.indexOf(_.first(totalImportList)), root.body.indexOf(_.last(totalImportList)) + 1)
+				const totalMixedList = rootNode.body.slice(rootNode.body.indexOf(_.first(totalImportList)), rootNode.body.indexOf(_.last(totalImportList)) + 1)
 
 				const sortedOtherList = totalMixedList.filter(node => node.type !== 'ImportDeclaration')
 
@@ -125,24 +111,26 @@ module.exports = {
 
 						const prevNode = sortedMixedList[index - 1]
 						const workNode = sortNode
-						const workLine = context.getSourceCode().getText(workNode)
-						const betweenTheLines = context.getSourceCode().getText(workNode, workNode.range[0] - prevNode.range[1])
-						const newLineCount = (betweenTheLines.substring(0, betweenTheLines.length - workLine.length).match(/\n/g) || []).length
+
+						const lastNode = _.maxBy([prevNode, ...rightComments.get(prevNode)], node => node.loc.end.line)
+						const nextNode = _.minBy([workNode, ...aboveComments.get(workNode)], node => node.loc.start.line)
+						const lineDiff = nextNode.loc.start.line - lastNode.loc.end.line
+
 						if (firstOfGroupImportList.includes(workNode)) {
-							if (newLineCount < 2) {
+							if (lineDiff !== 2) {
 								context.report({
 									node: workNode,
-									messageId: 'blankLineBefore',
-									fix: fixer => fixer.replaceText(workNode, '\n' + context.getSourceCode().getText(workNode))
+									message: 'Expected a blank line before this import statement.',
+									fix: fixer => fixer.insertTextBeforeRange(nextNode.range, '\n')
 								})
 							}
 
 						} else {
-							if (newLineCount > 1) {
+							if (lineDiff !== 1) {
 								context.report({
 									node: workNode,
-									messageId: 'blankLineNot',
-									fix: fixer => fixer.replaceTextRange([prevNode.range[1], workNode.range[0]], '\n')
+									message: 'Unexpected a blank line before this import statement.',
+									fix: fixer => fixer.replaceTextRange([lastNode.range[1], nextNode.range[0]], '\n')
 								})
 							}
 						}
@@ -151,24 +139,42 @@ module.exports = {
 					}
 
 					let reportedNode
-					let reportedMessageId
+					let reportedMessage
 					if (realNode.type === 'ImportDeclaration') {
 						reportedNode = realNode
-						reportedMessageId = 'orderlyFashion'
+						const expectedIndex = sortedMixedList.indexOf(realNode)
+						reportedMessage = `Expected this import statement to be placed after "${sortedMixedList[expectedIndex - 1].source.value}".`
 
 					} else {
 						reportedNode = totalMixedList.slice(index).find(node => node.type === 'ImportDeclaration')
-						reportedMessageId = 'consecutive'
+						reportedMessage = 'Expected import statements to be placed consecutively.'
 					}
 
 					return context.report({
 						node: reportedNode,
-						messageId: reportedMessageId,
+						message: reportedMessage,
 						fix: fixer => (
 							fixer.replaceTextRange(
-								[_.first(totalMixedList).range[0], _.last(totalMixedList).range[1]],
+								[
+									_.chain([_.first(totalMixedList), ...aboveComments.get(_.first(totalMixedList))])
+										.map(node => node.range[0])
+										.min()
+										.value(),
+									_.chain([_.last(totalMixedList), ...rightComments.get(_.last(totalMixedList))])
+										.map(node => node.range[1])
+										.max()
+										.value()
+								],
 								(
-									nestedImportList.map(list => ['', ...list.map(node => context.getSourceCode().getText(node))].join('\n')).join('\n').trim() +
+									nestedImportList.map(
+										list => [
+											'',
+											...list.map(node => (
+												aboveComments.get(node).map(node => context.getSourceCode().getText(node)).join('\n') + '\n' +
+												context.getSourceCode().getText(node) + ' ' + rightComments.get(node).map(node => context.getSourceCode().getText(node)).join(' ')
+											).trim())
+										].join('\n')
+									).join('\n').trim() +
 									'\n' + '\n' +
 									sortedOtherList.map(node => context.getSourceCode().getText(node)).join('\n')
 								).trim()
@@ -178,15 +184,16 @@ module.exports = {
 				}
 
 				const lastImport = _.last(sortedImportList)
-				const afterLastImport = root.body[root.body.indexOf(lastImport) + 1]
+				const afterLastImport = rootNode.body[rootNode.body.indexOf(lastImport) + 1]
 				if (afterLastImport) {
 					const afterLastImportText = context.getSourceCode().getText(afterLastImport)
+					// TODO
 					const betweenTheLines = context.getSourceCode().getText(afterLastImport, afterLastImport.range[0] - lastImport.range[1])
 					const newLineCount = (betweenTheLines.substring(0, betweenTheLines.length - afterLastImportText.length).match(/\n/g) || []).length
 					if (newLineCount < 2) {
 						context.report({
 							node: lastImport,
-							messageId: 'blankLineAfter',
+							message: 'Expected a blank line after the last import statement.',
 							fix: fixer => fixer.replaceText(lastImport, context.getSourceCode().getText(lastImport) + '\n')
 						})
 					}
@@ -196,16 +203,6 @@ module.exports = {
 	},
 	test: {
 		valid: [
-			{
-				code: `
-'use strict'
-jest.mock('../../config/main')
-
-import crypto from 'crypto'
-				`,
-				options: ['module'],
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-			},
 			{
 				code: `
 import crypto from 'crypto'
@@ -272,6 +269,18 @@ import 'c'
 				options: ['manta'],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
+			{
+				code: `
+import 'a' /*
+xxx
+*/
+// Note
+// @ts-ignore
+import 'b'
+				`,
+				options: ['manta'],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
 		],
 		invalid: [
 			{
@@ -280,7 +289,7 @@ const e = 3.14
 import 'aa'
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ messageId: 'first' }],
+				errors: [{ message: 'Expected import statements to be placed at the top of the module.' }],
 			},
 			{
 				code: `
@@ -289,7 +298,7 @@ const e = 3.14
 import 'aa'
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ messageId: 'first' }],
+				errors: [{ message: 'Expected import statements to be placed after "use strict".' }],
 			},
 			{
 				code: `
@@ -298,7 +307,7 @@ const e = 3.14
 import 'bb'
 				`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ messageId: 'consecutive' }],
+				errors: [{ message: 'Expected import statements to be placed consecutively.' }],
 				output: `
 import 'aa'
 import 'bb'
@@ -322,7 +331,7 @@ import 'a'
 				`,
 				options: ['module'],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ messageId: 'orderlyFashion' }],
+				errors: [{ message: 'Expected this import statement to be placed after "path".' }],
 				output: `
 import 'a'
 
@@ -348,7 +357,7 @@ import './a'
 				`,
 				options: ['module'],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ messageId: 'blankLineBefore' }],
+				errors: [{ message: 'Expected a blank line before this import statement.' }],
 				output: `
 import 'a'
 
@@ -363,11 +372,58 @@ import './b'
 				`,
 				options: ['module'],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ messageId: 'blankLineNot' }],
+				errors: [{ message: 'Unexpected a blank line before this import statement.' }],
 				output: `
 import './a'
 import './b'
 				`,
+			},
+			{
+				code: `
+// Hack
+import 'b' /*
+xxx
+*/
+// Note
+// @ts-ignore
+import 'a'
+				`,
+				options: ['manta'],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [{ message: 'Expected this import statement to be placed after "a".' }],
+				output: `
+// Note
+// @ts-ignore
+import 'a'
+// Hack
+import 'b' /*
+xxx
+*/
+				`
+			},
+			{
+				code: `
+// Hack
+import 'a' /*
+xxx
+*/
+// Note
+// @ts-ignore
+import React from 'react'
+				`,
+				options: ['manta'],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [{ message: 'Expected this import statement to be placed after "react".' }],
+				output: `
+// Note
+// @ts-ignore
+import React from 'react'
+
+// Hack
+import 'a' /*
+xxx
+*/
+				`
 			},
 		]
 	}
