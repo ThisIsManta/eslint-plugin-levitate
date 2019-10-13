@@ -2,7 +2,7 @@
 
 const fp = require('path')
 const _ = require('lodash')
-const { getImportFullPath } = require('./use-import-path-from-the-closest-index')
+const { getImportFullPath } = require('./import-path-from-closest-index')
 
 const ALPHANUMERIC = /[A-Za-z0-9]/
 

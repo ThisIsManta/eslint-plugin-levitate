@@ -27,7 +27,7 @@ const METHOD_MAP = {
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce passing a static array to Promise.all()',
+			description: 'enforce passing a concurrency number to Bluebird.map()',
 			category: 'Best Practices',
 		},
 	},
