@@ -21,14 +21,14 @@ module.exports = {
 		valid: [
 			{
 				code: `export interface x {}`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `interface x {}`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected interfaces to be exported.' }],
 			},

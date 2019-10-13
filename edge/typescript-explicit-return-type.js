@@ -120,14 +120,14 @@ module.exports = {
 				code: `
 					function x() {}
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
 					export function x(): string {}
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -135,14 +135,14 @@ module.exports = {
 					export function x() { return '' }
 				`,
 				options: [CONDITION],
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
 					export const x = 1
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -150,14 +150,14 @@ module.exports = {
 					const x = function(): string {}
 					export default x
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
 					const x = () => {}
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -165,7 +165,7 @@ module.exports = {
 					export const x = () => ''
 				`,
 				options: [CONDITION],
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -173,7 +173,7 @@ module.exports = {
 					export const x = () => { return '' }
 				`,
 				options: [CONDITION],
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -181,14 +181,14 @@ module.exports = {
 					export const x = (): string => { if (1) { return '' } return '' }
 				`,
 				options: [CONDITION],
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
 					export const x: () => string = () => {}
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -196,7 +196,7 @@ module.exports = {
 					const x: () => string = () => {}
 					export default x
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -204,7 +204,7 @@ module.exports = {
 					const x = (): () => string => ''
 					export default x
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
@@ -217,7 +217,7 @@ module.exports = {
 					}
 				`,
 				options: [CONDITION],
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
@@ -226,7 +226,7 @@ module.exports = {
 				code: `
 					export function x() {}
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
@@ -235,7 +235,7 @@ module.exports = {
 					export function x() { if (true) return 1; else return 2; }
 				`,
 				options: [CONDITION],
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
@@ -244,7 +244,7 @@ module.exports = {
 					const x = function() {}
 					export default x
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
@@ -252,7 +252,7 @@ module.exports = {
 				code: `
 					export const x = () => ''
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
@@ -260,7 +260,7 @@ module.exports = {
 				code: `
 					export const x = () => {}
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
@@ -268,7 +268,7 @@ module.exports = {
 				code: `
 					export const x = () => { return '' }
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
@@ -276,7 +276,7 @@ module.exports = {
 				code: `
 					export const x = () => { if (1) { return '' } return '' }
 				`,
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
@@ -285,8 +285,8 @@ module.exports = {
 					const x = () => {}
 					export default x
 				`,
-				parser: '@typescript-eslint/parser',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module', parser: '@typescript-eslint/parser' },
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: { ecmaVersion: 6, sourceType: 'module', parser: require.resolve('@typescript-eslint/parser') },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},
 			{
@@ -298,7 +298,7 @@ module.exports = {
 					}
 				`,
 				options: [CONDITION],
-				parser: '@typescript-eslint/parser',
+				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected an exported function must have a return type.' }],
 			},

@@ -81,7 +81,7 @@ module.exports = {
 			},
 			{
 				code: 'var something = require("./james-arthur")',
-				filename: './edge/use-require-name-after-file-path.js',
+				filename: './edge/require-name-after-file-name.js',
 				options: [['./edge/*.js']],
 				errors: [{ message: 'Expected "something" to be "JamesArthur".', }]
 			},
