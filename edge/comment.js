@@ -5,6 +5,7 @@ const _ = require('lodash')
 const FORMAL = /^\s(HACK|TODO):(\s\S|$)/
 const HACK = /^\s*(HACK|XXX)\W\s*/i
 const TODO = /^\s*TODO\W\s*/i
+const FIXME = /^\s*FIXME\W\s*/i
 const NOTE = /^\s*(Note\W)\s/i
 const URL = /^\s\w+:\/\/.+/
 
@@ -46,6 +47,18 @@ module.exports = {
                   fixer.replaceText(
                     node,
                     node.value.replace(TODO, '// TODO: ').trim()
+                  ),
+              })
+            }
+
+            if (FIXME.test(node.value)) {
+              return context.report({
+                node,
+                message: `Expected the comment to be written as "TODO: ..."`,
+                fix: fixer =>
+                  fixer.replaceText(
+                    node,
+                    node.value.replace(FIXME, '// TODO: ').trim()
                   ),
               })
             }
@@ -131,6 +144,15 @@ module.exports = {
       },
       {
         code: '// Todo: lorem',
+        errors: [
+          {
+            message: 'Expected the comment to be written as "TODO: ..."',
+          },
+        ],
+        output: '// TODO: lorem',
+      },
+      {
+        code: '// FIXME: lorem',
         errors: [
           {
             message: 'Expected the comment to be written as "TODO: ..."',
