@@ -15,7 +15,6 @@ module.exports = {
       description: 'enforce starting a single-line comment with either `TODO:`, `HACK:`, `See {url}`, or a first-capitalized word',
       category: 'Stylistic Issues',
     },
-    fixable: 'code',
   },
   create: function(context) {
     return {
@@ -31,11 +30,6 @@ module.exports = {
               return context.report({
                 node,
                 message: `Expected the comment to be written as "HACK: ..."`,
-                fix: fixer =>
-                  fixer.replaceText(
-                    node,
-                    node.value.replace(HACK, '// HACK: ').trim()
-                  ),
               })
             }
 
@@ -43,11 +37,6 @@ module.exports = {
               return context.report({
                 node,
                 message: `Expected the comment to be written as "TODO: ..."`,
-                fix: fixer =>
-                  fixer.replaceText(
-                    node,
-                    node.value.replace(TODO, '// TODO: ').trim()
-                  ),
               })
             }
 
@@ -55,11 +44,6 @@ module.exports = {
               return context.report({
                 node,
                 message: `Expected the comment to be written as "TODO: ..."`,
-                fix: fixer =>
-                  fixer.replaceText(
-                    node,
-                    node.value.replace(FIXME, '// TODO: ').trim()
-                  ),
               })
             }
 
@@ -67,7 +51,6 @@ module.exports = {
               return context.report({
                 node,
                 message: `Expected the comment to be written as "See ${node.value.trim()}"`,
-                fix: fixer => fixer.replaceText(node, '// See' + node.value),
               })
             }
 
@@ -75,11 +58,6 @@ module.exports = {
               return context.report({
                 node,
                 message: `Unexpected "${node.value.match(NOTE)[1].trim()}"`,
-                fix: fixer =>
-                  fixer.replaceText(
-                    node,
-                    node.value.replace(NOTE, '// ').trim()
-                  ),
               })
             }
 
@@ -106,14 +84,6 @@ module.exports = {
               return context.report({
                 node,
                 message: `Expected the comment to start with a capital letter`,
-                fix: fixer =>
-                  fixer.replaceText(
-                    node,
-                    node.value.replace(
-                      new RegExp('^\\s*' + _.escapeRegExp(firstChar) + '\\s*'),
-                      '// ' + firstChar.toUpperCase()
-                    )
-                  ),
               })
             }
           })
@@ -126,67 +96,31 @@ module.exports = {
     invalid: [
       {
         code: '// Hack lorem',
-        errors: [
-          {
-            message: 'Expected the comment to be written as "HACK: ..."',
-          },
-        ],
-        output: '// HACK: lorem',
+        errors: [{ message: 'Expected the comment to be written as "HACK: ..."' }],
       },
       {
         code: '// XXX: lorem',
-        errors: [
-          {
-            message: 'Expected the comment to be written as "HACK: ..."',
-          },
-        ],
-        output: '// HACK: lorem',
+        errors: [{ message: 'Expected the comment to be written as "HACK: ..."' }],
       },
       {
         code: '// Todo: lorem',
-        errors: [
-          {
-            message: 'Expected the comment to be written as "TODO: ..."',
-          },
-        ],
-        output: '// TODO: lorem',
+        errors: [{ message: 'Expected the comment to be written as "TODO: ..."' }],
       },
       {
         code: '// FIXME: lorem',
-        errors: [
-          {
-            message: 'Expected the comment to be written as "TODO: ..."',
-          },
-        ],
-        output: '// TODO: lorem',
+        errors: [{ message: 'Expected the comment to be written as "TODO: ..."' }],
       },
       {
         code: '// http://www.example.com/xxx',
-        errors: [
-          {
-            message:
-              'Expected the comment to be written as "See http://www.example.com/xxx"',
-          },
-        ],
-        output: '// See http://www.example.com/xxx',
+        errors: [{ message: 'Expected the comment to be written as "See http://www.example.com/xxx"' }],
       },
       {
         code: '// Note: lorem',
-        errors: [
-          {
-            message: 'Unexpected "Note:"',
-          },
-        ],
-        output: '// lorem',
+        errors: [{ message: 'Unexpected "Note:"' }],
       },
       {
         code: ['// lorem ipsum', '// dolor sit'].join('\n'),
-        errors: [
-          {
-            message: 'Expected the comment to start with a capital letter',
-          },
-        ],
-        output: ['// Lorem ipsum', '// dolor sit'].join('\n'),
+        errors: [{ message: 'Expected the comment to start with a capital letter' }],
       },
     ],
   },
