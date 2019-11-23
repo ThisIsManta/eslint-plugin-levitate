@@ -14,4 +14,4 @@
 |`test-case-title`|enforce writing consistent test case titles for `it` and `test` function calls; this applies to _*.{test,spec}_ files only; the pattern of the test case title is `"(does not) return/render/call/fetch/set/throw(s) ... (, given ...)"`||
 |`typescript-enum-name`|enforce naming enumerations consistently; the possible options are `"PascalCase"` (default), `"camelCase"`, `"UPPERCASE"`, `"SNAKE_CASE"`||
 |`typescript-explicit-return-type`|enforce writing an explicit return type for exported functions||
-|`typescript-exported-interface`|enforce exporting interfaces||
+|`typescript-exported-interface`|enforce exporting an `interface`, unless it is inside a `declare` block||
