@@ -25,11 +25,11 @@
   },
   "homepage": "https://github.com/ThisIsManta/eslint-plugin-levitate#readme",
   "devDependencies": {
-    "@typescript-eslint/parser": "^2.3.3",
-    "eslint": "^6.5.1",
-    "espree": "^6.1.1",
-    "glob": "^7.1.4",
+    "@typescript-eslint/parser": "^2.8.0",
+    "eslint": "^6.7.0",
+    "espree": "^6.1.2",
+    "glob": "^7.1.6",
     "lodash": "^4.17.15",
-    "typescript": "^3.6.4"
+    "typescript": "^3.7.2"
   }
 }
