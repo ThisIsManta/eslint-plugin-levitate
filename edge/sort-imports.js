@@ -53,22 +53,6 @@ module.exports = {
 					return null
 				}
 
-				if (rootNode.body.indexOf(totalImportList[0]) !== 0) {
-					if (rootNode.body[0].type === 'ExpressionStatement' && rootNode.body[0].expression.value === 'use strict') {
-						if (rootNode.body[1].type !== 'ImportDeclaration') {
-							return context.report({
-								node: rootNode.body[0],
-								message: 'Expected import statements to be placed after "use strict".',
-							})
-						}
-					} else {
-						return context.report({
-							node: rootNode.body[0],
-							message: 'Expected import statements to be placed at the top of the module.',
-						})
-					}
-				}
-
 				for (let index = 0; index < totalImportList.length; index++) {
 					const workNode = totalImportList[index]
 					rightComments.set(workNode, context.getCommentsAfter(workNode).filter(node => node.loc.start.line === workNode.loc.end.line))
@@ -284,23 +268,6 @@ import 'b'
 			},
 		],
 		invalid: [
-			{
-				code: `
-const e = 3.14
-import 'aa'
-				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected import statements to be placed at the top of the module.' }],
-			},
-			{
-				code: `
-'use strict'
-const e = 3.14
-import 'aa'
-				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected import statements to be placed after "use strict".' }],
-			},
 			{
 				code: `
 import 'aa'
