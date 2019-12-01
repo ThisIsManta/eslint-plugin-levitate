@@ -8,6 +8,7 @@ const TODO = /^\s*TODO\W\s*/i
 const FIXME = /^\s*FIXME\W\s*/i
 const NOTE = /^\s*(Note\W)\s/i
 const URL = /^\s\w+:\/\/.+/
+const ESLINT = /^eslint-(disable|enable)/
 
 module.exports = {
   meta: {
@@ -73,7 +74,7 @@ module.exports = {
             const text = node.value.trim()
             if (
               text.includes(' ') === false ||
-              text.startsWith('eslint-disable')
+              ESLINT.test(text)
             ) {
               return null
             }
