@@ -49,7 +49,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	test: {
 		valid: [
 			{
 				code: 'it("returns something", function() {})',

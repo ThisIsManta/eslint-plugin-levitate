@@ -51,7 +51,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	test: {
 		valid: [
 			{
 				code: [
