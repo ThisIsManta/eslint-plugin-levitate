@@ -5,7 +5,7 @@ const _ = require('lodash')
 module.exports = {
 	meta: {
 		docs: {
-			description: 'enforce naming an imported identifier after the user-defined list, for example given `["error", { "classnames": "cx" }]` `import cx from "classnames"`',
+			description: 'enforce naming an imported identifier after the user-defined list, for example given `["error", { "classnames": "cx" }]` then `import cx from "classnames"`',
 			category: 'Variables',
 		},
 		schema: [
@@ -29,24 +29,20 @@ module.exports = {
 		return {
 			ImportDeclaration: function (root) {
 				if (!root.specifiers || root.specifiers.length === 0) {
-					return null
+					return
 				}
 
 				const workPath = root.source.value
 				const workNode = root.specifiers.find(node => node.type === 'ImportNamespaceSpecifier' || node.type === 'ImportDefaultSpecifier')
+				if (!workNode) {
+					return
+				}
 
 				for (const rule of ruleList) {
 					const [importPathMatcher, variableName] = rule
 					if (importPathMatcher.test(workPath)) {
-						if (workNode === undefined) {
-							return context.report({
-								node: root,
-								message: `Expected to import "${variableName}" or "* as ${variableName}".`,
-							})
-						}
-
 						if (workNode.local.name !== variableName) {
-							return context.report({
+							context.report({
 								node: workNode.local,
 								message: `Expected "${workNode.local.name}" to be "${variableName}".`,
 							})
@@ -95,6 +91,11 @@ module.exports = {
 				options: [{ 'XXX': '/aaa/i' }],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
+			{
+				code: `import { AAA } from 'aaa'`,
+				options: [{ AAA: 'aaa' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
 		],
 		invalid: [
 			{
@@ -102,14 +103,6 @@ module.exports = {
 				options: [{ AAA: 'aaa' }],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "AAA".' }],
-			},
-			{
-				code: `import { AAA } from 'aaa'`,
-				options: [{ AAA: 'aaa' }],
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [
-					{ message: 'Expected to import "AAA" or "* as AAA".' }
-				],
 			},
 		]
 	}
