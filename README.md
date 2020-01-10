@@ -3,7 +3,7 @@
 |`bluebird-map-concurrency`|enforce passing a concurrency number to [`Bluebird.map`](http://bluebirdjs.com/docs/api/promise.map.html), for example `Bluebird.map([promise], { concurrency: 5 })`||
 |`comment`|enforce starting a single-line comment with either `TODO:`, `HACK:`, `See {url}`, or a first-capitalized word||
 |`import-name-after-file-name`|enforce naming an imported identifier after file or directory name, for example `import MyComponent from "./MyComponent"`||
-|`import-name-after-predefined-name`|enforce naming an imported identifier after the user-defined list, for example given `["error", { "classnames": "cx" }]` `import cx from "classnames"`||
+|`import-name-after-predefined-name`|enforce naming an imported identifier after the user-defined list, for example given `["error", { "classnames": "cx" }]` then `import cx from "classnames"`||
 |`import-path-from-closest-index`|enforce writing an import path pointing to the closest index file||
 |`import-path-without-mentioning-index`|enforce writing an import path to an index file without mentioning "index.js"|Yes|
 |`new-line-between-blocks`|enforce having new lines between blocks and before `else` and `catch`||
@@ -16,3 +16,5 @@
 |`typescript-enum-name`|enforce naming enumerations consistently; the possible options are `"PascalCase"` (default), `"camelCase"`, `"UPPERCASE"`, `"SNAKE_CASE"`||
 |`typescript-explicit-return-type`|enforce writing an explicit return type for exported functions||
 |`typescript-exported-interface`|enforce exporting an `interface`, unless it is inside a `declare` block||
+|`typescript-method-type`|enforce writing function types using arrow notation|Yes|
+|`typescript-pascal-type`|enforce writing a type name with Pascal case||
