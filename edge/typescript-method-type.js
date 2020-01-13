@@ -15,22 +15,21 @@ module.exports = {
         context.report({
           node: root,
           message: 'Expected to be using arrow notation',
-          fix: fixer =>
-            fixer.replaceText(
-              root,
-              sourceCode.getText(root.key) +
-                (root.optional ? '?' : '') +
-                ': ' +
-                sourceCode.getText(root.typeParameters) +
-                '(' +
-                _.map(root.params, node => sourceCode.getText(node)).join(
-                  ', '
-                ) +
-                ') => ' +
-                (root.returnType
-                  ? sourceCode.getText(root.returnType).replace(/^:\s*/, '')
-                  : 'void')
-            ),
+          fix: fixer => fixer.replaceText(
+            root,
+            sourceCode.getText(root.key) +
+            (root.optional ? '?' : '') +
+            ': ' +
+            (root.typeParameters ? sourceCode.getText(root.typeParameters) : '') +
+            '(' +
+            _.map(root.params, node => sourceCode.getText(node)).join(
+              ', '
+            ) +
+            ') => ' +
+            (root.returnType
+              ? sourceCode.getText(root.returnType).replace(/^:\s*/, '')
+              : 'void')
+          ),
         })
       },
     }
