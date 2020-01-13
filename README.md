@@ -8,7 +8,7 @@
 |`import-path-without-mentioning-index`|enforce writing an import path to an index file without mentioning "index.js"|Yes|
 |`new-line-between-blocks`|enforce having new lines between blocks and before `else` and `catch`||
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`||
-|`require-name-after-file-name`|enforce naming an identifier after the file name of its `require` statement|Yes|
+|`require-name-after-file-name`|enforce naming an identifier after the file name of its `require` statement||
 |`require-name-after-predefined-name`|enforce naming an identifier after the user-defined list of its `require` statement|Yes|
 |`sort-imports`|enforce sorting `import` statements. By default, this will sort according to [Renke](https://github.com/renke/import-sort/tree/master/packages/import-sort-style-module)|Yes|
 |`test-case-new-line`|enforce having a new line between `it`, `test`, and `describe` function calls; this applies to _*.{test,spec}_ files only|Yes|
