@@ -8,11 +8,11 @@ module.exports = {
     },
     fixable: 'code',
   },
-  create: function(context) {
+  create: function (context) {
     return {
-      TSMethodSignature: function(root) {
+      TSMethodSignature: function (root) {
         const sourceCode = context.getSourceCode()
-        context.report({
+        return context.report({
           node: root,
           message: 'Expected to be using arrow notation',
           fix: fixer => fixer.replaceText(
@@ -34,7 +34,7 @@ module.exports = {
       },
     }
   },
-  tests: {
+  test: {
     valid: [
       {
         code: `
@@ -77,7 +77,7 @@ module.exports = {
       {
         code: `
         interface X {
-          onClose?<T>()
+          onClose?()
         }
         `,
         parser: require.resolve('@typescript-eslint/parser'),
@@ -92,6 +92,29 @@ module.exports = {
             output: `
             interface X {
               onClose?: () => void
+            }
+            `,
+          },
+        ],
+      },
+      {
+        code: `
+        interface X {
+          onClose?<T>()
+        }
+        `,
+        parser: require.resolve('@typescript-eslint/parser'),
+        parserOptions: {
+          ecmaVersion: 6,
+          sourceType: 'module',
+          ecmaFeatures: { jsx: true },
+        },
+        errors: [
+          {
+            message: 'Expected to be using arrow notation',
+            output: `
+            interface X {
+              onClose?: <T>() => void
             }
             `,
           },

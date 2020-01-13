@@ -16,7 +16,6 @@ module.exports = {
 				}
 			}
 		],
-		fixable: 'code'
 	},
 	create: function (context) {
 		return {

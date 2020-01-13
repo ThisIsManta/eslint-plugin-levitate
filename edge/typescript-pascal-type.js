@@ -7,21 +7,21 @@ module.exports = {
       category: 'Stylistic Issues',
     },
   },
-  create: function(context) {
+  create: function (context) {
     return {
-      TSTypeAliasDeclaration: function(node) {
+      TSTypeAliasDeclaration: function (node) {
         if (node.id.name[0] !== node.id.name[0].toUpperCase()) {
           context.report({
             node: node.id,
             message: `Expected type name "${
               node.id.name
-            }" to be "${_.upperFirst(node.id.name)}".`,
+              }" to be "${_.upperFirst(node.id.name)}".`,
           })
         }
       },
     }
   },
-  tests: {
+  test: {
     valid: [
       {
         code: 'type FirstCapitalLetterType = {}',
