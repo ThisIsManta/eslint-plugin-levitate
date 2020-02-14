@@ -15,7 +15,12 @@ module.exports = {
 				}
 
 				for (const node of context.getAncestors().reverse()) {
-					if (node.type === 'BlockStatement' || node.type === 'ArrowFunctionExpression' || node.type === 'ClassBody') {
+					if (
+						node.type === 'BlockStatement' ||
+						node.type === 'ArrowFunctionExpression' ||
+						node.type === 'ClassBody' ||
+						node.type === 'TemplateLiteral'
+					) {
 						return
 					}
 				}
@@ -52,6 +57,10 @@ module.exports = {
 			{
 				code: 'class S { m = require("m") }',
 				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
+			{
+				code: 'const s = `${require("m")}`',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
