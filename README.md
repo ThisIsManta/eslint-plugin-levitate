@@ -17,5 +17,6 @@
 |`typescript-enum-name`|enforce naming enumerations consistently; the possible options are `"PascalCase"` (default), `"camelCase"`, `"UPPERCASE"`, `"SNAKE_CASE"`||
 |`typescript-explicit-return-type`|enforce writing an explicit return type for exported functions||
 |`typescript-exported-interface`|enforce exporting an `interface`, unless it is inside a `declare` block||
+|`typescript-interface-name`|enforce naming user-defined interfaces starting with "I"||
 |`typescript-method-type`|enforce writing function types using arrow notation|Yes|
 |`typescript-pascal-type`|enforce writing a type name with Pascal case||
