@@ -11,7 +11,7 @@ module.exports = {
 	create: function (context) {
 		const componentName = path
 			.basename(context.getFilename())
-			.replace(FILE_SUFFIX, '')
+			.replace(/\..+/, '')
 
 		const COMPONENT_NAME = {
 			type: 'Identifier',
