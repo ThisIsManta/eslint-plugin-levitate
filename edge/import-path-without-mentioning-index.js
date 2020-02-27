@@ -1,5 +1,3 @@
-'use strict'
-
 const INDEX = /\/index(\.\w+)?$/
 
 const INDEX_INTERNAL = /^\.\.?(\/\.\.)*\/index/

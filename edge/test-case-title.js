@@ -1,5 +1,3 @@
-'use strict'
-
 const _ = require('lodash')
 
 const ALLOWED_PATTERN = /^(returns|renders|calls|fetches|sets|throws|does not (return|render|call|fetch|set|throw) )/

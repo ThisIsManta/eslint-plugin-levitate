@@ -1,5 +1,3 @@
-'use strict'
-
 const fp = require('path')
 const _ = require('lodash')
 const { getImportFullPath } = require('./import-path-from-closest-index')
