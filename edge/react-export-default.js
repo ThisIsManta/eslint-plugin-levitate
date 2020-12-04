@@ -470,49 +470,63 @@ function isReactFunctionalComponent(node) {
 	)
 }
 
-function findNode(sourceNode, matcher, parentNodes = [], visitedNodes = new Set()) {
+function findNodes(sourceNode, matcher) {
+	const matchingNodes = []
+	travelNodes(sourceNode, matcher, matchingNodes)
+	return matchingNodes
+}
+
+module.exports.findNode = findNode
+
+function findNode(sourceNode, matcher) {
+	const matchingNodes = []
+	travelNodes(sourceNode, matcher, matchingNodes)
+	return matchingNodes[0] || null
+}
+
+module.exports.findNodes = findNodes
+
+/**
+ * @internal
+ */
+function travelNodes(sourceNode, matcher, matchingNodes, parentNodes = [], visitedNodes = new Set()) {
 	if (visitedNodes.has(sourceNode)) {
-		return null
+		return
 	} else {
 		visitedNodes.add(sourceNode)
 	}
 
 	if (_.isObject(sourceNode)) {
 		if (matcher(sourceNode, parentNodes)) {
-			return sourceNode
+			matchingNodes.push(sourceNode)
 		}
 
 		parentNodes = parentNodes.concat(sourceNode)
 
 		for (const name in sourceNode) {
-			if (name === 'loc' || name === 'range') {
+			if (name === 'parent') {
 				continue
 			}
-			const matchingNode = findNode(
+
+			travelNodes(
 				sourceNode[name],
 				matcher,
+				matchingNodes,
 				parentNodes,
 				visitedNodes
 			)
-			if (matchingNode !== null) {
-				return matchingNode
-			}
 		}
 	} else if (_.isArrayLike(sourceNode)) {
 		parentNodes = parentNodes.concat(sourceNode)
 
 		for (const rank of sourceNode) {
-			const matchingNode = findNode(
+			travelNodes(
 				sourceNode[rank],
 				matcher,
+				matchingNodes,
 				parentNodes,
 				visitedNodes
 			)
-			if (matchingNode !== null) {
-				return matchingNode
-			}
 		}
 	}
-
-	return null
 }
