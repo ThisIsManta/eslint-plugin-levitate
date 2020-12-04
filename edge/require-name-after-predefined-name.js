@@ -107,12 +107,14 @@ module.exports = {
 				options: [{ AAA: 'aaa' }],
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "AAA".' }],
+				output: `const AAA = require('aaa')`,
 			},
 			{
 				code: `const { AAA } = require('aaa')`,
 				options: [{ AAA: 'aaa' }],
 				parserOptions: { ecmaVersion: 9, sourceType: 'module' },
 				errors: [{ message: 'Expected "{ AAA }" to be "AAA".' }],
+				output: `const AAA = require('aaa')`,
 			},
 		]
 	}

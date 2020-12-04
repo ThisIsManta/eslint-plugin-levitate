@@ -64,15 +64,13 @@ module.exports = {
           ecmaFeatures: { jsx: true },
         },
         errors: [
-          {
-            message: 'Expected to be using arrow notation',
-            output: `
-            interface X {
-              onClick: <T>(a, b, c) => void
-            }
-            `,
-          },
+          { message: 'Expected to be using arrow notation' },
         ],
+        output: `
+        interface X {
+          onClick: <T>(a, b, c) => void
+        }
+        `,
       },
       {
         code: `
@@ -87,15 +85,13 @@ module.exports = {
           ecmaFeatures: { jsx: true },
         },
         errors: [
-          {
-            message: 'Expected to be using arrow notation',
-            output: `
-            interface X {
-              onClose?: () => void
-            }
-            `,
-          },
+          { message: 'Expected to be using arrow notation' },
         ],
+        output: `
+        interface X {
+          onClose?: () => void
+        }
+        `,
       },
       {
         code: `
@@ -110,15 +106,13 @@ module.exports = {
           ecmaFeatures: { jsx: true },
         },
         errors: [
-          {
-            message: 'Expected to be using arrow notation',
-            output: `
-            interface X {
-              onClose?: <T>() => void
-            }
-            `,
-          },
+          { message: 'Expected to be using arrow notation' },
         ],
+        output: `
+        interface X {
+          onClose?: <T>() => void
+        }
+        `,
       },
     ],
   },
