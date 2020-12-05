@@ -74,6 +74,12 @@ module.exports = {
 				}
 			},
 			'Program:exit': function (root) {
+				// Skip an empty file
+				const firstNode = context.getSourceCode().getFirstToken(root)
+				if (!firstNode) {
+					return
+				}
+
 				if (!primaryComponentNode) {
 					return context.report({
 						node: context.getSourceCode().getFirstToken(root),
