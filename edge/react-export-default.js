@@ -45,7 +45,7 @@ module.exports = {
 			},
 			Program: function (root) {
 				for (let statement of root.body) {
-					if (statement.type === 'ExportNamedDeclaration') {
+					if (statement.type === 'ExportNamedDeclaration' && statement.declaration) {
 						statement = statement.declaration
 					}
 
