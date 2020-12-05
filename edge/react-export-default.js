@@ -27,6 +27,11 @@ module.exports = {
 					primaryComponentNode = root
 				}
 			},
+			FunctionExpression: function (root) {
+				if (_.isMatch(root.id, COMPONENT_NAME)) {
+					primaryComponentNode = root
+				}
+			},
 			ClassDeclaration: function (root) {
 				if (
 					_.isMatch(root, CLASS_COMPONENT) &&
@@ -39,7 +44,11 @@ module.exports = {
 				defaultExportNode = root.declaration
 			},
 			Program: function (root) {
-				for (const statement of root.body) {
+				for (let statement of root.body) {
+					if (statement.type === 'ExportNamedDeclaration') {
+						statement = statement.declaration
+					}
+
 					if (statement.type !== 'VariableDeclaration') {
 						continue
 					}
@@ -49,9 +58,14 @@ module.exports = {
 							continue
 						}
 
+						if (_.isMatch(node.id, COMPONENT_NAME)) {
+							// Support `const MyComponent = React.memo(() => ...)`
+							primaryComponentNode = node
+						}
+
 						if (isReactFunctionalComponent(node.init)) {
 							context.report({
-								node: node.init,
+								node: context.getSourceCode().getFirstToken(node.init),
 								message:
 									'Expected a React component to be written using `function` keyword (if possible)',
 							})
@@ -78,15 +92,13 @@ module.exports = {
 					return
 				}
 
-				if (_.isMatch(defaultExportNode, COMPONENT_NAME)) {
+				// Find `export default MyComponent` and report not having `export default` in front of `class` or `function` keyword
+				if (
+					_.isMatch(defaultExportNode, COMPONENT_NAME) &&
+					primaryComponentNode.type !== 'VariableDeclarator'
+				) {
 					return context.report({
-						loc: {
-							start: primaryComponentNode.loc.start,
-							end: {
-								line: primaryComponentNode.loc.start.line,
-								column: primaryComponentNode.loc.start.column,
-							},
-						},
+						node: context.getSourceCode().getFirstToken(primaryComponentNode),
 						message: `Expected \`export default\` keyword to be here`,
 					})
 				}
@@ -345,12 +357,12 @@ module.exports = {
 					{
 						message:
 							'Expected the arrow function to return the value without `return` keyword',
-						output: `
-						function A(props) { return <div></div> }
-						export default (props) => <A />
-						`,
 					},
 				],
+				output: `
+				function A(props) { return <div></div> }
+				export default (props) => <A />
+				`,
 			},
 			{
 				code: `
@@ -464,6 +476,7 @@ function isReactFunctionalComponent(node) {
 		node.body.body.some(
 			stub =>
 				stub.type === 'ReturnStatement' &&
+				stub.argument &&
 				(stub.argument.type === 'JSXElement' ||
 					stub.argument.type === 'JSXFragment')
 		)
