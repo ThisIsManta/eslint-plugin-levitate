@@ -66,7 +66,7 @@ module.exports = {
 			}
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			'Promise.all()',
 			'Promise.all([])',

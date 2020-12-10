@@ -90,7 +90,7 @@ module.exports = {
 			},
 		}
 	},
-	test: {
+	tests: {
 		valid: ['// HACK: lorem', '// TODO: lorem', '// Lorem'],
 		invalid: [
 			{

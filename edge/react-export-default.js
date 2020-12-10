@@ -281,6 +281,19 @@ module.exports = {
 					ecmaFeatures: { jsx: true },
 				},
 			},
+			{
+				code: `
+        export default () => <A />
+        const A = React.memo(() => <div></div>)
+				}
+				`,
+				filename: 'A.react.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
 		],
 		invalid: [
 			{

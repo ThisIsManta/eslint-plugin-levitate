@@ -50,7 +50,7 @@ module.exports = {
 			}
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			{
 				code: `import { a } from './aaa'`,

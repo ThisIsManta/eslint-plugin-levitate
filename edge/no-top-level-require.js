@@ -30,7 +30,7 @@ module.exports = {
 			},
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			{
 				code: 'require',

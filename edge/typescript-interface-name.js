@@ -27,7 +27,7 @@ module.exports = {
 			}
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			{
 				code: `interface IWindow {}`,

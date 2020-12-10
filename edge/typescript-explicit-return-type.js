@@ -114,7 +114,7 @@ module.exports = {
 			return true
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			{
 				code: `

@@ -48,7 +48,7 @@ module.exports = {
 			}
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			{
 				code: `enum PascalCase {}`,

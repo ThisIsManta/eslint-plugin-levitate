@@ -21,7 +21,7 @@ module.exports = {
       },
     }
   },
-  test: {
+  tests: {
     valid: [
       {
         code: 'type FirstCapitalLetterType = {}',

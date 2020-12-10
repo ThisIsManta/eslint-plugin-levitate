@@ -58,7 +58,7 @@ module.exports = {
 			}
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			'var something = require("shawn-mendes")',
 			'var JamesArthur = require("./james-arthur")',

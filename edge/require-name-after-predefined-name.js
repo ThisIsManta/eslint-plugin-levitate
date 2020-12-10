@@ -63,7 +63,7 @@ module.exports = {
 			}
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			{
 				code: `const AAA = require('aaa')`,

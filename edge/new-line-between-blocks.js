@@ -153,7 +153,7 @@ module.exports = {
 			},
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			"{\na();\n}",
 			"{\n//comment\na();\n}",

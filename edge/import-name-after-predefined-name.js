@@ -52,7 +52,7 @@ module.exports = {
 			}
 		}
 	},
-	test: {
+	tests: {
 		valid: [
 			{
 				code: `import AAA from 'aaa'`,

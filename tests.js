@@ -3,11 +3,11 @@ const ruleList = require('./rules')
 
 ruleList.forEach(function (name) {
 	const rule = require('./edge/' + name)
-	if (rule.test) {
-		console.log('Testing ' + name)
-		new TestRunner().run(name, rule, rule.test)
+	if (rule.tests) {
+		console.log('✅ ' + name)
+		new TestRunner().run(name, rule, rule.tests)
 	} else {
-		console.log('Skipping ' + name)
+		console.log('⛔ ' + name)
 	}
 })
 console.log('Done')
