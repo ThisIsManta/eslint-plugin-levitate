@@ -6,14 +6,13 @@ module.exports = {
 		docs: {
 			description: 'enforce writing React components consistently',
 		},
-		fixable: 'code',
 	},
 	create: function (context) {
 		const componentName = path
 			.basename(context.getFilename())
 			.replace(/\..+/, '')
 
-		const COMPONENT_NAME = {
+		const componentId = {
 			type: 'Identifier',
 			name: componentName,
 		}
@@ -22,53 +21,44 @@ module.exports = {
 		let defaultExportNode = null
 
 		return {
-			FunctionDeclaration: function (root) {
-				if (_.isMatch(root.id, COMPONENT_NAME)) {
-					primaryComponentNode = root
-				}
-			},
-			FunctionExpression: function (root) {
-				if (_.isMatch(root.id, COMPONENT_NAME)) {
-					primaryComponentNode = root
-				}
-			},
-			ClassDeclaration: function (root) {
-				if (
-					_.isMatch(root, CLASS_COMPONENT) &&
-					_.isMatch(root.id, COMPONENT_NAME)
-				) {
-					primaryComponentNode = root
-				}
-			},
 			ExportDefaultDeclaration: function (root) {
 				defaultExportNode = root.declaration
+
+				if (checkReactMemo(root.declaration, componentName)) {
+					primaryComponentNode = root.declaration
+				}
 			},
 			Program: function (root) {
-				for (let statement of root.body) {
-					if (statement.type === 'ExportNamedDeclaration' && statement.declaration) {
-						statement = statement.declaration
+				const topLevelNodes = root.body.map(node => {
+					if ((node.type === 'ExportNamedDeclaration' || node.type === 'ExportDefaultDeclaration') && node.declaration) {
+						return node.declaration
 					}
 
-					if (statement.type !== 'VariableDeclaration') {
-						continue
+					return node
+				})
+
+				for (const node of topLevelNodes) {
+					if (_.isMatch(node.id, componentId) && (_.isMatch(node, { type: 'FunctionDeclaration' }) || _.isMatch(node, CLASS_COMPONENT))) {
+						primaryComponentNode = node
 					}
 
-					for (const node of statement.declarations) {
-						if (node.type !== 'VariableDeclarator' || !node.init) {
-							continue
-						}
+					if (node.type === 'VariableDeclaration') {
+						for (const stub of node.declarations) {
+							if (_.isMatch(stub, { type: 'VariableDeclarator', id: { type: 'Identifier' } })) {
+								const name = stub.id.name
+								if (name === componentName) {
+									primaryComponentNode = stub
+								}
 
-						if (_.isMatch(node.id, COMPONENT_NAME)) {
-							// Support `const MyComponent = React.memo(() => ...)`
-							primaryComponentNode = node
-						}
+								if (stub.init && (stub.init.type === 'ArrowFunctionExpression' || stub.init.type === 'FunctionExpression') && isReactFunctionalComponent(stub.init, name)) {
+									context.report({
+										node: stub,
+										message: 'Expected a React component to be written using `function` keyword',
+									})
+								}
 
-						if (isReactFunctionalComponent(node.init)) {
-							context.report({
-								node: context.getSourceCode().getFirstToken(node.init),
-								message:
-									'Expected a React component to be written using `function` keyword (if possible)',
-							})
+								checkReactMemo(stub.init, name)
+							}
 						}
 					}
 				}
@@ -100,12 +90,12 @@ module.exports = {
 
 				// Find `export default MyComponent` and report not having `export default` in front of `class` or `function` keyword
 				if (
-					_.isMatch(defaultExportNode, COMPONENT_NAME) &&
+					_.isMatch(defaultExportNode, componentId) &&
 					primaryComponentNode.type !== 'VariableDeclarator'
 				) {
 					return context.report({
 						node: context.getSourceCode().getFirstToken(primaryComponentNode),
-						message: `Expected \`export default\` keyword to be here`,
+						message: 'Expected `export default` keyword to be here',
 					})
 				}
 
@@ -115,7 +105,7 @@ module.exports = {
 				const primaryComponentUsed = findNode(
 					defaultExportNode,
 					node =>
-						_.isMatch(node, COMPONENT_NAME) ||
+						_.isMatch(node, componentId) ||
 						_.isMatch(node, { type: 'JSXIdentifier', name: componentName }),
 					[],
 					new Set([defaultExportNode.parent])
@@ -146,48 +136,47 @@ module.exports = {
 					// Do not early return
 					context.report({
 						node: defaultExportNode.body.body[0],
-						message:
-							'Expected the arrow function to return the value without `return` keyword',
-						fix: fixer =>
-							fixer.replaceText(
-								defaultExportNode.body,
-								context
-									.getSourceCode()
-									.getText(defaultExportNode.body.body[0].argument)
-							),
+						message: 'Expected the arrow function to return the value without `return` keyword',
 					})
 				}
 			},
+		}
+
+		function checkReactMemo(node, name) {
+			if (_.isMatch(node, {
+				type: 'CallExpression',
+				callee: {
+					type: 'MemberExpression',
+					object: { type: 'Identifier', name: 'React' },
+					property: { type: 'Identifier', name: 'memo' },
+				},
+			}) && node.arguments.length > 0 && isReactFunctionalComponent(node.arguments[0])) {
+				if (node.arguments[0].type === 'ArrowFunctionExpression') {
+					context.report({
+						node: node.arguments[0],
+						message: 'Expected a React component to be written using `function` keyword',
+					})
+
+				} else if (node.arguments[0].type === 'FunctionExpression' && (node.arguments[0].id ? node.arguments[0].id.name : '') !== name) {
+					context.report({
+						node: node.arguments[0].id || node.arguments[0],
+						message: `Expected the React component to be named "${name}"`,
+					})
+
+				} else {
+					return true
+				}
+			}
+
+			return false
 		}
 	},
 	tests: {
 		valid: [
 			{
 				code: `
-				const x = 123
-				`,
-				filename: 'A.js',
-				parserOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
-				},
-			},
-			{
-				code: `
 				const Y = function () { return false }
 				export default function A() { return <div></div> }
-				`,
-				filename: 'A.react.js',
-				parserOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
-				},
-			},
-			{
-				code: `
-				export default B
 				`,
 				filename: 'A.js',
 				parserOptions: {
@@ -200,7 +189,7 @@ module.exports = {
 				code: `
 				export default class A extends React.Component {}
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -211,7 +200,7 @@ module.exports = {
 				code: `
 				export default class A extends React.PureComponent {}
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -223,7 +212,7 @@ module.exports = {
 				function A(props) { return <div></div> }
 				export default enhance(A)
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -235,7 +224,7 @@ module.exports = {
 				function A(props) { return <div></div> }
 				export default (props) => <A />
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -246,7 +235,7 @@ module.exports = {
 				code: `
 				export default function A(props) { return <div></div> }
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -258,7 +247,7 @@ module.exports = {
 				export function A(props) { return <div></div> }
 				export default () => <A />
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -274,7 +263,7 @@ module.exports = {
 					return <div>{renderSomething()}</div>
 				}
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -283,11 +272,21 @@ module.exports = {
 			},
 			{
 				code: `
-        export default () => <A />
-        const A = React.memo(() => <div></div>)
-				}
+				export default () => <A />
+				const A = React.memo(function A() { return <div></div> })
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				export default React.memo(function A() { return <div></div> })
+				`,
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -300,7 +299,7 @@ module.exports = {
 				code: `
 				const x = 123
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -308,8 +307,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message:
-							'Expected the React file to have a React component named "A"',
+						message: 'Expected the React file to have a React component named "A"',
 					},
 				],
 			},
@@ -320,7 +318,7 @@ module.exports = {
 				const Z = () => <div></div>
 				export default function A() { return <div></div> }
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -328,18 +326,15 @@ module.exports = {
 				},
 				errors: [
 					{
-						message:
-							'Expected a React component to be written using `function` keyword (if possible)',
+						message: 'Expected a React component to be written using `function` keyword',
 						line: 2,
 					},
 					{
-						message:
-							'Expected a React component to be written using `function` keyword (if possible)',
+						message: 'Expected a React component to be written using `function` keyword',
 						line: 3,
 					},
 					{
-						message:
-							'Expected a React component to be written using `function` keyword (if possible)',
+						message: 'Expected a React component to be written using `function` keyword',
 						line: 4,
 					},
 				],
@@ -348,7 +343,7 @@ module.exports = {
 				code: `
 				export default (props) => <div></div>
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -356,8 +351,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message:
-							'Expected the React file to have a React component named "A"',
+						message: 'Expected the React file to have a React component named "A"',
 					},
 				],
 			},
@@ -366,7 +360,7 @@ module.exports = {
 				function A(props) { return <div></div> }
 				export default (props) => { return <A /> }
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -374,21 +368,16 @@ module.exports = {
 				},
 				errors: [
 					{
-						message:
-							'Expected the arrow function to return the value without `return` keyword',
+						message: 'Expected the arrow function to return the value without `return` keyword',
 					},
 				],
-				output: `
-				function A(props) { return <div></div> }
-				export default (props) => <A />
-				`,
 			},
 			{
 				code: `
 				function A(props) { return <div></div> }
 				export default A
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -405,7 +394,7 @@ module.exports = {
 				function A(props) { return <div></div> }
 				export default class B extends React.Component {}
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -413,12 +402,10 @@ module.exports = {
 				},
 				errors: [
 					{
-						message:
-							'Expected an enhanced component to render the React component named "A"',
+						message: 'Expected an enhanced component to render the React component named "A"',
 					},
 					{
-						message:
-							'Expected an enhanced component to be nameless by writing as an arrow function',
+						message: 'Expected an enhanced component to be nameless by writing as an arrow function',
 					},
 				],
 			},
@@ -427,7 +414,7 @@ module.exports = {
 				function A(props) { return <div></div> }
 				export default class B extends React.PureComponent { render() { return <A /> } }
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -435,8 +422,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message:
-							'Expected an enhanced component to be nameless by writing as an arrow function',
+						message: 'Expected an enhanced component to be nameless by writing as an arrow function',
 					},
 				],
 			},
@@ -445,7 +431,7 @@ module.exports = {
 				function A(props) { return <div></div> }
 				export default function B(props) {}
 				`,
-				filename: 'A.react.js',
+				filename: 'A.js',
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -453,12 +439,44 @@ module.exports = {
 				},
 				errors: [
 					{
-						message:
-							'Expected an enhanced component to render the React component named "A"',
+						message: 'Expected an enhanced component to render the React component named "A"',
 					},
 					{
-						message:
-							'Expected an enhanced component to be nameless by writing as an arrow function',
+						message: 'Expected an enhanced component to be nameless by writing as an arrow function',
+					},
+				],
+			},
+			{
+				code: `
+        export default () => <A />
+        const A = React.memo(() => { return <div></div> })
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected a React component to be written using `function` keyword',
+					},
+				],
+			},
+			{
+				code: `
+        export default () => <A />
+        const A = React.memo(function () { return <div></div> })
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected the React component to be named "A"',
 					},
 				],
 			},
