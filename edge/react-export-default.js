@@ -166,6 +166,9 @@ module.exports = {
 					context.report({
 						node: node.arguments[0].id || node.arguments[0],
 						message: `Expected the React component to be named "${name}"`,
+						fix: node.arguments[0].id
+							? fixer => fixer.replaceText(node.arguments[0].id, name)
+							: fixer => fixer.insertTextAfter(context.getFirstToken(node.arguments[0]), ' ' + name)
 					})
 
 				} else {
@@ -488,6 +491,31 @@ module.exports = {
 						message: 'Expected the React component to be named "A"',
 					},
 				],
+				output: `
+        export default () => <A />
+        const A = React.memo(function A () { return <div></div> })
+				`,
+			},
+			{
+				code: `
+        export default () => <A />
+        const A = React.memo(function B() { return <div></div> })
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected the React component to be named "A"',
+					},
+				],
+				output: `
+        export default () => <A />
+        const A = React.memo(function A() { return <div></div> })
+				`,
 			},
 		],
 	},
