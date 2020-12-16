@@ -22,13 +22,6 @@ module.exports = {
 		let defaultExportNode = null
 
 		return {
-			ExportDefaultDeclaration: function (root) {
-				defaultExportNode = root.declaration
-
-				if (checkReactMemo(root.declaration, componentName)) {
-					primaryComponentNode = root.declaration
-				}
-			},
 			Program: function (root) {
 				const topLevelNodes = root.body.map(node => {
 					if ((node.type === 'ExportNamedDeclaration' || node.type === 'ExportDefaultDeclaration') && node.declaration) {
@@ -62,6 +55,13 @@ module.exports = {
 							}
 						}
 					}
+				}
+			},
+			ExportDefaultDeclaration: function (root) {
+				defaultExportNode = root.declaration
+
+				if (!primaryComponentNode && checkReactMemo(root.declaration, componentName)) {
+					primaryComponentNode = root.declaration
 				}
 			},
 			'Program:exit': function (root) {
@@ -293,6 +293,18 @@ module.exports = {
 			{
 				code: `
 				export default React.memo(function A() { return <div></div> })
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				export default React.memo(() => { return <A/> })
+				function A() { return <div></div> }
 				`,
 				filename: 'A.js',
 				parserOptions: {
