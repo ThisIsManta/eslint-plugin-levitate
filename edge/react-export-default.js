@@ -6,6 +6,7 @@ module.exports = {
 		docs: {
 			description: 'enforce writing React components consistently',
 		},
+		fixable: 'code',
 	},
 	create: function (context) {
 		const componentName = path
@@ -96,6 +97,10 @@ module.exports = {
 					return context.report({
 						node: context.getSourceCode().getFirstToken(primaryComponentNode),
 						message: 'Expected `export default` keyword to be here',
+						fix: fixer => [
+							fixer.insertTextBefore(primaryComponentNode, 'export default '),
+							fixer.removeRange(defaultExportNode.parent.range),
+						]
 					})
 				}
 
@@ -375,7 +380,7 @@ module.exports = {
 			{
 				code: `
 				function A(props) { return <div></div> }
-				export default A
+				export default A//EOL
 				`,
 				filename: 'A.js',
 				parserOptions: {
@@ -388,6 +393,10 @@ module.exports = {
 						message: 'Expected `export default` keyword to be here',
 					},
 				],
+				output: `
+				export default function A(props) { return <div></div> }
+				//EOL
+				`,
 			},
 			{
 				code: `
