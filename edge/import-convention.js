@@ -236,6 +236,10 @@ module.exports = {
 				code: `import { aaa as AAA } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: /^aaa$/, rename: (path) => path.toUpperCase() }] }],
 			},
+			{
+				code: `import React, { useEffect } from 'react'`,
+				options: [{ path: 'react', default: 'React', named: [{ name: /^use\W+/ }] }],
+			},
 		],
 		invalid: [
 			{
@@ -312,6 +316,11 @@ module.exports = {
 				code: `import { aaa } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', forbidden: true }] }],
 				errors: [{ message: 'Unexpected the named import "aaa".' }],
+			},
+			{
+				code: `import React, { memo } from 'react'`,
+				options: [{ path: 'react', default: 'React', named: [{ name: /^(?!use)/, forbidden: true }] }],
+				errors: [{ message: 'Unexpected the named import "memo".' }],
 			},
 		]
 	}
