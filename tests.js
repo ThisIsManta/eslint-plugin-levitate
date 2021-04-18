@@ -5,7 +5,9 @@ ruleList.forEach(function (name) {
 	const rule = require('./edge/' + name)
 	if (rule.tests) {
 		console.log('✅ ' + name)
-		new TestRunner().run(name, rule, rule.tests)
+		new TestRunner({
+			parserOptions: { ecmaVersion: 6, sourceType: 'module' }
+		}).run(name, rule, rule.tests)
 	} else {
 		console.log('⛔ ' + name)
 	}
