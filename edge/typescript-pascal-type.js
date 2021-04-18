@@ -2,6 +2,10 @@ const _ = require('lodash')
 
 module.exports = {
   meta: {
+    /**
+     * Use https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/naming-convention.md instead
+     */
+    deprecated: true,
     docs: {
       description: 'enforce writing a type name with Pascal case',
       category: 'Stylistic Issues',

@@ -1,5 +1,3 @@
-const _ = require('lodash')
-
 const CONDITION = 'onlyIfMoreThanOneReturns'
 
 module.exports = {

@@ -2,6 +2,10 @@ const _ = require('lodash')
 
 module.exports = {
 	meta: {
+		/**
+		 * Use import-convention rule instead
+		 */
+		deprecated: true,
 		docs: {
 			description: 'enforce naming an imported identifier after the user-defined list, for example given `["error", { "classnames": "cx" }]` then `import cx from "classnames"`',
 			category: 'Variables',
