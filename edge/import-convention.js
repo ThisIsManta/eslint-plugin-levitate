@@ -11,26 +11,46 @@ module.exports = {
 			items: {
 				type: 'object',
 				properties: {
-					path: {
-						anyOf: [
-							{ type: 'string' },
-							{ type: 'object' }, // RegExp
-						]
-					},
-					default: { /* undefined | boolean | string | (path, rule) => string */ },
-					namespace: { /* undefined | boolean | string | (path, rule) => string */ },
-					named: { /* undefined | false | Array<{ name: string | RegExp, rename?: string | (path, rule) => string, forbidden: boolean }> */ }
+					path: { type: 'string' },
 				},
-				required: ['path']
+				additionalProperties: {
+					default: { anyOf: [{ type: 'boolean' }, { type: 'string' }] },
+					namespace: { anyOf: [{ type: 'boolean' }, { type: 'string' }] },
+					named: {
+						anyOf: [
+							{ type: 'boolean' },
+							{
+								type: 'array', items: {
+									type: 'object',
+									properties: {
+										name: { type: 'string' },
+									},
+									additionalProperties: {
+										rename: { type: 'string' },
+										forbidden: { type: 'boolean' },
+									}
+								}
+							}
+						]
+					}
+				}
 			}
 		},
 	},
 	create: function (context) {
+		const rules = context.options.map(({ path, named, ...rest }) => ({
+			...rest,
+			path: new RegExp(path),
+			named: _.isArray(named)
+				? named.map(({ name, ...rest }) => ({ ...rest, name: new RegExp(name) }))
+				: named
+		}))
+
 		// TODO: support `require`
 		return {
 			ImportDeclaration: function (root) {
 				const workPath = root.source.value
-				const rule = context.options.find(({ path }) => path === workPath || path instanceof RegExp && path.test(workPath))
+				const rule = rules.find(({ path }) => path.test(workPath))
 				if (!rule) {
 					return
 				}
@@ -45,22 +65,11 @@ module.exports = {
 						})
 					}
 
-					const expectedName = (() => {
-						if (typeof rule.namespace === 'string') {
-							if (rule.path instanceof RegExp) {
-								return workPath.replace(rule.path, rule.namespace)
-							}
-
-							return rule.namespace
-						}
-
-						if (typeof rule.namespace === 'function') {
-							return rule.namespace(workPath, rule)
-						}
-
-						return null
-					})()
-					if (expectedName && expectedName !== namespaceNode.local.name) {
+					const actualName = namespaceNode.local.name
+					const expectedName = typeof rule.namespace === 'string'
+						? workPath.replace(rule.path, rule.namespace)
+						: actualName
+					if (actualName !== expectedName) {
 						context.report({
 							node: namespaceNode,
 							message: `Expected the namespace import to be "${expectedName}".`,
@@ -73,7 +82,7 @@ module.exports = {
 				} else if (rule.namespace) {
 					context.report({
 						node: root,
-						message: `Expected the namespace import to exist.`,
+						message: `Expected the namespace import.`,
 					})
 				}
 
@@ -87,22 +96,11 @@ module.exports = {
 						})
 					}
 
-					const expectedName = (() => {
-						if (typeof rule.default === 'string') {
-							if (rule.path instanceof RegExp) {
-								return workPath.replace(rule.path, rule.default)
-							}
-
-							return rule.default
-						}
-
-						if (typeof rule.default === 'function') {
-							return rule.default(workPath, rule)
-						}
-
-						return defaultNode.local.name
-					})()
-					if (expectedName !== defaultNode.local.name) {
+					const actualName = defaultNode.local.name
+					const expectedName = typeof rule.default === 'string'
+						? workPath.replace(rule.path, rule.default)
+						: actualName
+					if (actualName !== expectedName) {
 						context.report({
 							node: defaultNode,
 							message: `Expected the default import to be "${expectedName}".`,
@@ -112,7 +110,7 @@ module.exports = {
 				} else if (rule.default) {
 					context.report({
 						node: root,
-						message: `Expected the default import to exist.`,
+						message: `Expected the default import.`,
 					})
 				}
 
@@ -127,10 +125,7 @@ module.exports = {
 
 				if (_.isArray(rule.named)) {
 					for (const namedNode of namedNodes) {
-						const subrule = rule.named.find(({ name }) => (
-							name === namedNode.imported.name ||
-							name instanceof RegExp && name.test(namedNode.imported.name)
-						))
+						const subrule = rule.named.find(({ name }) => name.test(namedNode.imported.name))
 
 						if (!subrule) {
 							continue
@@ -144,18 +139,19 @@ module.exports = {
 							continue
 						}
 
-						const expectedName = (() => {
-							if (typeof subrule.rename === 'string') {
-								return subrule.rename
-							}
+						if (subrule.rename === false && namedNode.imported.name !== namedNode.local.name) {
+							context.report({
+								node: namedNode.local,
+								message: `Expected the named import to be "${namedNode.imported.name}".`,
+							})
+							continue
+						}
 
-							if (typeof subrule.rename === 'function') {
-								return subrule.rename(namedNode.imported.name, subrule)
-							}
-
-							return namedNode.imported.name
-						})()
-						if (expectedName && expectedName !== namedNode.local.name) {
+						const actualName = namedNode.local.name
+						const expectedName = typeof subrule.rename === 'string'
+							? namedNode.imported.name.replace(subrule.name, subrule.rename)
+							: actualName
+						if (actualName !== expectedName) {
 							context.report({
 								node: namedNode.local || namedNode,
 								message: `Expected the named import to be "${expectedName}".`,
@@ -170,7 +166,7 @@ module.exports = {
 		valid: [
 			{
 				code: `import XXX from 'xxx'`,
-				options: [{ path: 'aaa', default: false }, { path: 'aaa', default: false }],
+				options: [{ path: 'aaa', default: false }, { path: 'bbb', default: false }],
 			},
 			{
 				code: `import AAA from 'aaa'`,
@@ -181,12 +177,8 @@ module.exports = {
 				options: [{ path: 'aaa', default: 'AAA' }],
 			},
 			{
-				code: `import AAA from 'aaa'`,
-				options: [{ path: 'aaa', default: (path) => path.toUpperCase() }],
-			},
-			{
-				code: `import AAA from 'aaa'`,
-				options: [{ path: /^aaa$/, default: 'AAA' }],
+				code: `import aaa from 'aaa'`,
+				options: [{ path: '(.*)', default: '$1' }],
 			},
 			{
 				code: ``,
@@ -201,12 +193,8 @@ module.exports = {
 				options: [{ path: 'aaa', namespace: 'AAA' }],
 			},
 			{
-				code: `import * as AAA from 'aaa'`,
-				options: [{ path: 'aaa', namespace: (path) => path.toUpperCase() }],
-			},
-			{
-				code: `import * as AAA from 'aaa'`,
-				options: [{ path: /^aaa$/, namespace: 'AAA' }],
+				code: `import * as aaa from 'aaa'`,
+				options: [{ path: '(.*)', namespace: '$1' }],
 			},
 			{
 				code: `import 'aaa'`,
@@ -233,8 +221,8 @@ module.exports = {
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: 'AAA' }] }],
 			},
 			{
-				code: `import { aaa as AAA } from 'aaa'`,
-				options: [{ path: 'aaa', named: [{ name: /^aaa$/, rename: (path) => path.toUpperCase() }] }],
+				code: `import { useState as makeState } from 'aaa'`,
+				options: [{ path: 'aaa', named: [{ name: '^use(\\w+)', rename: 'make$1' }] }],
 			},
 			{
 				code: `import React, { useEffect } from 'react'`,
@@ -250,7 +238,7 @@ module.exports = {
 			{
 				code: `import 'aaa'`,
 				options: [{ path: 'aaa', default: true }],
-				errors: [{ message: 'Expected the default import to exist.' }],
+				errors: [{ message: 'Expected the default import.' }],
 			},
 			{
 				code: `import XXX from 'aaa'`,
@@ -259,13 +247,8 @@ module.exports = {
 			},
 			{
 				code: `import XXX from 'aaa'`,
-				options: [{ path: 'aaa', default: (path) => path.toUpperCase() }],
-				errors: [{ message: 'Expected the default import to be "AAA".' }],
-			},
-			{
-				code: `import XXX from 'aaa'`,
-				options: [{ path: /^aaa$/, default: 'AAA' }],
-				errors: [{ message: 'Expected the default import to be "AAA".' }],
+				options: [{ path: '(.*)', default: '$1' }],
+				errors: [{ message: 'Expected the default import to be "aaa".' }],
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
@@ -275,7 +258,7 @@ module.exports = {
 			{
 				code: `import 'aaa'`,
 				options: [{ path: 'aaa', namespace: true }],
-				errors: [{ message: 'Expected the namespace import to exist.' }],
+				errors: [{ message: 'Expected the namespace import.' }],
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
@@ -284,13 +267,8 @@ module.exports = {
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
-				options: [{ path: 'aaa', namespace: (path) => path.toUpperCase() }],
-				errors: [{ message: 'Expected the namespace import to be "AAA".' }],
-			},
-			{
-				code: `import * as XX from 'aaa'`,
-				options: [{ path: /^aaa$/, namespace: 'AAA' }],
-				errors: [{ message: 'Expected the namespace import to be "AAA".' }],
+				options: [{ path: '(.*)', namespace: '$1' }],
+				errors: [{ message: 'Expected the namespace import to be "aaa".' }],
 			},
 			{
 				code: `import { AAA } from 'aaa'`,
@@ -308,9 +286,9 @@ module.exports = {
 				errors: [{ message: 'Expected the named import to be "AAA".' }],
 			},
 			{
-				code: `import { aaa } from 'aaa'`,
-				options: [{ path: 'aaa', named: [{ name: /^aaa$/, rename: (path) => path.toUpperCase() }] }],
-				errors: [{ message: 'Expected the named import to be "AAA".' }],
+				code: `import { useState } from 'react'`,
+				options: [{ path: '^react$', named: [{ name: '^use(\\w+)$', rename: 'make$1' }] }],
+				errors: [{ message: 'Expected the named import to be "makeState".' }],
 			},
 			{
 				code: `import { aaa } from 'aaa'`,
@@ -319,8 +297,11 @@ module.exports = {
 			},
 			{
 				code: `import React, { memo } from 'react'`,
-				options: [{ path: 'react', default: 'React', named: [{ name: /^(?!use)/, forbidden: true }] }],
-				errors: [{ message: 'Unexpected the named import "memo".' }],
+				options: [{ path: 'react', default: 'X', named: [{ name: '^(?!use)', forbidden: true }] }],
+				errors: [
+					{ message: 'Expected the default import to be "X".' },
+					{ message: 'Unexpected the named import "memo".' },
+				],
 			},
 		]
 	}
