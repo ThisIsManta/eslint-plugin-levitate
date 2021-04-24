@@ -1,4 +1,7 @@
 const _ = require('lodash')
+const fs = require('fs')
+const fp = require('path')
+const glob = require('glob')
 
 module.exports = {
 	meta: {
@@ -97,9 +100,24 @@ module.exports = {
 					}
 
 					const actualName = defaultNode.local.name
-					const expectedName = typeof rule.default === 'string'
-						? workPath.replace(rule.path, rule.default)
-						: actualName
+					const expectedName = (() => {
+						if (typeof rule.default === 'string') {
+							return workPath.replace(rule.path, rule.default)
+						}
+
+						if (rule.default === true && !workPath.startsWith('.') && !workPath.startsWith('/') && context.parserPath.includes('@typescript-eslint/parser'.replace('/', fp.sep))) {
+							try {
+								const name = findType(workPath, context.getCwd())
+								if (name) {
+									return name
+								}
+							} catch {
+								// Do nothing
+							}
+						}
+
+						return actualName
+					})()
 					if (actualName !== expectedName) {
 						context.report({
 							node: defaultNode,
@@ -253,6 +271,14 @@ module.exports = {
 				code: `import React, { useEffect } from 'react'`,
 				options: [{ path: 'react', default: 'React', named: [{ name: /^use\W+/ }] }],
 			},
+			{
+				code: `
+					import React from 'react'
+					import moment from 'moment'
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				options: [{ path: 'react', default: true }, { path: 'moment', default: true }],
+			},
 		],
 		invalid: [
 			{
@@ -330,6 +356,18 @@ module.exports = {
 			},
 			{
 				code: `
+					import react from 'react'
+					import Moment from 'moment'
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				options: [{ path: 'react', default: true }, { path: 'moment', default: true }],
+				errors: [
+					{ message: 'Expected the default import to be "React".' },
+					{ message: 'Expected the default import to be "moment".' },
+				],
+			},
+			{
+				code: `
 					import React from 'react'
 					function MyComponent() {
 						const state = React.useState()
@@ -346,3 +384,47 @@ module.exports = {
 		]
 	}
 }
+
+const findType = _.memoize((moduleName, workingDirectoryPath) => {
+	const ts = require('typescript')
+
+	const paths = [
+		...glob.sync(`**/node_modules/${moduleName}`, { cwd: workingDirectoryPath }),
+		...glob.sync(`**/node_modules/@types/${moduleName}`, { cwd: workingDirectoryPath })
+	].map(path => fp.join(workingDirectoryPath, path))
+	for (const path of paths) {
+		const typeDefinitionPath = (() => {
+			const packagePath = fp.join(path, 'package.json')
+			if (fs.existsSync(packagePath)) {
+				const packageJson = require(packagePath)
+				if (typeof packageJson.typings === 'string') {
+					return fp.resolve(path, packageJson.typings)
+				}
+			}
+
+			return fp.join(path, 'index.d.ts')
+		})()
+
+		if (!typeDefinitionPath || !fs.existsSync(typeDefinitionPath)) {
+			return undefined
+		}
+
+		const root = ts.createSourceFile(typeDefinitionPath, fs.readFileSync(typeDefinitionPath, 'utf-8'), ts.ScriptTarget.Latest)
+
+		const defaultExportNode = root.statements.find(node => _.isMatch(node, {
+			kind: ts.SyntaxKind.ExportAssignment,
+			expression: { kind: ts.SyntaxKind.Identifier },
+		}))
+		if (defaultExportNode) {
+			return defaultExportNode.expression.escapedText
+		}
+
+		const namespaceExportNode = root.statements.find(node => _.isMatch(node, {
+			kind: ts.SyntaxKind.NamespaceExportDeclaration,
+			name: { kind: ts.SyntaxKind.Identifier },
+		}))
+		if (namespaceExportNode) {
+			return namespaceExportNode.name.escapedText
+		}
+	}
+}, (...params) => params.join('|'))
