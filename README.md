@@ -7,6 +7,7 @@
 |`import-name-after-predefined-name`|enforce naming an imported identifier after the user-defined list, for example given `["error", { "classnames": "cx" }]` then `import cx from "classnames"`||
 |`import-path-from-closest-index`|enforce writing an import path pointing to the closest index file||
 |`import-path-without-mentioning-index`|enforce writing an import path to an index file without mentioning "index.js"|Yes|
+|`new-line-before-chain`|enforce having a new line per chaining method||
 |`new-line-between-blocks`|enforce having new lines between blocks and before `else` and `catch`||
 |`no-top-level-require`|enforce writing no top-level `require`||
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`||
