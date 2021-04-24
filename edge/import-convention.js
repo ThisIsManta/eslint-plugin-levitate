@@ -107,6 +107,31 @@ module.exports = {
 						})
 					}
 
+					// Forbid writing `default.xxx` where `xxx` is in named import list
+					if (rule.named === false || _.isArray(rule.named)) {
+						const accessors = context.getDeclaredVariables(defaultNode)[0].references
+							.filter(node => _.isMatch(node, { identifier: { parent: { type: 'MemberExpression', property: { type: 'Identifier' } } } }))
+							.map(node => node.identifier.parent.property)
+
+						for (const accessor of accessors) {
+							if (rule.named === false) {
+								context.report({
+									node: accessor,
+									message: `Expected "${accessor.name}" to be imported directly.`,
+								})
+								continue
+							}
+
+							const subrule = rule.named.find(({ name }) => name.test(accessor.name))
+							if (subrule && subrule.forbidden) {
+								context.report({
+									node: accessor,
+									message: `Expected "${accessor.name}" to be imported directly.`,
+								})
+							}
+						}
+					}
+
 				} else if (rule.default) {
 					context.report({
 						node: root,
@@ -301,6 +326,21 @@ module.exports = {
 				errors: [
 					{ message: 'Expected the default import to be "X".' },
 					{ message: 'Unexpected the named import "memo".' },
+				],
+			},
+			{
+				code: `
+					import React from 'react'
+					function MyComponent() {
+						const state = React.useState()
+						React.useMemo()
+						React.memo()
+					}
+				`,
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use', forbidden: true }] }],
+				errors: [
+					{ message: 'Expected "useState" to be imported directly.' },
+					{ message: 'Expected "useMemo" to be imported directly.' },
 				],
 			},
 		]
