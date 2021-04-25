@@ -1,7 +1,6 @@
 const _ = require('lodash')
 const fs = require('fs')
 const fp = require('path')
-const glob = require('glob')
 
 module.exports = {
 	meta: {
@@ -77,11 +76,12 @@ module.exports = {
 				// Stop processing since importing namespace cannot co-exist with other imports
 				return
 
-			} else if (rule.namespace === true) {
+			} else if (rule.namespace === true && !rule.default) {
 				context.report({
 					node: root,
 					message: `Expected the namespace import.`,
 				})
+				return
 			}
 
 			if (defaultNode) {
@@ -357,8 +357,9 @@ module.exports = {
 						useCallback()
 						React.memo()
 					}
+					const _ = require('lodash')
 				`,
-				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }],
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }, { path: '^lodash$', default: true, namespace: true }],
 			},
 		],
 		invalid: [
@@ -473,13 +474,15 @@ module.exports = {
 						React.useCallback()
 						memo()
 					}
+					const { get } = require('lodash')
 				`,
-				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }],
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }, { path: '^lodash$', default: true, namespace: true }],
 				errors: [
 					{ message: 'Unexpected the named import "memo".' },
 					{ message: 'Expected "useState" to be imported directly.' },
 					{ message: 'Expected "useMemo" to be imported directly.' },
 					{ message: 'Expected "useCallback" to be imported directly.' },
+					{ message: 'Expected the default import.' },
 				],
 			},
 		]
