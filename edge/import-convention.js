@@ -49,160 +49,214 @@ module.exports = {
 				: named
 		}))
 
-		// TODO: support `require`
-		return {
-			ImportDeclaration: function (root) {
-				const workPath = root.source.value
-				const rule = rules.find(({ path }) => path.test(workPath))
-				if (!rule) {
-					return
-				}
+		function check({ root, modulePath, namespaceNode, defaultNode, namedWrappers }) {
+			const rule = rules.find(({ path }) => path.test(modulePath))
+			if (!rule) {
+				return
+			}
 
-				const namespaceNode = root.specifiers.find(node => node.type === 'ImportNamespaceSpecifier')
-
-				if (namespaceNode) {
-					if (rule.namespace === false) {
-						context.report({
-							node: namespaceNode,
-							message: `Unexpected the namespace import.`,
-						})
-					}
-
-					const actualName = namespaceNode.local.name
-					const expectedName = typeof rule.namespace === 'string'
-						? workPath.replace(rule.path, rule.namespace)
-						: actualName
-					if (actualName !== expectedName) {
-						context.report({
-							node: namespaceNode,
-							message: `Expected the namespace import to be "${expectedName}".`,
-						})
-					}
-
-					// Stop processing since importing namespace cannot co-exist with other imports
-					return
-
-				} else if (rule.namespace) {
+			if (namespaceNode) {
+				if (rule.namespace === false) {
 					context.report({
-						node: root,
-						message: `Expected the namespace import.`,
+						node: namespaceNode,
+						message: `Unexpected the namespace import.`,
 					})
 				}
 
-				const defaultNode = root.specifiers.find(node => node.type === 'ImportDefaultSpecifier')
-
-				if (defaultNode) {
-					if (rule.default === false) {
-						context.report({
-							node: defaultNode,
-							message: `Unexpected the default import.`,
-						})
-					}
-
-					const actualName = defaultNode.local.name
-					const expectedName = (() => {
-						if (typeof rule.default === 'string') {
-							return workPath.replace(rule.path, rule.default)
-						}
-
-						if (rule.default === true && !workPath.startsWith('.') && !workPath.startsWith('/') && context.parserPath.includes('@typescript-eslint/parser'.replace('/', fp.sep))) {
-							try {
-								const name = findType(workPath, fp.dirname(context.getFilename()))
-								if (name) {
-									return name
-								}
-							} catch {
-								// Do nothing
-							}
-						}
-
-						return actualName
-					})()
-					if (actualName !== expectedName) {
-						context.report({
-							node: defaultNode,
-							message: `Expected the default import to be "${expectedName}".`,
-						})
-					}
-
-					// Forbid writing `default.xxx` where `xxx` is in named import list
-					if (rule.named === false || _.isArray(rule.named)) {
-						const accessors = context.getDeclaredVariables(defaultNode)[0].references
-							.filter(node => _.isMatch(node, { identifier: { parent: { type: 'MemberExpression', property: { type: 'Identifier' } } } }))
-							.map(node => node.identifier.parent.property)
-
-						for (const accessor of accessors) {
-							if (rule.named === false) {
-								context.report({
-									node: accessor,
-									message: `Expected "${accessor.name}" to be imported directly.`,
-								})
-								continue
-							}
-
-							const subrule = rule.named.find(({ name }) => name.test(accessor.name))
-							if (subrule && !subrule.forbidden) {
-								context.report({
-									node: accessor,
-									message: `Expected "${accessor.name}" to be imported directly.`,
-								})
-							}
-						}
-					}
-
-				} else if (rule.default) {
+				const actualName = namespaceNode.name
+				const expectedName = typeof rule.namespace === 'string'
+					? modulePath.replace(rule.path, rule.namespace)
+					: actualName
+				if (actualName !== expectedName) {
 					context.report({
-						node: root,
-						message: `Expected the default import.`,
+						node: namespaceNode,
+						message: `Expected the namespace import to be "${expectedName}".`,
 					})
 				}
 
-				const namedNodes = root.specifiers.filter(node => node.type === 'ImportSpecifier')
+				// Stop processing since importing namespace cannot co-exist with other imports
+				return
 
-				if (namedNodes.length > 0 && rule.named === false) {
+			} else if (rule.namespace === true) {
+				context.report({
+					node: root,
+					message: `Expected the namespace import.`,
+				})
+			}
+
+			if (defaultNode) {
+				if (rule.default === false) {
 					context.report({
-						node: root,
-						message: `Unexpected any named imports.`,
+						node: defaultNode,
+						message: `Unexpected the default import.`,
 					})
 				}
 
-				if (_.isArray(rule.named)) {
-					for (const namedNode of namedNodes) {
-						const subrule = rule.named.find(({ name }) => name.test(namedNode.imported.name))
+				const actualName = defaultNode.name
+				const expectedName = (() => {
+					if (typeof rule.default === 'string') {
+						return modulePath.replace(rule.path, rule.default)
+					}
 
-						if (!subrule) {
-							continue
+					if (rule.default === true && !modulePath.startsWith('.') && !modulePath.startsWith('/') && context.parserPath.includes('@typescript-eslint/parser'.replace('/', fp.sep))) {
+						try {
+							const name = findType(modulePath, fp.dirname(context.getFilename()))
+							if (name) {
+								return name
+							}
+						} catch {
+							// Do nothing
 						}
+					}
 
-						if (subrule.forbidden) {
+					return actualName
+				})()
+				if (actualName !== expectedName) {
+					context.report({
+						node: defaultNode,
+						message: `Expected the default import to be "${expectedName}".`,
+					})
+				}
+
+				// Forbid writing `default.xxx` where `xxx` is in named import list
+				if (rule.named === false || _.isArray(rule.named)) {
+					const accessors = context.getDeclaredVariables(defaultNode.parent)[0].references
+						.filter(node => _.isMatch(node, { identifier: { parent: { type: 'MemberExpression', property: { type: 'Identifier' } } } }))
+						.map(node => node.identifier.parent.property)
+
+					for (const accessor of accessors) {
+						if (rule.named === false) {
 							context.report({
-								node: namedNode.local,
-								message: `Unexpected the named import "${namedNode.local.name}".`,
+								node: accessor,
+								message: `Expected "${accessor.name}" to be imported directly.`,
 							})
 							continue
 						}
 
-						if (subrule.rename === false && namedNode.imported.name !== namedNode.local.name) {
+						const subrule = rule.named.find(({ name }) => name.test(accessor.name))
+						if (subrule && !subrule.forbidden) {
 							context.report({
-								node: namedNode.local,
-								message: `Expected the named import to be "${namedNode.imported.name}".`,
+								node: accessor,
+								message: `Expected "${accessor.name}" to be imported directly.`,
+							})
+						}
+					}
+				}
+
+			} else if (rule.default === true) {
+				context.report({
+					node: root,
+					message: `Expected the default import.`,
+				})
+			}
+
+			if (_.isArray(namedWrappers) && namedWrappers.length > 0 && rule.named === false) {
+				context.report({
+					node: root,
+					message: `Unexpected any named imports.`,
+				})
+			}
+
+			if (_.isArray(namedWrappers) && _.isArray(rule.named)) {
+				for (const { originalNode, givenNode } of namedWrappers) {
+					const subrule = rule.named.find(({ name }) => name.test(originalNode.name))
+
+					if (!subrule) {
+						continue
+					}
+
+					if (subrule.forbidden) {
+						context.report({
+							node: originalNode,
+							message: `Unexpected the named import "${originalNode.name}".`,
+						})
+						continue
+					}
+
+					if (givenNode && givenNode.type === 'Identifier') {
+						if (subrule.rename === false && originalNode.name !== givenNode.name) {
+							context.report({
+								node: givenNode,
+								message: `Expected the named import to be "${originalNode.name}".`,
 							})
 							continue
 						}
 
-						const actualName = namedNode.local.name
+						const actualName = givenNode.name
 						const expectedName = typeof subrule.rename === 'string'
-							? namedNode.imported.name.replace(subrule.name, subrule.rename)
-							: actualName
+							? originalNode.name.replace(subrule.name, subrule.rename)
+							: originalNode.name
 						if (actualName !== expectedName) {
 							context.report({
-								node: namedNode.local || namedNode,
+								node: givenNode,
 								message: `Expected the named import to be "${expectedName}".`,
 							})
 						}
 					}
 				}
 			}
+		}
+
+		return {
+			ImportDeclaration: function (root) {
+				const modulePath = root.source.value
+				const namespaceNode = root.specifiers.find(node => node.type === 'ImportNamespaceSpecifier')
+				const defaultNode = root.specifiers.find(node => node.type === 'ImportDefaultSpecifier')
+				const namedNodes = root.specifiers.filter(node => node.type === 'ImportSpecifier')
+
+				check({
+					root,
+					modulePath,
+					namespaceNode: namespaceNode ? namespaceNode.local : undefined,
+					defaultNode: defaultNode ? defaultNode.local : undefined,
+					namedWrappers: namedNodes.map(node => ({ originalNode: node.imported, givenNode: node.local })),
+				})
+			},
+			CallExpression: function (root) {
+				if (!_.isMatch(root, {
+					callee: { type: 'Identifier', name: 'require' },
+					arguments: [{ type: 'Literal' }]
+				})) {
+					return
+				}
+
+				const modulePath = root.arguments[0].value
+
+				if (root.parent.type === 'VariableDeclarator') {
+					if (root.parent.id.type === 'Identifier') {
+						check({
+							root: root.parent,
+							modulePath,
+							defaultNode: root.parent.id,
+						})
+					}
+
+					if (root.parent.id.type === 'ObjectPattern') {
+						check({
+							root: root.parent,
+							modulePath,
+							namedWrappers: root.parent.id.properties.map(node => ({ originalNode: node.key, givenNode: node.value }))
+						})
+					}
+				}
+
+				if (root.parent.type === 'MemberExpression') {
+					if (root.parent.parent.type === 'VariableDeclarator' && root.parent.parent.id.type === 'Identifier') {
+						check({
+							root: root.parent,
+							modulePath,
+							namedWrappers: [{ originalNode: root.parent.property, givenNode: root.parent.parent.id }]
+						})
+
+					} else {
+						check({
+							root: root.parent,
+							modulePath,
+							namedWrappers: [{ originalNode: root.parent.property }]
+						})
+					}
+				}
+			},
 		}
 	},
 	tests: {
@@ -286,6 +340,21 @@ module.exports = {
 					function MyComponent() {
 						const state = useState()
 						useMemo()
+						React.memo()
+					}
+				`,
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }],
+			},
+			{
+				code: `
+					const React = require('react')
+					const useState = require('react').useState
+					const useMemo = require('react').useMemo
+					const { useCallback } = require('react')
+					function MyComponent() {
+						const state = useState()
+						useMemo()
+						useCallback()
 						React.memo()
 					}
 				`,
@@ -394,6 +463,25 @@ module.exports = {
 					{ message: 'Expected "useMemo" to be imported directly.' },
 				],
 			},
+			{
+				code: `
+					const React = require('react')
+					const { memo } = require('react')
+					function MyComponent() {
+						const state = React.useState()
+						React.useMemo()
+						React.useCallback()
+						memo()
+					}
+				`,
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }],
+				errors: [
+					{ message: 'Unexpected the named import "memo".' },
+					{ message: 'Expected "useState" to be imported directly.' },
+					{ message: 'Expected "useMemo" to be imported directly.' },
+					{ message: 'Expected "useCallback" to be imported directly.' },
+				],
+			},
 		]
 	}
 }
@@ -431,7 +519,6 @@ const findType = _.memoize((moduleName, workingDirectoryPath) => {
 		return undefined
 	}
 
-	console.log(moduleName)
 	const root = ts.createSourceFile(typeDefinitionPath, fs.readFileSync(typeDefinitionPath, 'utf-8'), ts.ScriptTarget.Latest)
 
 	// Match `declare module "x" {}`
@@ -439,7 +526,6 @@ const findType = _.memoize((moduleName, workingDirectoryPath) => {
 		kind: ts.SyntaxKind.ModuleDeclaration,
 		name: { kind: ts.SyntaxKind.StringLiteral, text: moduleName }
 	}))
-	console.log('scopedModules', scopedModules/* .map(node => node.name.text) */)
 
 	const statements = root.statements.concat(...scopedModules.map(node => node.statements))
 
