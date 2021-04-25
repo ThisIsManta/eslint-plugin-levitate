@@ -107,7 +107,7 @@ module.exports = {
 
 						if (rule.default === true && !workPath.startsWith('.') && !workPath.startsWith('/') && context.parserPath.includes('@typescript-eslint/parser'.replace('/', fp.sep))) {
 							try {
-								const name = findType(workPath, context.getCwd())
+								const name = findType(workPath, fp.dirname(context.getFilename()))
 								if (name) {
 									return name
 								}
@@ -141,7 +141,7 @@ module.exports = {
 							}
 
 							const subrule = rule.named.find(({ name }) => name.test(accessor.name))
-							if (subrule && subrule.forbidden) {
+							if (subrule && !subrule.forbidden) {
 								context.report({
 									node: accessor,
 									message: `Expected "${accessor.name}" to be imported directly.`,
@@ -276,8 +276,20 @@ module.exports = {
 					import React from 'react'
 					import moment from 'moment'
 				`,
+				filename: fp.join(__dirname, 'import-convention.js'),
 				parser: require.resolve('@typescript-eslint/parser'),
-				options: [{ path: 'react', default: true }, { path: 'moment', default: true }],
+				options: [{ path: '.*', default: true }],
+			},
+			{
+				code: `
+					import React, { useState, useMemo } from 'react'
+					function MyComponent() {
+						const state = useState()
+						useMemo()
+						React.memo()
+					}
+				`,
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }],
 			},
 		],
 		invalid: [
@@ -359,8 +371,9 @@ module.exports = {
 					import react from 'react'
 					import Moment from 'moment'
 				`,
+				filename: fp.join(__dirname, 'import-convention.js'),
 				parser: require.resolve('@typescript-eslint/parser'),
-				options: [{ path: 'react', default: true }, { path: 'moment', default: true }],
+				options: [{ path: '.*', default: true }],
 				errors: [
 					{ message: 'Expected the default import to be "React".' },
 					{ message: 'Expected the default import to be "moment".' },
@@ -375,7 +388,7 @@ module.exports = {
 						React.memo()
 					}
 				`,
-				options: [{ path: 'react', default: 'React', named: [{ name: '^use', forbidden: true }] }],
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }],
 				errors: [
 					{ message: 'Expected "useState" to be imported directly.' },
 					{ message: 'Expected "useMemo" to be imported directly.' },
@@ -388,43 +401,63 @@ module.exports = {
 const findType = _.memoize((moduleName, workingDirectoryPath) => {
 	const ts = require('typescript')
 
-	const paths = [
-		...glob.sync(`**/node_modules/${moduleName}`, { cwd: workingDirectoryPath }),
-		...glob.sync(`**/node_modules/@types/${moduleName}`, { cwd: workingDirectoryPath })
-	].map(path => fp.join(workingDirectoryPath, path))
-	for (const path of paths) {
-		const typeDefinitionPath = (() => {
-			const packagePath = fp.join(path, 'package.json')
-			if (fs.existsSync(packagePath)) {
-				const packageJson = require(packagePath)
-				if (typeof packageJson.typings === 'string') {
-					return fp.resolve(path, packageJson.typings)
+	const typeDefinitionPath = (() => {
+		const directoryParts = _.trim(workingDirectoryPath, fp.sep).split(/\\|\//g)
+		for (let index = directoryParts.length; index > 1; index--) {
+			const basePath = directoryParts.slice(0, index)
+
+			const directModulePath = fp.join(...basePath, 'node_modules', moduleName)
+			if (fs.existsSync(directModulePath) && fs.lstatSync(directModulePath).isDirectory()) {
+				const packagePath = fp.join(directModulePath, 'package.json')
+				if (fs.existsSync(packagePath)) {
+					const packageJson = require(packagePath)
+					if (typeof packageJson.types === 'string') {
+						return fp.resolve(directModulePath, packageJson.types)
+					}
+					if (typeof packageJson.typings === 'string') {
+						return fp.resolve(directModulePath, packageJson.typings)
+					}
 				}
 			}
 
-			return fp.join(path, 'index.d.ts')
-		})()
-
-		if (!typeDefinitionPath || !fs.existsSync(typeDefinitionPath)) {
-			return undefined
+			const typeModulePath = fp.join(...basePath, 'node_modules', '@types', moduleName)
+			if (fs.existsSync(typeModulePath) && fs.lstatSync(typeModulePath).isDirectory()) {
+				return fp.join(typeModulePath, 'index.d.ts')
+			}
 		}
+	})()
 
-		const root = ts.createSourceFile(typeDefinitionPath, fs.readFileSync(typeDefinitionPath, 'utf-8'), ts.ScriptTarget.Latest)
+	if (!typeDefinitionPath) {
+		return undefined
+	}
 
-		const defaultExportNode = root.statements.find(node => _.isMatch(node, {
-			kind: ts.SyntaxKind.ExportAssignment,
-			expression: { kind: ts.SyntaxKind.Identifier },
-		}))
-		if (defaultExportNode) {
-			return defaultExportNode.expression.escapedText
-		}
+	console.log(moduleName)
+	const root = ts.createSourceFile(typeDefinitionPath, fs.readFileSync(typeDefinitionPath, 'utf-8'), ts.ScriptTarget.Latest)
 
-		const namespaceExportNode = root.statements.find(node => _.isMatch(node, {
-			kind: ts.SyntaxKind.NamespaceExportDeclaration,
-			name: { kind: ts.SyntaxKind.Identifier },
-		}))
-		if (namespaceExportNode) {
-			return namespaceExportNode.name.escapedText
-		}
+	// Match `declare module "x" {}`
+	const scopedModules = root.statements.filter(node => _.isMatch(node, {
+		kind: ts.SyntaxKind.ModuleDeclaration,
+		name: { kind: ts.SyntaxKind.StringLiteral, text: moduleName }
+	}))
+	console.log('scopedModules', scopedModules/* .map(node => node.name.text) */)
+
+	const statements = root.statements.concat(...scopedModules.map(node => node.statements))
+
+	// Match `export = X;`
+	const defaultExportNode = statements.find(node => _.isMatch(node, {
+		kind: ts.SyntaxKind.ExportAssignment,
+		expression: { kind: ts.SyntaxKind.Identifier },
+	}))
+	if (defaultExportNode) {
+		return defaultExportNode.expression.escapedText
+	}
+
+	// Match `export as namespace X;`
+	const namespaceExportNode = root.statements.find(node => _.isMatch(node, {
+		kind: ts.SyntaxKind.NamespaceExportDeclaration,
+		name: { kind: ts.SyntaxKind.Identifier },
+	}))
+	if (namespaceExportNode) {
+		return namespaceExportNode.name.escapedText
 	}
 }, (...params) => params.join('|'))
