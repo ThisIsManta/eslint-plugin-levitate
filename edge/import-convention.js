@@ -63,9 +63,11 @@ module.exports = {
 				}
 
 				const actualName = namespaceNode.name
-				const expectedName = typeof rule.namespace === 'string'
-					? modulePath.replace(rule.path, rule.namespace)
-					: actualName
+				const expectedName = normalizeIdentifierName(
+					typeof rule.namespace === 'string'
+						? modulePath.replace(rule.path, rule.namespace)
+						: actualName
+				)
 				if (actualName !== expectedName) {
 					context.report({
 						node: namespaceNode,
@@ -93,7 +95,7 @@ module.exports = {
 				}
 
 				const actualName = defaultNode.name
-				const expectedName = (() => {
+				const expectedName = normalizeIdentifierName((() => {
 					if (typeof rule.default === 'string') {
 						return modulePath.replace(rule.path, rule.default)
 					}
@@ -110,7 +112,7 @@ module.exports = {
 					}
 
 					return actualName
-				})()
+				})())
 				if (actualName !== expectedName) {
 					context.report({
 						node: defaultNode,
@@ -183,9 +185,11 @@ module.exports = {
 						}
 
 						const actualName = givenNode.name
-						const expectedName = typeof subrule.rename === 'string'
-							? originalNode.name.replace(subrule.name, subrule.rename)
-							: originalNode.name
+						const expectedName = normalizeIdentifierName(
+							typeof subrule.rename === 'string'
+								? originalNode.name.replace(subrule.name, subrule.rename)
+								: originalNode.name
+						)
 						if (actualName !== expectedName) {
 							context.report({
 								node: givenNode,
@@ -550,3 +554,12 @@ const findType = _.memoize((moduleName, workingDirectoryPath) => {
 		return namespaceExportNode.name.escapedText
 	}
 }, (...params) => params.join('|'))
+
+function normalizeIdentifierName(name) {
+	return name
+		.trim()
+		.replace(/^\d+/, '')
+		.split(/-/g)
+		.map((word, index) => index === 0 ? word : _.upperFirst(word))
+		.join('')
+}
