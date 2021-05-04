@@ -9,6 +9,7 @@
 |`import-path-without-mentioning-index`|enforce writing an import path to an index file without mentioning "index.js"|Yes|
 |`new-line-before-chain`|enforce having a new line per chaining method||
 |`new-line-between-blocks`|enforce having new lines between blocks and before `else` and `catch`||
+|`new-line-within-statement`|enforce having new lines within statement||
 |`no-top-level-require`|enforce writing no top-level `require`||
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`||
 |`react-export-default`|enforce writing React components consistently|Yes|
