@@ -55,7 +55,9 @@ module.exports = {
 				}
 
 			} else if (node.type === 'MemberExpression') {
-				outputList.unshift(node.property)
+				if (!node.computed) {
+					outputList.unshift(node.property)
+				}
 
 				findOrderedChainNodes(node.object, outputList)
 			}
@@ -262,19 +264,17 @@ function Component() {
 			},
 			{
 				code: `
-					_.chain().map()
-						.prop.reduce().value()
+					_.chain().map()['prop']
+						.reduce().value().text
 				`,
 				output: `
 					_.chain()
-.map()
-						.prop
-.reduce()
-.value()
+.map()['prop']
+						.reduce()
+.value().text
 				`,
 				errors: [
 					{ messageId: 'before', line: 2 },
-					{ messageId: 'before', line: 3 },
 					{ messageId: 'before', line: 3 },
 				],
 			},
