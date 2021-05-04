@@ -2,6 +2,10 @@ const _ = require('lodash')
 
 module.exports = {
 	meta: {
+		/**
+		 * Use new-line-between-statement rule instead
+		 */
+		deprecated: true,
 		docs: {
 			description: 'enforce having a new line per chaining method',
 			category: 'Stylistic Issues',
