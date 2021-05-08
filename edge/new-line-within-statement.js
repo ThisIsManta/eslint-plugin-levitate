@@ -22,11 +22,19 @@ module.exports = {
 			after: 'Expected a new line after this.',
 			noBefore: 'Unexpected a new line before this.',
 			noAfter: 'Unexpected a new line after this.',
+			paren: 'Expected a pair of parentheses around this.',
+			noParen: 'Unexpected a pair of parentheses.',
 		}
 	},
 	create: function (context) {
 		const code = context.getSourceCode()
 		const options = _.defaultsDeep(context.options[0], { maxLength: Infinity })
+
+		const baseIndent = detectIndent(code.text).indent || ''
+
+		function getIndentAt(line) {
+			return detectIndent(code.lines[line - 1] || '').indent || ''
+		}
 
 		const topLevelChainedNodes = new Set()
 		function checkIfNodeIsPartOfTopLevelChain(node) {
@@ -63,6 +71,10 @@ module.exports = {
 			}
 
 			return outputList
+		}
+
+		function checkIfLogicalExpressionNeedsNewLine(node) {
+			return node.type === 'LogicalExpression' && unwrap(code.getText(node)).length - node.operator.length > options.maxLength
 		}
 
 		return {
@@ -105,19 +117,21 @@ module.exports = {
 					return
 				}
 
-				const text = code.getText(root)
+				if (root.right.type === 'JSXElement') {
+					return
+				}
 
-				const newLineExpected = unwrap(text).length - root.operator.length > options.maxLength
+				const newLineExpected = checkIfLogicalExpressionNeedsNewLine(root)
 
 				const first = code.getFirstToken(root.right)
 
 				if (newLineExpected) {
 					if (root.left.loc.end.line === root.right.loc.start.line) {
-						const indentation = detectIndent(code.lines[root.left.loc.start.line - 1]).indent || ''
+						const prevIndent = getIndentAt(root.left.loc.start.line)
 						context.report({
 							loc: first.loc,
 							messageId: 'before',
-							fix: (fixer) => fixer.insertTextBefore(first, '\n' + indentation)
+							fix: (fixer) => fixer.insertTextBefore(first, '\n' + prevIndent + baseIndent)
 						})
 					}
 
@@ -130,7 +144,6 @@ module.exports = {
 							fix: (fixer) => fixer.removeRange([operator.range[1], first.range[0]])
 						})
 					}
-
 				}
 			},
 			IfStatement: function (root) {
@@ -177,6 +190,121 @@ module.exports = {
 							messageId: 'noBefore',
 							fix: (fixer) => fixer.removeRange([last.range[1], close.range[0]])
 						})
+					}
+				}
+			},
+			JSXElement: function (root) {
+				if (root.parent.type === 'JSXElement') {
+					return
+				}
+
+				const prev = code.getTokenBefore(root)
+				const next = code.getTokenAfter(root)
+				if (!prev || !next) {
+					return
+				}
+
+				const prevPrev = code.getTokenBefore(prev)
+
+				if (root.parent.type === 'CallExpression' && root.parent.arguments.includes(root)) {
+					if (prev.value === '(' && next.value === ')') {
+						context.report({
+							loc: { start: prev.loc.start, end: next.loc.end },
+							messageId: 'noParen',
+							fix: (fixer) => [
+								fixer.removeRange([prev.range[0], root.range[0]]),
+								fixer.removeRange([root.range[1], next.range[1]]),
+							]
+						})
+					}
+
+					return
+				}
+
+				const newLineExpected = (
+					root.loc.start.line !== root.loc.end.line ||
+					checkIfLogicalExpressionNeedsNewLine(root.parent) && root.parent.right === root
+				)
+
+				if (newLineExpected) {
+					if (prev.value === '(' && next.value === ')') {
+						if (prevPrev && prevPrev.loc.end.line !== prev.loc.start.line) {
+							context.report({
+								loc: prev,
+								messageId: 'noBefore',
+								fix: (fixer) => fixer.removeRange([prevPrev.range[1], prev.range[0]])
+							})
+						}
+
+						if (prev.loc.end.line === root.loc.start.line) {
+							const prevIndent = getIndentAt(root.loc.start.line)
+							context.report({
+								loc: code.getFirstToken(root).loc,
+								messageId: 'before',
+								fix: (fixer) => fixer.insertTextBefore(root, '\n' + prevIndent + baseIndent)
+							})
+						}
+
+						if (next.loc.start.line === root.loc.end.line) {
+							context.report({
+								loc: code.getLastToken(root).loc,
+								messageId: 'after',
+								fix: (fixer) => fixer.insertTextAfter(root, '\n')
+							})
+						}
+
+					} else {
+						if (prev.loc.end.line === root.loc.start.line) {
+							const prevIndent = getIndentAt(root.loc.start.line)
+							context.report({
+								loc: code.getFirstToken(root).loc,
+								messageId: 'before',
+								fix: (fixer) => [
+									fixer.insertTextBefore(root, '(\n' + prevIndent + baseIndent),
+									fixer.insertTextAfter(root, '\n' + prevIndent + ')'),
+								]
+							})
+
+						} else {
+							context.report({
+								node: root,
+								messageId: 'paren',
+								fix: (fixer) => [
+									fixer.insertTextAfter(prev, ' ('),
+									fixer.insertTextAfter(root, '\n)'),
+								]
+							})
+						}
+
+						if (next.loc.start.line === root.loc.end.line) {
+							context.report({
+								loc: code.getLastToken(root).loc,
+								messageId: 'after',
+								fix: (fixer) => fixer.insertTextAfter(root, '\n)')
+							})
+						}
+					}
+
+				} else { // Remove new lines
+					if (prev.value === '(' && next.value === ')' && root.parent.type !== 'IfStatement') {
+						const space = code.isSpaceBetween(prevPrev, prev) ? '' : ' '
+						context.report({
+							loc: { start: prev.loc.start, end: next.loc.end },
+							messageId: 'noParen',
+							fix: (fixer) => [
+								fixer.replaceTextRange([prev.range[0], root.range[0]], space),
+								fixer.removeRange([root.range[1], next.range[1]]),
+							]
+						})
+
+					} else {
+						if (prev.loc.end.line !== root.loc.start.line) {
+							context.report({
+								loc: code.getFirstToken(root).loc,
+								messageId: 'noBefore',
+								fix: (fixer) => fixer.replaceTextRange([prev.range[1], root.range[0]], ' ')
+							})
+						}
 					}
 				}
 			},
@@ -229,15 +357,17 @@ module.exports = {
 			{
 				code: `
 function Component() {
-	<div>
-		{getClipboardText && (
-			<InputAdornment position="end">
-				<IconButton>
-					<PasteIcon />
-				</IconButton>
-			</InputAdornment>
-		)}
-	</div>
+	return (
+		<div>
+			{getClipboardText && (
+				<InputAdornment position="end">
+					<IconButton>
+						<PasteIcon />
+					</IconButton>
+				</InputAdornment>
+			)}
+		</div>
+	)
 }
 				`,
 				options: [{ maxLength: 80 }],
@@ -247,6 +377,24 @@ function Component() {
 					ecmaFeatures: { jsx: true },
 				},
 			},
+			{
+				code: `
+ReactDOM.render(
+	<Playbook
+		pages={demoComponents}
+		contentControl={LanguageSelection}
+		contentWrapper={LanguageProvider}
+	/>,
+	document.getElementById('root')
+)
+				`,
+				options: [{ maxLength: 80 }],
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			}
 		],
 		invalid: [
 			{
@@ -325,45 +473,43 @@ a &&
 			},
 			{
 				code: `
-					const x = a && b || c && d
-					const y = a &&
-						b
+const x = a && b || c && d
+const y = a &&
+	b
 				`,
 				output: `
-					const x = a && b || 
-					c && d
-					const y = a &&b
+const x = a && b || 
+	c && d
+const y = a &&b
 				`,
 				options: [{ maxLength: 5 }],
 				errors: [
-					{ messageId: 'before', line: 2, column: 26 },
-					{ messageId: 'noBefore', line: 4, column: 7 },
+					{ messageId: 'before', line: 2, column: 21 },
+					{ messageId: 'noBefore', line: 4, column: 2 },
 				],
 			},
 			{
 				code: `
-function Component() {
-	<div>
-		{getClipboardText && (<InputAdornment position="end">
-				<IconButton>
-					<PasteIcon />
-				</IconButton>
-			</InputAdornment>
-		)}
-	</div>
+function Component(x) {
+	const a = x && <div/>
+	const b = x &&
+		<div/>
+	const c = x && (<div/>)
+	const d = x && (<div>
+		text
+		</div>)
 }
 				`,
 				output: `
-function Component() {
-	<div>
-		{getClipboardText && (
-		<InputAdornment position="end">
-				<IconButton>
-					<PasteIcon />
-				</IconButton>
-			</InputAdornment>
-		)}
-	</div>
+function Component(x) {
+	const a = x && <div/>
+	const b = x && <div/>
+	const c = x && <div/>
+	const d = x && (
+		<div>
+		text
+		</div>
+)
 }
 				`,
 				options: [{ maxLength: 80 }],
@@ -373,9 +519,133 @@ function Component() {
 					ecmaFeatures: { jsx: true },
 				},
 				errors: [
-					{ messageId: 'before', line: 4 },
+					{ messageId: 'noBefore', line: 5 },
+					{ messageId: 'noParen', line: 6 },
+					{ messageId: 'before', line: 7 },
+					{ messageId: 'after', line: 9 },
 				]
 			},
+			{
+				code: `
+ReactDOM.render(
+	(
+		<Playbook
+			pages={demoComponents}
+			contentControl={LanguageSelection}
+			contentWrapper={LanguageProvider}
+		/>
+	),
+	document.getElementById('root')
+)
+				`,
+				output: `
+ReactDOM.render(
+	<Playbook
+			pages={demoComponents}
+			contentControl={LanguageSelection}
+			contentWrapper={LanguageProvider}
+		/>,
+	document.getElementById('root')
+)
+				`,
+				options: [{ maxLength: 80 }],
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{ messageId: 'noParen', line: 3 },
+				]
+			},
+			{
+				code: `
+function Component() {
+	return (<div>
+		{array.length > 0 && (<Grid>
+			<Grid.Gap height={10} />
+		</Grid>)}
+	</div>)
+}
+				`,
+				output: `
+function Component() {
+	return (
+		<div>
+		{array.length > 0 && (
+			<Grid>
+			<Grid.Gap height={10} />
+		</Grid>
+)}
+	</div>
+)
+}
+				`,
+				options: [{ maxLength: 80 }],
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{ messageId: 'before', line: 3 },
+					{ messageId: 'before', line: 4 },
+					{ messageId: 'after', line: 6 },
+					{ messageId: 'after', line: 7 },
+				]
+			},
+			{
+				code: `
+const footerItems = _.compact([
+	props.isShowMobileAppLink && (
+		<MobileAppLink />
+	),
+	props.unsubscribeLink && (
+		<UnsubscriptionLink unsubscribeLink={props.unsubscribeLink} />
+	),
+])
+				`,
+				output: `
+const footerItems = _.compact([
+	props.isShowMobileAppLink && <MobileAppLink />,
+	props.unsubscribeLink && (
+		<UnsubscriptionLink unsubscribeLink={props.unsubscribeLink} />
+	),
+])
+				`,
+				options: [{ maxLength: 80 }],
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{ messageId: 'noParen', line: 3 },
+				]
+			},
+			{
+				code: `
+function MyComponent() {
+	return !excludeAttachment && isAttachment(props.message) && <Attachment attachment={props.message.metadata.attachments[0]} />
+}
+				`,
+				output: `
+function MyComponent() {
+	return !excludeAttachment && isAttachment(props.message) && (
+		<Attachment attachment={props.message.metadata.attachments[0]} />
+	)
+}
+				`,
+				options: [{ maxLength: 80 }],
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{ messageId: 'before', line: 3, column: 62 },
+				]
+			}
 		]
 	}
 }
