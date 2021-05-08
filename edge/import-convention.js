@@ -121,13 +121,13 @@ module.exports = {
 				}
 
 				// Forbid writing `default.xxx` where `xxx` is in named import list
-				if (rule.named === false || _.isArray(rule.named)) {
+				if (rule.named === true || _.isArray(rule.named)) {
 					const accessors = context.getDeclaredVariables(defaultNode.parent)[0].references
 						.filter(node => _.isMatch(node, { identifier: { parent: { type: 'MemberExpression', property: { type: 'Identifier' } } } }))
 						.map(node => node.identifier.parent.property)
 
 					for (const accessor of accessors) {
-						if (rule.named === false) {
+						if (rule.named === true) {
 							context.report({
 								node: accessor,
 								message: `Expected "${accessor.name}" to be imported directly.`,
@@ -340,6 +340,17 @@ module.exports = {
 			},
 			{
 				code: `
+					import React from 'react'
+					function MyComponent() {
+						const state = React.useState()
+						React.useMemo()
+						React.memo()
+					}
+				`,
+				options: [{ path: 'react', default: 'React', named: false }],
+			},
+			{
+				code: `
 					import React, { useState, useMemo } from 'react'
 					function MyComponent() {
 						const state = useState()
@@ -347,7 +358,7 @@ module.exports = {
 						React.memo()
 					}
 				`,
-				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }],
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }],
 			},
 			{
 				code: `
@@ -363,7 +374,7 @@ module.exports = {
 					}
 					const _ = require('lodash')
 				`,
-				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }, { path: '^lodash$', default: true, namespace: true }],
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }, { path: '^lodash$', default: true, namespace: true }],
 			},
 		],
 		invalid: [
@@ -462,7 +473,7 @@ module.exports = {
 						React.memo()
 					}
 				`,
-				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }],
+				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }],
 				errors: [
 					{ message: 'Expected "useState" to be imported directly.' },
 					{ message: 'Expected "useMemo" to be imported directly.' },
