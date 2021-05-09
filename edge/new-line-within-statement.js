@@ -146,6 +146,79 @@ module.exports = {
 					}
 				}
 			},
+			ConditionalExpression: function (root) {
+				let question = code.getTokenBefore(root.consequent)
+				while (question && question.value !== '?') {
+					question = code.getTokenBefore(question)
+				}
+
+				let colon = code.getTokenBefore(root.alternate)
+				while (colon && colon.value !== ':') {
+					colon = code.getTokenBefore(colon)
+				}
+
+				if (!question || !colon) {
+					return
+				}
+
+				const newLineExpected = unwrap(code.getText(root)).length - 2 > options.maxLength ||
+					root.test.loc.start.line !== root.consequent.loc.start.line
+
+				const prevIndent = getIndentAt(root.loc.start.line)
+
+				if (newLineExpected) {
+					if (code.getTokenBefore(question).loc.end.line === question.loc.start.line) {
+						context.report({
+							loc: question.loc,
+							messageId: 'before',
+							fix: (fixer) => fixer.insertTextBefore(question, '\n' + prevIndent + baseIndent)
+						})
+					}
+
+					if (code.getTokenBefore(colon).loc.end.line === colon.loc.start.line) {
+						context.report({
+							loc: colon.loc,
+							messageId: 'before',
+							fix: (fixer) => fixer.insertTextBefore(colon, '\n' + prevIndent + baseIndent)
+						})
+					}
+
+				} else {
+					if (root.test.loc.end.line !== question.loc.start.line) {
+						context.report({
+							loc: question.loc,
+							messageId: 'noBefore',
+							fix: (fixer) => fixer.replaceTextRange([code.getTokenBefore(question).range[1], question.range[0]], ' ')
+						})
+					}
+
+					if (root.consequent.loc.end.line !== colon.loc.start.line) {
+						context.report({
+							loc: colon.loc,
+							messageId: 'noBefore',
+							fix: (fixer) => fixer.replaceTextRange([code.getTokenBefore(colon).range[1], question.range[0]], ' ')
+						})
+					}
+				}
+
+				const truthy = code.getTokenAfter(question)
+				if (question.loc.start.line !== truthy.loc.start.line) {
+					context.report({
+						loc: truthy.loc,
+						messageId: 'noBefore',
+						fix: (fixer) => fixer.replaceTextRange([question.range[1], truthy.range[0]], ' ')
+					})
+				}
+
+				const falsy = code.getTokenAfter(colon)
+				if (colon.loc.start.line !== falsy.loc.start.line) {
+					context.report({
+						loc: falsy.loc,
+						messageId: 'noBefore',
+						fix: (fixer) => fixer.replaceTextRange([colon.range[1], falsy.range[0]], ' ')
+					})
+				}
+			},
 			IfStatement: function (root) {
 				const text = code.getText(root.test)
 
@@ -394,7 +467,24 @@ ReactDOM.render(
 					sourceType: 'module',
 					ecmaFeatures: { jsx: true },
 				},
-			}
+			},
+			{
+				code: `
+const x = a ? b : c
+const y = a
+	? b
+	: c
+const z = aaaaaaaaaa
+	? bbbbbbbbbb
+	: cccccccccc
+				`,
+				options: [{ maxLength: 10 }],
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
 		],
 		invalid: [
 			{
@@ -645,7 +735,105 @@ function MyComponent() {
 				errors: [
 					{ messageId: 'before', line: 3, column: 62 },
 				]
-			}
+			},
+			{
+				code: `
+const x = {
+	title: __('email_renderer.tags'),
+	value: _.isEmpty(props.task.tags) ? 'n/a' : (
+		<span>
+			{_.map(props.task.tags, (tag, index, tags) => (
+				<span key={index}>
+					<Tag tag={tag} />
+					{index < tags.length - 1 ? ', ' : ''}
+				</span>
+			))}
+		</span>
+	),
+}
+				`,
+				output: `
+const x = {
+	title: __('email_renderer.tags'),
+	value: _.isEmpty(props.task.tags) 
+		? 'n/a' 
+		: (
+		<span>
+			{_.map(props.task.tags, (tag, index, tags) => (
+				<span key={index}>
+					<Tag tag={tag} />
+					{index < tags.length - 1 ? ', ' : ''}
+				</span>
+			))}
+		</span>
+	),
+}
+				`,
+				options: [{ maxLength: 80 }],
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{ messageId: 'before', line: 4, column: 36 },
+					{ messageId: 'before', line: 4, column: 44 },
+				]
+			},
+			{
+				code: `
+const x = a
+	?
+	b
+	:
+	c
+const y = a
+	? b
+	: c
+const z = aaaaaaaaaa ? bbbbbbbbbb : cccccccccc
+const w = aaaaaaaaaa ? bbbbbbbbbb :
+	cccccccccc
+const u = aaaaaaaaaa ?
+	bbbbbbbbbb :
+	cccccccccc
+				`,
+				output: `
+const x = a
+	? b
+	: c
+const y = a
+	? b
+	: c
+const z = aaaaaaaaaa 
+	? bbbbbbbbbb 
+	: cccccccccc
+const w = aaaaaaaaaa 
+	? bbbbbbbbbb 
+	: cccccccccc
+const u = aaaaaaaaaa 
+	? bbbbbbbbbb 
+	: cccccccccc
+				`,
+				options: [{ maxLength: 10 }],
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{ messageId: 'noBefore', line: 4 },
+					{ messageId: 'noBefore', line: 6 },
+					{ messageId: 'before', line: 10, column: 22 },
+					{ messageId: 'before', line: 10, column: 35 },
+					{ messageId: 'before', line: 11, column: 22 },
+					{ messageId: 'before', line: 11, column: 35 },
+					{ messageId: 'noBefore', line: 12 },
+					{ messageId: 'before', line: 13 },
+					{ messageId: 'noBefore', line: 14 },
+					{ messageId: 'before', line: 14 },
+					{ messageId: 'noBefore', line: 15 },
+				]
+			},
 		]
 	}
 }
