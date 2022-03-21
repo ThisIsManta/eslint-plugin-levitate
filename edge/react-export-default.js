@@ -51,7 +51,7 @@ module.exports = {
 									})
 								}
 
-								checkReactMemo(stub.init, name)
+								checkReactHOC(context, stub.init, name)
 							}
 						}
 					}
@@ -60,7 +60,7 @@ module.exports = {
 			ExportDefaultDeclaration: function (root) {
 				defaultExportNode = root.declaration
 
-				if (!primaryComponentNode && checkReactMemo(root.declaration, componentName)) {
+				if (!primaryComponentNode && checkReactHOC(context, root.declaration, componentName)) {
 					primaryComponentNode = root.declaration
 				}
 			},
@@ -145,38 +145,6 @@ module.exports = {
 					})
 				}
 			},
-		}
-
-		function checkReactMemo(node, name) {
-			if (_.isMatch(node, {
-				type: 'CallExpression',
-				callee: {
-					type: 'MemberExpression',
-					object: { type: 'Identifier', name: 'React' },
-					property: { type: 'Identifier', name: 'memo' },
-				},
-			}) && node.arguments.length > 0 && isReactFunctionalComponent(node.arguments[0])) {
-				if (node.arguments[0].type === 'ArrowFunctionExpression') {
-					context.report({
-						node: node.arguments[0],
-						message: 'Expected a React component to be written using `function` keyword',
-					})
-
-				} else if (node.arguments[0].type === 'FunctionExpression' && (node.arguments[0].id ? node.arguments[0].id.name : '') !== name) {
-					context.report({
-						node: node.arguments[0].id || node.arguments[0],
-						message: `Expected the React component to be named "${name}"`,
-						fix: node.arguments[0].id
-							? fixer => fixer.replaceText(node.arguments[0].id, name)
-							: fixer => fixer.insertTextAfter(context.getFirstToken(node.arguments[0]), ' ' + name)
-					})
-
-				} else {
-					return true
-				}
-			}
-
-			return false
 		}
 	},
 	tests: {
@@ -545,6 +513,50 @@ const CLASS_COMPONENT = {
 			type: 'Identifier',
 		},
 	},
+}
+
+const REACT_TOP_LEVEL_API_CALL = {
+	type: 'CallExpression',
+	callee: {
+		type: 'MemberExpression',
+		object: { type: 'Identifier', name: 'React' },
+		property: { type: 'Identifier' },
+	},
+}
+
+function checkReactHOC(context, node, name) {
+	if (
+		_.isMatch(node, REACT_TOP_LEVEL_API_CALL) &&
+		/^(memo|lazy|forwardRef)$/.test(node.callee.property.name) &&
+		node.arguments.length > 0 &&
+		isReactFunctionalComponent(node.arguments[0])
+	) {
+		const firstArgument = node.arguments[0]
+
+		if (firstArgument.type === 'ArrowFunctionExpression') {
+			context.report({
+				node: firstArgument,
+				message: 'Expected a React component to be written using `function` keyword',
+			})
+
+		} else if (
+			firstArgument.type === 'FunctionExpression' &&
+			(firstArgument.id ? firstArgument.id.name : '') !== name
+		) {
+			context.report({
+				node: firstArgument.id || firstArgument,
+				message: `Expected the React component to be named "${name}"`,
+				fix: firstArgument.id
+					? fixer => fixer.replaceText(firstArgument.id, name)
+					: fixer => fixer.insertTextAfter(context.getFirstToken(firstArgument), ' ' + name)
+			})
+
+		} else {
+			return true
+		}
+	}
+
+	return false
 }
 
 function isReactFunctionalComponent(node) {
