@@ -1,6 +1,6 @@
 const _ = require('lodash')
 
-const ALLOWED_PATTERN = /^(returns|renders|calls|fetches|sets|throws|does not (return|render|call|fetch|set|throw) )/
+const ALLOWED_TEST_PATTERN = /^(returns|renders|calls|fetches|sets|throws|does not (return|render|call|fetch|set|throw) )/
 const DISALLOWED_WORDS = ['proper', 'correct', 'appropriate', 'accurate', 'perfect']
 const DISALLOWED_PATTERN = new RegExp('\\W((' + DISALLOWED_WORDS.join('|') + ')(ly)?)(\\W|$)', 'i')
 
@@ -12,35 +12,38 @@ module.exports = {
 		},
 		messages: {
 			start: 'Expected the test case title to start with "(does not) return/render/call/fetch/set/throw(s) ... (, given ...)" only',
-			vague: 'Expected the test case title to provide more details rather using the word {{word}}',
+			vague: 'Expected the test case title to provide more details rather using the word "{{word}}"',
+			direct: 'Expected the description title to be the direct reference of the function (removing the string quotes)',
 		},
 	},
-	create: function(context) {
+	create: function (context) {
 		return {
-			ExpressionStatement: function(root) {
+			ExpressionStatement: function (root) {
 				const functionCall = _.get(root, 'expression.callee.name')
 				if (functionCall !== 'it' && functionCall !== 'test') {
 					return
 				}
 
 				const titleNode = _.get(root, 'expression.arguments.0')
-				if (!titleNode || _.isString(titleNode.value) === false) {
+				const titleText = getText(titleNode)
+				if (_.isString(titleText) === false) {
 					return
 				}
 
-				if (ALLOWED_PATTERN.test(titleNode.value) === false) {
+
+				if (ALLOWED_TEST_PATTERN.test(titleText) === false) {
 					return context.report({
 						node: titleNode,
 						messageId: 'start',
 					})
 				}
 
-				if (DISALLOWED_PATTERN.test(titleNode.value)) {
+				if (DISALLOWED_PATTERN.test(titleText)) {
 					return context.report({
 						node: titleNode,
 						messageId: 'vague',
 						data: {
-							word: titleNode.value.match(DISALLOWED_PATTERN)[1]
+							word: titleText.match(DISALLOWED_PATTERN)[1]
 						}
 					})
 				}
@@ -77,6 +80,10 @@ module.exports = {
 				code: 'it("does not return something", function() {})',
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
+			{
+				code: 'it(`returns ${something}`, function() {})',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+			},
 		],
 		invalid: [
 			{
@@ -104,6 +111,27 @@ module.exports = {
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'vague' }],
 			},
+			{
+				code: 'it(`${something}returns`, function() {})',
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				errors: [{ messageId: 'start' }],
+			},
 		],
 	},
 }
+
+function getText(node) {
+	if (!node) {
+		return undefined
+	}
+
+	if (node.type === 'Literal' && _.isString(node.value)) {
+		return node.value
+	}
+
+	if (node.type === 'TemplateLiteral') {
+		return _.get(node, 'quasis.0.value.cooked')
+	}
+}
+
+module.exports.getText = getText
