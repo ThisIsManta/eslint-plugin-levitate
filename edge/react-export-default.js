@@ -18,50 +18,90 @@ module.exports = {
 			name: componentName,
 		}
 
-		let primaryComponentNode = null
 		let defaultExportNode = null
+		let topLevelDeclarations = []
+		let primaryComponentNode = null
+		let primaryComponentIsUsed = false
+
+		function setIfPrimaryComponentIsUsed(root) {
+			if (root.name !== componentName) {
+				return
+			}
+
+			if (defaultExportNode) {
+				let node = root.parent
+				while (node) {
+					if (node === defaultExportNode) {
+						primaryComponentIsUsed = true
+						break
+					}
+					node = node.parent
+				}
+			}
+		}
 
 		return {
 			Program: function (root) {
-				const topLevelNodes = root.body.map(node => {
-					if ((node.type === 'ExportNamedDeclaration' || node.type === 'ExportDefaultDeclaration') && node.declaration) {
-						return node.declaration
+				defaultExportNode = root.body.find(node => node.type === 'ExportDefaultDeclaration')
+
+				topLevelDeclarations = _.chain(root.body)
+					.map(node => {
+						if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportNamedDeclaration') {
+							return node.declaration
+						}
+
+						return node
+					})
+					.flatMap(node => context.getDeclaredVariables(node))
+					.flatMap(({ name, defs }) => defs.map(({ type, node }) => ({ name, type, node })))
+					.uniqBy(definition => definition.node)
+					.value()
+
+				for (const { name, type, node } of topLevelDeclarations) {
+					if (name === componentName) {
+						if (type === 'FunctionName') {
+							primaryComponentNode = node
+						}
+
+						if (type === 'ClassName' && _.isMatch(node, CLASS_COMPONENT)) {
+							primaryComponentNode = node
+						}
+
+						if (type === 'Variable') {
+							primaryComponentNode = node
+						}
 					}
 
-					return node
-				})
-
-				for (const node of topLevelNodes) {
-					if (_.isMatch(node.id, componentId) && (_.isMatch(node, { type: 'FunctionDeclaration' }) || _.isMatch(node, CLASS_COMPONENT))) {
-						primaryComponentNode = node
-					}
-
-					if (node.type === 'VariableDeclaration') {
-						for (const stub of node.declarations) {
-							if (_.isMatch(stub, { type: 'VariableDeclarator', id: { type: 'Identifier' } })) {
-								const name = stub.id.name
-								if (name === componentName) {
-									primaryComponentNode = stub
-								}
-
-								if (stub.init && (stub.init.type === 'ArrowFunctionExpression' || stub.init.type === 'FunctionExpression') && isReactFunctionalComponent(stub.init, name)) {
-									context.report({
-										node: stub,
-										message: 'Expected a React component to be written using `function` keyword',
-									})
-								}
-
-								checkReactHOC(context, stub.init, name)
-							}
+					if (type === 'Variable') {
+						if (
+							node.init &&
+							(node.init.type === 'ArrowFunctionExpression' || node.init.type === 'FunctionExpression') &&
+							isReactFunctionalComponent(node.init)
+						) {
+							context.report({
+								node: node,
+								message: 'Expected the React component to be written as `function ' + name + '(props) {...}`',
+							})
 						}
 					}
 				}
 			},
-			ExportDefaultDeclaration: function (root) {
-				defaultExportNode = root.declaration
+			Identifier: function (root) {
+				if (_.isMatch(root.parent, { type: 'CallExpression', arguments: [root] })) {
+					setIfPrimaryComponentIsUsed(root)
+				}
+			},
+			JSXIdentifier: setIfPrimaryComponentIsUsed,
+			FunctionExpression: function (root) {
+				if (!isReactFunctionalComponent(root)) {
+					return
+				}
 
-				if (!primaryComponentNode && checkReactHOC(context, root.declaration, componentName)) {
-					primaryComponentNode = root.declaration
+				if (root.parent && root.parent.type === 'CallExpression' && root.parent.arguments.includes(root)) {
+					context.report({
+						node: root,
+						message: 'Expected a React component argument to be written as an arrow function',
+					})
 				}
 			},
 			'Program:exit': function (root) {
@@ -73,25 +113,25 @@ module.exports = {
 
 				if (!primaryComponentNode) {
 					return context.report({
-						node: context.getSourceCode().getFirstToken(root),
+						node: firstNode,
 						message: `Expected the React file to have a React component named "${componentName}"`,
 					})
 				}
 
 				if (!defaultExportNode) {
 					return context.report({
-						node: context.getSourceCode().getFirstToken(root),
+						node: firstNode,
 						message: 'Expected the React file to have `export default` keyword',
 					})
 				}
 
-				if (defaultExportNode === primaryComponentNode) {
+				if (defaultExportNode.declaration === primaryComponentNode) {
 					return
 				}
 
 				// Find `export default MyComponent` and report not having `export default` in front of `class` or `function` keyword
 				if (
-					_.isMatch(defaultExportNode, componentId) &&
+					_.isMatch(defaultExportNode.declaration, componentId) &&
 					primaryComponentNode.type !== 'VariableDeclarator'
 				) {
 					return context.report({
@@ -99,49 +139,40 @@ module.exports = {
 						message: 'Expected `export default` keyword to be here',
 						fix: fixer => [
 							fixer.insertTextBefore(primaryComponentNode, 'export default '),
-							fixer.removeRange(defaultExportNode.parent.range),
+							fixer.removeRange(defaultExportNode.range),
 						]
 					})
 				}
 
-				// Skip checking
-				// `export default enhance(MyComponent)`
-				// `export default (props) => <MyComponent {...props} />`
-				const primaryComponentUsed = findNode(
-					defaultExportNode,
-					node =>
-						_.isMatch(node, componentId) ||
-						_.isMatch(node, { type: 'JSXIdentifier', name: componentName }),
-					[],
-					new Set([defaultExportNode.parent])
-				)
-				if (!primaryComponentUsed) {
+				// Skip reporting `export default enhance(MyComponent)`
+				// Skip reporting `export default (props) => <MyComponent {...props} />`
+				if (!primaryComponentIsUsed) {
 					context.report({
-						node: defaultExportNode,
+						node: defaultExportNode.declaration,
 						message: `Expected an enhanced component to render the React component named "${componentName}"`,
 					})
 				}
 
 				if (
-					defaultExportNode.type === 'FunctionDeclaration' ||
-					defaultExportNode.type === 'ClassDeclaration'
+					defaultExportNode.declaration.type === 'FunctionDeclaration' ||
+					defaultExportNode.declaration.type === 'ClassDeclaration'
 				) {
 					context.report({
-						node: defaultExportNode,
-						message: `Expected an enhanced component to be nameless by writing as an arrow function`,
+						node: defaultExportNode.declaration,
+						message: `Expected an enhanced component to be written as an arrow function`,
 					})
 				}
 
 				if (
-					defaultExportNode.type === 'ArrowFunctionExpression' &&
-					defaultExportNode.body.type === 'BlockStatement' &&
-					defaultExportNode.body.body.length === 1 &&
-					defaultExportNode.body.body[0].type === 'ReturnStatement'
+					defaultExportNode.declaration.type === 'ArrowFunctionExpression' &&
+					defaultExportNode.declaration.body.type === 'BlockStatement' &&
+					defaultExportNode.declaration.body.body.length === 1 &&
+					defaultExportNode.declaration.body.body[0].type === 'ReturnStatement'
 				) {
 					// Do not early return
 					context.report({
-						node: defaultExportNode.body.body[0],
-						message: 'Expected the arrow function to return the value without `return` keyword',
+						node: defaultExportNode.declaration.body.body[0],
+						message: 'Expected the arrow function to return the value by using the shorthand syntax',
 					})
 				}
 			},
@@ -198,18 +229,7 @@ module.exports = {
 			{
 				code: `
 				function A(props) { return <div></div> }
-				export default (props) => <A />
-				`,
-				filename: 'A.js',
-				parserOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
-				},
-			},
-			{
-				code: `
-				export default function A(props) { return <div></div> }
+				export default () => <A />
 				`,
 				filename: 'A.js',
 				parserOptions: {
@@ -222,6 +242,17 @@ module.exports = {
 				code: `
 				export function A(props) { return <div></div> }
 				export default () => <A />
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				export default function A(props) { return <div></div> }
 				`,
 				filename: 'A.js',
 				parserOptions: {
@@ -248,8 +279,8 @@ module.exports = {
 			},
 			{
 				code: `
+				const A = React.memo(() => <div></div>)
 				export default () => <A />
-				const A = React.memo(function A() { return <div></div> })
 				`,
 				filename: 'A.js',
 				parserOptions: {
@@ -260,19 +291,20 @@ module.exports = {
 			},
 			{
 				code: `
-				export default React.memo(function A() { return <div></div> })
-				`,
-				filename: 'A.js',
-				parserOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
-				},
-			},
-			{
-				code: `
-				export default React.memo(() => { return <A/> })
 				function A() { return <div></div> }
+				export default React.memo(() => { return <A/> })
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				const A = React.memo(() => { return <div></div> })
+				export default () => <A />
 				`,
 				filename: 'A.js',
 				parserOptions: {
@@ -314,15 +346,15 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected a React component to be written using `function` keyword',
+						message: 'Expected the React component to be written as `function X(props) {...}`',
 						line: 2,
 					},
 					{
-						message: 'Expected a React component to be written using `function` keyword',
+						message: 'Expected the React component to be written as `function Y(props) {...}`',
 						line: 3,
 					},
 					{
-						message: 'Expected a React component to be written using `function` keyword',
+						message: 'Expected the React component to be written as `function Z(props) {...}`',
 						line: 4,
 					},
 				],
@@ -356,7 +388,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected the arrow function to return the value without `return` keyword',
+						message: 'Expected the arrow function to return the value by using the shorthand syntax',
 					},
 				],
 			},
@@ -397,7 +429,7 @@ module.exports = {
 						message: 'Expected an enhanced component to render the React component named "A"',
 					},
 					{
-						message: 'Expected an enhanced component to be nameless by writing as an arrow function',
+						message: 'Expected an enhanced component to be written as an arrow function',
 					},
 				],
 			},
@@ -414,7 +446,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected an enhanced component to be nameless by writing as an arrow function',
+						message: 'Expected an enhanced component to be written as an arrow function',
 					},
 				],
 			},
@@ -434,14 +466,14 @@ module.exports = {
 						message: 'Expected an enhanced component to render the React component named "A"',
 					},
 					{
-						message: 'Expected an enhanced component to be nameless by writing as an arrow function',
+						message: 'Expected an enhanced component to be written as an arrow function',
 					},
 				],
 			},
 			{
 				code: `
-        export default () => <A />
-        const A = React.memo(() => { return <div></div> })
+				export default function A(props) { return <div></div> }
+				const B = React.memo(function C() { return <div></div> })
 				`,
 				filename: 'A.js',
 				parserOptions: {
@@ -451,51 +483,9 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected a React component to be written using `function` keyword',
+						message: 'Expected a React component argument to be written as an arrow function',
 					},
 				],
-			},
-			{
-				code: `
-        export default () => <A />
-        const A = React.memo(function () { return <div></div> })
-				`,
-				filename: 'A.js',
-				parserOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
-				},
-				errors: [
-					{
-						message: 'Expected the React component to be named "A"',
-					},
-				],
-				output: `
-        export default () => <A />
-        const A = React.memo(function A () { return <div></div> })
-				`,
-			},
-			{
-				code: `
-        export default () => <A />
-        const A = React.memo(function B() { return <div></div> })
-				`,
-				filename: 'A.js',
-				parserOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
-				},
-				errors: [
-					{
-						message: 'Expected the React component to be named "A"',
-					},
-				],
-				output: `
-        export default () => <A />
-        const A = React.memo(function A() { return <div></div> })
-				`,
 			},
 		],
 	},
@@ -513,50 +503,6 @@ const CLASS_COMPONENT = {
 			type: 'Identifier',
 		},
 	},
-}
-
-const REACT_TOP_LEVEL_API_CALL = {
-	type: 'CallExpression',
-	callee: {
-		type: 'MemberExpression',
-		object: { type: 'Identifier', name: 'React' },
-		property: { type: 'Identifier' },
-	},
-}
-
-function checkReactHOC(context, node, name) {
-	if (
-		_.isMatch(node, REACT_TOP_LEVEL_API_CALL) &&
-		/^(memo|lazy|forwardRef)$/.test(node.callee.property.name) &&
-		node.arguments.length > 0 &&
-		isReactFunctionalComponent(node.arguments[0])
-	) {
-		const firstArgument = node.arguments[0]
-
-		if (firstArgument.type === 'ArrowFunctionExpression') {
-			context.report({
-				node: firstArgument,
-				message: 'Expected a React component to be written using `function` keyword',
-			})
-
-		} else if (
-			firstArgument.type === 'FunctionExpression' &&
-			(firstArgument.id ? firstArgument.id.name : '') !== name
-		) {
-			context.report({
-				node: firstArgument.id || firstArgument,
-				message: `Expected the React component to be named "${name}"`,
-				fix: firstArgument.id
-					? fixer => fixer.replaceText(firstArgument.id, name)
-					: fixer => fixer.insertTextAfter(context.getFirstToken(firstArgument), ' ' + name)
-			})
-
-		} else {
-			return true
-		}
-	}
-
-	return false
 }
 
 function isReactFunctionalComponent(node) {
@@ -579,65 +525,4 @@ function isReactFunctionalComponent(node) {
 					stub.argument.type === 'JSXFragment')
 		)
 	)
-}
-
-function findNodes(sourceNode, matcher) {
-	const matchingNodes = []
-	travelNodes(sourceNode, matcher, matchingNodes)
-	return matchingNodes
-}
-
-module.exports.findNode = findNode
-
-function findNode(sourceNode, matcher) {
-	const matchingNodes = []
-	travelNodes(sourceNode, matcher, matchingNodes)
-	return matchingNodes[0] || null
-}
-
-module.exports.findNodes = findNodes
-
-/**
- * @internal
- */
-function travelNodes(sourceNode, matcher, matchingNodes, parentNodes = [], visitedNodes = new Set()) {
-	if (visitedNodes.has(sourceNode)) {
-		return
-	} else {
-		visitedNodes.add(sourceNode)
-	}
-
-	if (_.isObject(sourceNode)) {
-		if (matcher(sourceNode, parentNodes)) {
-			matchingNodes.push(sourceNode)
-		}
-
-		parentNodes = parentNodes.concat(sourceNode)
-
-		for (const name in sourceNode) {
-			if (name === 'parent') {
-				continue
-			}
-
-			travelNodes(
-				sourceNode[name],
-				matcher,
-				matchingNodes,
-				parentNodes,
-				visitedNodes
-			)
-		}
-	} else if (_.isArrayLike(sourceNode)) {
-		parentNodes = parentNodes.concat(sourceNode)
-
-		for (const rank of sourceNode) {
-			travelNodes(
-				sourceNode[rank],
-				matcher,
-				matchingNodes,
-				parentNodes,
-				visitedNodes
-			)
-		}
-	}
 }
