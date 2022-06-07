@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node tests.js",
-    "docs": "node generateREADME.js && (git status --short | grep README.md && git add README.md && git commit -m \"Updated README.md\") || echo \"No updates on README.md\"",
+    "docs": "node generateREADME.js && (git status --short | grep README.md && git add README.md && git commit -m \"Update README.md\") || echo \"No updates on README.md\"",
     "preversion": "npm install && npm run test && npm run docs && git push --dry-run origin master",
     "version": "npm publish",
     "postversion": "git push --tags origin master"
@@ -25,17 +25,17 @@
   },
   "homepage": "https://github.com/ThisIsManta/eslint-plugin-levitate#readme",
   "peerDependencies": {
-    "@typescript-eslint/parser": "^4.9.0",
-    "eslint": "^7.14.0"
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.168",
-    "@types/react": "^17.0.3",
-    "moment": "^2.29.1"
+    "@types/lodash": "^4.14.182",
+    "@types/react": "^18.0.12",
+    "moment": "^2.29.3"
   },
   "dependencies": {
     "detect-indent": "^6.0.0",
-    "glob": "^7.1.6",
-    "lodash": "^4.17.20"
+    "glob": "^8.0.3",
+    "lodash": "^4.17.21"
   }
 }
