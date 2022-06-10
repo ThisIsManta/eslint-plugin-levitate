@@ -109,7 +109,19 @@ module.exports = {
 
 		function check(props /* { [propName: string]: KeyAndValueNode, ... } */) {
 			const originalNames = _.keys(props)
+
+			if (originalNames.length === 0) {
+				return
+			}
+
 			const sortedNames = _.sortBy(originalNames, findIndex)
+
+			// Skip auto-fixing when comments are around
+			const commentFound = (
+				sourceCode.getCommentsBefore(props[_.first(originalNames)]).length > 0 ||
+				sourceCode.getCommentsAfter(props[_.last(originalNames)]).length > 0 ||
+				sourceCode.commentsExistBetween(props[_.first(originalNames)], props[_.last(originalNames)])
+			)
 
 			for (let index = 0; index < originalNames.length; index++) {
 				if (originalNames[index] !== sortedNames[index]) {
@@ -119,7 +131,7 @@ module.exports = {
 					context.report({
 						node: foundNode,
 						message: `Expected the prop \`${expectedName}\` to be sorted here`,
-						fix: (fixer) => _.chain(props)
+						fix: commentFound ? null : (fixer) => _.chain(props)
 							.values()
 							.map((originalNode, index) => {
 								if (originalNames[index] === sortedNames[index]) {
@@ -424,6 +436,69 @@ module.exports = {
 						line: 17,
 					},
 				],
+			},
+			{
+				code: `
+				type Props = {
+					// Comment
+					ref: string
+					key: string
+				}
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 4,
+					}
+				]
+			},
+			{
+				code: `
+				type Props = {
+					ref: string
+					// Comment
+					key: string
+				}
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 3,
+					}
+				]
+			},
+			{
+				code: `
+				type Props = {
+					ref: string
+					key: string
+					// Comment
+				}
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 3,
+					}
+				]
 			},
 		],
 	},
