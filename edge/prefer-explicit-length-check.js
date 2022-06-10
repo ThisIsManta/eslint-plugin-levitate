@@ -5,6 +5,7 @@ module.exports = {
 	meta: {
 		docs: {
 			description: 'enforce comparing `length` using an explicit comparison operator',
+			category: 'Stylistic Issues',
 		},
 		schema: [
 			{
