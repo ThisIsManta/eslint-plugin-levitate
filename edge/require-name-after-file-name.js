@@ -4,9 +4,9 @@ const glob = require('glob').sync
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce naming an identifier after the file name of its `require` statement',
-			category: 'Variables',
 		},
 		schema: [
 			{

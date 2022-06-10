@@ -20,9 +20,9 @@ const defaultOption = options[0]
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce naming enumerations consistently; the possible options are ' + options.map(option => '`"' + option + '"`' + (option === defaultOption ? ' (default)' : '')).join(', '),
-			category: 'Stylistic Issues',
 		},
 		schema: [
 			{

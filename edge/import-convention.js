@@ -4,9 +4,9 @@ const fp = require('path')
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce naming imported identifiers after the user-defined list',
-			category: 'Variables',
 		},
 		schema: {
 			type: 'array',

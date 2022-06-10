@@ -1,8 +1,8 @@
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce exporting an `interface`, unless it is inside a `declare` block',
-			category: 'Stylistic Issues',
 		},
 	},
 	create: function (context) {

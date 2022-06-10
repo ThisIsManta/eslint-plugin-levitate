@@ -10,9 +10,9 @@ const ESLINT = /^eslint-(disable|enable)/
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce starting a single-line comment with either `TODO:`, `HACK:`, `See {url}`, or a first-capitalized word',
-			category: 'Stylistic Issues',
 		},
 	},
 	create: function(context) {

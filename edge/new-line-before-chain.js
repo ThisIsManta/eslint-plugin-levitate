@@ -2,13 +2,11 @@ const _ = require('lodash')
 
 module.exports = {
 	meta: {
-		/**
-		 * Use new-line-between-statement rule instead
-		 */
 		deprecated: true,
+		replacedBy: ['levitate/new-line-between-blocks'],
+		type: 'layout',
 		docs: {
 			description: 'enforce having a new line per chaining method',
-			category: 'Stylistic Issues',
 		},
 		fixable: 'whitespace',
 		messages: {

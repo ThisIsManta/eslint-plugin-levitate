@@ -3,9 +3,9 @@
 // Copied from https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v23.0.0/rules/explicit-length-check.js
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce comparing `length` using an explicit comparison operator',
-			category: 'Stylistic Issues',
 		},
 		schema: [
 			{

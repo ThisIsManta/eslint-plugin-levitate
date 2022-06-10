@@ -2,9 +2,9 @@ const _ = require('lodash')
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce naming an identifier after the user-defined list of its `require` statement',
-			category: 'Variables',
 		},
 		schema: [
 			{ type: 'object' }

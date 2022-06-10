@@ -2,6 +2,7 @@ const _ = require('lodash')
 
 module.exports = {
   meta: {
+    type: 'problem',
     docs: {
       description: 'enforce writing type definition for React props',
     },

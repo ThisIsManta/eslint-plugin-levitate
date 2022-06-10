@@ -4,9 +4,9 @@ const { getText } = require('./test-case-title')
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce using a function reference as a test case description',
-			category: 'Stylistic Issues',
 		},
 		messages: {
 			direct: 'Expected the description to be the direct reference of the under-testing function by removing the string quotes',

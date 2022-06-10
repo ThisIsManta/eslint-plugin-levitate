@@ -3,6 +3,7 @@ const _ = require('lodash')
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce writing React components consistently',
 		},

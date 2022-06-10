@@ -2,9 +2,9 @@ const CONDITION = 'onlyIfMoreThanOneReturns'
 
 module.exports = {
 	meta: {
+		type: 'problem',
 		docs: {
 			description: 'enforce writing an explicit return type for exported functions',
-			category: 'Possible Errors',
 		},
 		schema: [
 			{

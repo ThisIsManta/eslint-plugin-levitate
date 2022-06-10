@@ -2,13 +2,11 @@ const _ = require('lodash')
 
 module.exports = {
 	meta: {
-		/**
-		 * Use https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/naming-convention.md instead
-		 */
 		deprecated: true,
+		replacedBy: ['@typescript-eslint/naming-convention'],
+		type: 'suggestion',
 		docs: {
 			description: 'enforce naming user-defined interfaces starting with "I"',
-			category: 'Stylistic Issues',
 		},
 	},
 	create: function (context) {

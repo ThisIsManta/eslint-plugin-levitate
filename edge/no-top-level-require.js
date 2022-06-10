@@ -1,8 +1,8 @@
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce writing no top-level `require`',
-			category: 'ECMAScript 6',
 		},
 	},
 	create: function (context) {

@@ -3,9 +3,9 @@ const detectIndent = require('detect-indent')
 
 module.exports = {
 	meta: {
+		type: 'layout',
 		docs: {
 			description: 'enforce having new lines within statement',
-			category: 'Stylistic Issues',
 		},
 		fixable: 'whitespace',
 		schema: {

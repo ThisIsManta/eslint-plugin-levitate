@@ -29,9 +29,9 @@ const SORT_TYPES = {
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce sorting `import` statements. By default, this will sort according to [Renke](https://github.com/renke/import-sort/tree/master/packages/import-sort-style-module)',
-			category: 'ECMAScript 6',
 		},
 		schema: [
 			{ enum: Object.keys(SORT_TYPES) }

@@ -9,7 +9,6 @@ module.exports = {
 		type: "layout",
 		docs: {
 			description: "enforce having new lines between blocks and before `else` and `catch`",
-			category: "Stylistic Issues",
 		},
 		fixable: "whitespace",
 		messages: {

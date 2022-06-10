@@ -4,9 +4,9 @@ const fp = require('path')
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce writing an import path pointing to the closest index file',
-			category: 'ECMAScript 6',
 		},
 	},
 	create: function (context) {

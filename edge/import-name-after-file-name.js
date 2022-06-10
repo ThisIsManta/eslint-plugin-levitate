@@ -6,9 +6,9 @@ const ALPHANUMERIC = /[A-Za-z0-9]/
 
 module.exports = {
 	meta: {
+		type: 'suggestion',
 		docs: {
 			description: 'enforce naming an imported identifier after file or directory name, for example `import MyComponent from "./MyComponent"`',
-			category: 'Variables',
 		},
 	},
 	create: function (context) {

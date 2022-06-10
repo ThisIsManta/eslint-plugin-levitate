@@ -13,9 +13,9 @@ const DEFAULT_PROPS_ORDER = [
 
 module.exports = {
 	meta: {
+		type: 'layout',
 		docs: {
 			description: 'enforce consistent props sorting',
-			category: 'Stylistic Issues',
 		},
 		schema: [
 			{
