@@ -10,11 +10,13 @@
 |`new-line-before-chain`|enforce having a new line per chaining method||
 |`new-line-between-blocks`|enforce having new lines between blocks and before `else` and `catch`||
 |`new-line-within-statement`|enforce having new lines within statement||
+|`no-shortened-identifier`|enforce naming an identifier without the user-defined abbreviations||
 |`no-top-level-require`|enforce writing no top-level `require`||
 |`prefer-explicit-length-check`|enforce comparing `length` using an explicit comparison operator|Yes|
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`||
 |`react-export-default`|enforce writing React components consistently|Yes|
 |`react-prop-type`|enforce writing type definition for React props||
+|`react-sort-props`|enforce consistent props sorting|Yes|
 |`require-name-after-file-name`|enforce naming an identifier after the file name of its `require` statement||
 |`require-name-after-predefined-name`|enforce naming an identifier after the user-defined list of its `require` statement|Yes|
 |`sort-imports`|enforce sorting `import` statements. By default, this will sort according to [Renke](https://github.com/renke/import-sort/tree/master/packages/import-sort-style-module)|Yes|
