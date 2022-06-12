@@ -30,6 +30,7 @@ module.exports = {
 	create: function (context) {
 		const matchers = (context.options[0] || DEFAULT_PROPS_ORDER).map(pattern => pattern === '*' ? null : new RegExp('^' + pattern.replace(/\*/g, '.+') + '$'))
 		const sourceCode = context.getSourceCode()
+		const wholeFileText = sourceCode.getText()
 
 		return {
 			TSTypeLiteral: function (root) { // Match `type Props = { ... }` and `function (props: { ... })`
@@ -116,12 +117,33 @@ module.exports = {
 
 			const sortedNames = _.sortBy(originalNames, findIndex)
 
-			// Skip auto-fixing when comments are around
-			const commentFound = (
-				sourceCode.getCommentsBefore(props[_.first(originalNames)]).length > 0 ||
-				sourceCode.getCommentsAfter(props[_.last(originalNames)]).length > 0 ||
-				sourceCode.commentsExistBetween(props[_.first(originalNames)], props[_.last(originalNames)])
-			)
+			const takenComments = new Set()
+			const surroundingCommentMap = new Map()
+			for (const node of _.values(props)) {
+				const aboveComments = _.reject(sourceCode.getCommentsBefore(node), comment => takenComments.has(comment))
+				for (const comment of aboveComments) {
+					takenComments.add(comment)
+				}
+
+				const rightComment = _.find(sourceCode.getCommentsAfter(node), comment =>
+					comment.type === 'Line' &&
+					comment.loc.start.line === node.loc.end.line
+				)
+				if (rightComment) {
+					takenComments.add(rightComment)
+				}
+
+				surroundingCommentMap.set(node, { aboveComments, rightComment })
+			}
+
+			function getNodeRangeWithComments(node) {
+				const { aboveComments, rightComment } = surroundingCommentMap.get(node)
+
+				return [
+					aboveComments.length > 0 ? aboveComments[0].range[0] : node.range[0],
+					rightComment ? rightComment.range[1] : node.range[1]
+				]
+			}
 
 			for (let index = 0; index < originalNames.length; index++) {
 				if (originalNames[index] !== sortedNames[index]) {
@@ -131,20 +153,24 @@ module.exports = {
 					context.report({
 						node: foundNode,
 						message: `Expected the prop \`${expectedName}\` to be sorted here`,
-						fix: commentFound ? null : (fixer) => _.chain(props)
+						fix: fixer => _.chain(props)
 							.values()
 							.map((originalNode, index) => {
 								if (originalNames[index] === sortedNames[index]) {
 									return null
 								}
 
-								// Relocate type separators as in `type Props { a: string; b: string }`
-								const sortedNode = props[sortedNames[index]]
-								const originalText = sourceCode.getText(originalNode)
-								const [originalSeparator] = originalText.match(/[;,]$/) || ['']
-								const replacementText = sourceCode.getText(sortedNode).replace(/[;,]$/, '') + originalSeparator
+								const expandedOriginalRange = getNodeRangeWithComments(originalNode)
+								const [originalSeparator] = sourceCode.getText(originalNode).match(/[;,]$/) || ['']
 
-								return fixer.replaceText(originalNode, replacementText)
+								const replacementNode = props[sortedNames[index]]
+								const expandedReplacementRange = getNodeRangeWithComments(replacementNode)
+								const replacementText =
+									wholeFileText.substring(expandedReplacementRange[0], replacementNode.range[0]) +
+									sourceCode.getText(replacementNode).replace(/[;,]$/, '') + originalSeparator +
+									wholeFileText.substring(replacementNode.range[1], expandedReplacementRange[1])
+
+								return fixer.replaceTextRange(expandedOriginalRange, replacementText)
 							})
 							.compact()
 							.reverse()
@@ -445,30 +471,26 @@ module.exports = {
 			{
 				code: `
 				type Props = {
-					// Comment
-					ref: string
-					key: string
+					// Comment 1
+					// Comment 2
+					ref: string; // Comment 3
+					/**
+					 * Comment 4
+					 */
+					key: string // Comment 5
+					// Comment 6
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
-				},
-				errors: [
-					{
-						message: 'Expected the prop `key` to be sorted here',
-						line: 4,
-					}
-				]
-			},
-			{
-				code: `
+				output: `
 				type Props = {
-					ref: string
-					// Comment
-					key: string
+					/**
+					 * Comment 4
+					 */
+					key: string; // Comment 5
+					// Comment 1
+					// Comment 2
+					ref: string // Comment 3
+					// Comment 6
 				}
 				`,
 				parser: require.resolve('@typescript-eslint/parser'),
@@ -480,28 +502,7 @@ module.exports = {
 				errors: [
 					{
 						message: 'Expected the prop `key` to be sorted here',
-						line: 3,
-					}
-				]
-			},
-			{
-				code: `
-				type Props = {
-					ref: string
-					key: string
-					// Comment
-				}
-				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
-				},
-				errors: [
-					{
-						message: 'Expected the prop `key` to be sorted here',
-						line: 3,
+						line: 5,
 					}
 				]
 			},
