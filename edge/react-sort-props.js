@@ -138,8 +138,13 @@ module.exports = {
 									return null
 								}
 
+								// Relocate type separators as in `type Props { a: string; b: string }`
 								const sortedNode = props[sortedNames[index]]
-								return fixer.replaceText(originalNode, sourceCode.getText(sortedNode))
+								const originalText = sourceCode.getText(originalNode)
+								const [originalSeparator] = originalText.match(/[;,]$/) || ['']
+								const replacementText = sourceCode.getText(sortedNode).replace(/[;,]$/, '') + originalSeparator
+
+								return fixer.replaceText(originalNode, replacementText)
 							})
 							.compact()
 							.reverse()
@@ -497,6 +502,26 @@ module.exports = {
 					{
 						message: 'Expected the prop `key` to be sorted here',
 						line: 3,
+					}
+				]
+			},
+			{
+				code: `
+				type Props = { ref: string; key: string }
+				`,
+				output: `
+				type Props = { key: string; ref: string }
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 2,
 					}
 				]
 			},
