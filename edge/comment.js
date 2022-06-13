@@ -5,7 +5,7 @@ const HACK = /^\s*(HACK|XXX)\W\s*/i
 const TODO = /^\s*TODO\W\s*/i
 const FIXME = /^\s*FIXME\W\s*/i
 const NOTE = /^\s*(Note\W)\s/i
-const URL = /^\s\w+:\/\/.+/
+const URL = /^\s(?:See\s*:\s*)?(\w+:\/\/.+)/i
 const ESLINT = /^eslint-(disable|enable)/
 
 module.exports = {
@@ -49,7 +49,7 @@ module.exports = {
 						if (URL.test(node.value)) {
 							return context.report({
 								node,
-								message: `Expected the comment to be written as "See ${node.value.trim()}"`,
+								message: `Expected the comment to be written as "See ${node.value.match(URL)[1]}"`,
 							})
 						}
 
@@ -68,7 +68,7 @@ module.exports = {
 							return null
 						}
 
-						// Skip if this is a single word or an ESLint instruction
+						// Skip if this is a single word or an ESLint directive
 						const text = node.value.trim()
 						if (
 							text.includes(' ') === false ||
@@ -111,6 +111,10 @@ module.exports = {
 			},
 			{
 				code: '// http://www.example.com/xxx',
+				errors: [{ message: 'Expected the comment to be written as "See http://www.example.com/xxx"' }],
+			},
+			{
+				code: '// See: http://www.example.com/xxx',
 				errors: [{ message: 'Expected the comment to be written as "See http://www.example.com/xxx"' }],
 			},
 			{
