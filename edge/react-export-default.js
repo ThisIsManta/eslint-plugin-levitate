@@ -115,14 +115,14 @@ module.exports = {
 				if (!primaryComponentNode) {
 					return context.report({
 						node: firstNode,
-						message: `Expected the React file to have a React component named "${componentName}"`,
+						message: `Expected the React file to have \`function ${componentName}\` or \`class ${componentName}\` outside \`React.memo\` or any other enhanced functions`,
 					})
 				}
 
 				if (!defaultExportNode) {
 					return context.report({
 						node: firstNode,
-						message: 'Expected the React file to have `export default` keyword',
+						message: 'Expected a React file to have `export default` keyword',
 					})
 				}
 
@@ -328,7 +328,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected the React file to have a React component named "A"',
+						message: 'Expected the React file to have `function A` or `class A` outside `React.memo` or any other enhanced functions',
 					},
 				],
 			},
@@ -372,7 +372,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected the React file to have a React component named "A"',
+						message: 'Expected the React file to have `function A` or `class A` outside `React.memo` or any other enhanced functions',
 					},
 				],
 			},
@@ -390,6 +390,22 @@ module.exports = {
 				errors: [
 					{
 						message: 'Expected the arrow function to return the value by using the shorthand syntax',
+					},
+				],
+			},
+			{
+				code: `
+				function A(props) { return <div></div> }
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected a React file to have `export default` keyword',
 					},
 				],
 			},
