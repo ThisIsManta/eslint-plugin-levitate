@@ -138,7 +138,7 @@ module.exports = {
 					return context.report({
 						node: context.getSourceCode().getFirstToken(primaryComponentNode),
 						message: 'Expected `export default` keyword to be here',
-						fix: fixer => [
+						fix: primaryComponentNode.parent.type === 'ExportNamedDeclaration' ? undefined : fixer => [
 							fixer.insertTextBefore(primaryComponentNode, 'export default '),
 							fixer.removeRange(defaultExportNode.range),
 						]
@@ -485,6 +485,23 @@ module.exports = {
 				errors: [
 					{
 						message: 'Expected a React component argument to be written as an arrow function',
+					},
+				],
+			},
+			{
+				code: `
+				export function A(props) { return <div></div> }
+				export default A
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected `export default` keyword to be here',
 					},
 				],
 			},
