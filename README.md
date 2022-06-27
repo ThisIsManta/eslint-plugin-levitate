@@ -2,6 +2,7 @@
 |---|---|---|
 |`bluebird-map-concurrency`|enforce passing a concurrency number to [`Bluebird.map`](http://bluebirdjs.com/docs/api/promise.map.html), for example `Bluebird.map([promise], { concurrency: 5 })`||
 |`comment`|enforce starting a single-line comment with either `TODO:`, `HACK:`, `See {url}`, or a first-capitalized word||
+|`export-default-from-naming`|enforce exporting the default with the same file name||
 |`import-convention`|enforce naming imported identifiers after the user-defined list||
 |`import-name-after-file-name`|enforce naming an imported identifier after file or directory name, for example `import MyComponent from "./MyComponent"`||
 |`import-name-after-predefined-name`|enforce naming an imported identifier after the user-defined list, for example given `["error", { "classnames": "cx" }]` then `import cx from "classnames"`||
