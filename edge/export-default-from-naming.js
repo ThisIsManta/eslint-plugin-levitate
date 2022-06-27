@@ -12,6 +12,7 @@ module.exports = {
 		return {
 			ExportNamedDeclaration: function (root) {
 				if (
+					!root.source ||
 					root.source.type !== 'Literal' ||
 					!root.source.value.startsWith('.') ||
 					!root.specifiers ||
