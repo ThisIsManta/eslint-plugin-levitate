@@ -5,7 +5,7 @@ module.exports = {
 	meta: {
 		type: 'suggestion',
 		docs: {
-			description: 'enforce exporting the default with the same file name',
+			description: 'enforce naming a default exported identifier after the file name',
 		},
 	},
 	create: function (context) {
@@ -26,16 +26,20 @@ module.exports = {
 					return
 				}
 
+				const defaultName = defaultNode.exported.name
+				if (defaultName === 'default') {
+					return
+				}
+
 				const expectedName = fp.basename(root.source.value).replace(/\..*/, '')
 				if (expectedName !== _.words(expectedName).join('')) {
 					return
 				}
 
-				const defaultName = defaultNode.exported.name
 				if (defaultName !== expectedName) {
 					context.report({
 						node: defaultNode,
-						message: `Expected the default export name ${defaultName} to be after its file name ${expectedName}`,
+						message: `Expected the default export name "${defaultName}" to be after its file name "${expectedName}"`,
 					})
 				}
 			},
@@ -64,7 +68,7 @@ module.exports = {
 			{
 				code: `export { default as Component } from './MyComponent.react'`,
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
-				errors: [{ message: 'Expected the default export name Component to be after its file name MyComponent' }],
+				errors: [{ message: 'Expected the default export name "Component" to be after its file name "MyComponent"' }],
 			},
 		]
 	}
