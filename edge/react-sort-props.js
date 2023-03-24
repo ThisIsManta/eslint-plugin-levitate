@@ -3,6 +3,7 @@ const _ = require('lodash')
 const DEFAULT_PROPS_ORDER = [
 	'key',
 	'ref',
+	'id',
 	'className',
 	'*ClassName',
 	'*',
@@ -189,6 +190,7 @@ module.exports = {
 				type Props = {
 					key: string
 					ref: Ref
+					id: string
 					className: string
 					contentClassName: string
 					everythingElse: string
@@ -199,6 +201,7 @@ module.exports = {
         function C(props: {
 					key: string
 					ref: Ref
+					id: string
 					className: string
 					contentClassName: string
 					everythingElse: string
@@ -210,6 +213,7 @@ module.exports = {
 						<div
 							key=""
 							ref={() => {}}
+							id=""
 							className=""
 							contentClassName=""
 							everythingElse=""
@@ -409,6 +413,7 @@ module.exports = {
 					onChange: () => void
 					somethingElse: string
 					className: string
+					id: string
 				}
         function C(props: Props) {
 					return (
@@ -420,6 +425,7 @@ module.exports = {
 							onChange=""
 							somethingElse=""
 							className=""
+							id=""
 						/>
 					)
 				}
@@ -427,6 +433,7 @@ module.exports = {
 				output: `
 				type Props = {
 					key: string
+					id: string
 					className: string
 					everythingElse: string
 					somethingElse: string
@@ -440,6 +447,7 @@ module.exports = {
 							everythingElse=""
 							onClick=""
 							{...props}
+							id=""
 							className=""
 							somethingElse=""
 							onChange=""
@@ -455,16 +463,16 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected the prop `className` to be sorted here',
+						message: 'Expected the prop `id` to be sorted here',
 						line: 4,
 					},
 					{
 						message: 'Expected the prop `everythingElse` to be sorted here',
-						line: 14,
+						line: 15,
 					},
 					{
-						message: 'Expected the prop `className` to be sorted here',
-						line: 17,
+						message: 'Expected the prop `id` to be sorted here',
+						line: 18,
 					},
 				],
 			},
