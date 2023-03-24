@@ -33,10 +33,11 @@
     "@thisismanta/semantic-version": "^5.0.2",
     "@types/lodash": "^4.14.191",
     "@types/react": "^18.0.28",
+    "chalk": "^4.1.2",
+    "detect-indent": "^6.1.0",
     "moment": "^2.29.4"
   },
   "dependencies": {
-    "detect-indent": "^6.0.0",
     "glob": "^8.0.3",
     "lodash": "^4.17.21",
     "pluralize": "^8.0.0"

@@ -81,7 +81,7 @@ module.exports = {
 		}
 	},
 	tests: {
-		valid: [,
+		valid: [
 			{
 				code: `
 				import { func } from 'xxx'
