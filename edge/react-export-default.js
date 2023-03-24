@@ -42,6 +42,37 @@ module.exports = {
 			Program: function (root) {
 				defaultExportNode = root.body.find(node => node.type === 'ExportDefaultDeclaration')
 
+				const reactImport = root.body.reduce((output, node) => {
+					if (_.isMatch(node, { type: 'ImportDeclaration', source: { type: 'Literal', value: 'react' } }) && node.specifiers) {
+						return {
+							Default: _.get(node.specifiers.find(specifier => _.isMatch(specifier, { type: 'ImportDefaultSpecifier' })), 'local.name'),
+							Component: _.get(node.specifiers.find(specifier => _.isMatch(specifier, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'Component' } })), 'local.name'),
+							PureComponent: _.get(node.specifiers.find(specifier => _.isMatch(specifier, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'PureComponent' } })), 'local.name'),
+						}
+
+					} else if (node.type === 'VariableDeclaration') {
+						for (const stub of node.declarations) {
+							if (_.isMatch(stub, { type: 'VariableDeclarator', init: { type: 'CallExpression', callee: { type: 'Identifier', name: 'require' } } })) {
+								if (stub.id.type === 'Identifier') {
+									output.Default = stub.id.name
+
+								} else if (stub.id.type === 'ObjectPattern') {
+									for (const propertyNode of stub.id.properties) {
+										if (propertyNode.key.name === 'Component') {
+											output.Component = propertyNode.value.name
+
+										} else if (propertyNode.key.name === 'PureComponent') {
+											output.PureComponent = propertyNode.value.name
+										}
+									}
+								}
+							}
+						}
+					}
+
+					return output
+				}, {})
+
 				topLevelDeclarations = _.chain(root.body)
 					.map(node => {
 						if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportNamedDeclaration') {
@@ -61,7 +92,23 @@ module.exports = {
 							primaryComponentNode = node
 						}
 
-						if (type === 'ClassName' && _.isMatch(node, CLASS_COMPONENT)) {
+						if (
+							type === 'ClassName' &&
+							node.type === 'ClassDeclaration' &&
+							node.superClass &&
+							(
+								// Match `class ... extends React.[Component|PureComponent]`
+								reactImport.Default &&
+								_.isMatch(node.superClass, { type: 'MemberExpression', object: { type: 'Identifier', name: reactImport.Default }, property: { type: 'Identifier' } }) &&
+								(node.superClass.property.name === 'Component' || node.superClass.property.name === 'PureComponent') ||
+
+								// Match `class ... extends Component`
+								reactImport.Component && _.isMatch(node.superClass, { type: 'Identifier', name: reactImport.Component }) ||
+
+								// Match `class ... extends PureComponent`
+								reactImport.PureComponent && _.isMatch(node.superClass, { type: 'Identifier', name: reactImport.PureComponent })
+							)
+						) {
 							primaryComponentNode = node
 						}
 
@@ -118,8 +165,8 @@ module.exports = {
 
 				if (!defaultExportNode) {
 					return context.report({
-						node: firstNode,
-						message: 'Expected a React file to have `export default` keyword',
+						node: context.getSourceCode().getFirstToken(primaryComponentNode),
+						message: 'Expected `export default` to be here',
 					})
 				}
 
@@ -134,7 +181,7 @@ module.exports = {
 				) {
 					return context.report({
 						node: context.getSourceCode().getFirstToken(primaryComponentNode),
-						message: 'Expected `export default` keyword to be here',
+						message: 'Expected `export default` to be here',
 						fix: primaryComponentNode.parent.type === 'ExportNamedDeclaration' ? undefined : fixer => [
 							fixer.insertTextBefore(primaryComponentNode, 'export default '),
 							fixer.removeRange(defaultExportNode.range),
@@ -192,6 +239,7 @@ module.exports = {
 			},
 			{
 				code: `
+				import React from 'react'
 				export default class A extends React.Component {}
 				`,
 				filename: 'A.js',
@@ -203,7 +251,80 @@ module.exports = {
 			},
 			{
 				code: `
+				import React from 'react'
 				export default class A extends React.PureComponent {}
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				import { Component } from 'react'
+				export default class A extends Component {}
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				import { PureComponent } from 'react'
+				export default class A extends PureComponent {}
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				const React = require('react')
+				export default class A extends React.Component {}
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				const React = require('react')
+				export default class A extends React.PureComponent {}
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				const { Component } = require('react')
+				export default class A extends Component {}
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+				const { PureComponent } = require('react')
+				export default class A extends PureComponent {}
 				`,
 				filename: 'A.js',
 				parserOptions: {
@@ -402,7 +523,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected a React file to have `export default` keyword',
+						message: 'Expected `export default` to be here',
 					},
 				],
 			},
@@ -419,7 +540,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected `export default` keyword to be here',
+						message: 'Expected `export default` to be here',
 					},
 				],
 				output: `
@@ -514,25 +635,13 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected `export default` keyword to be here',
+						message: 'Expected `export default` to be here',
+						line: 2,
+						column: 12,
 					},
 				],
 			},
 		],
-	},
-}
-
-const CLASS_COMPONENT = {
-	type: 'ClassDeclaration',
-	superClass: {
-		type: 'MemberExpression',
-		object: {
-			type: 'Identifier',
-			name: 'React',
-		},
-		property: {
-			type: 'Identifier',
-		},
 	},
 }
 
