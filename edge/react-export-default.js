@@ -10,14 +10,11 @@ module.exports = {
 		fixable: 'code',
 	},
 	create: function (context) {
-		const componentName = path
-			.basename(context.getFilename())
-			.replace(/\..+/, '')
-
-		const componentId = {
-			type: 'Identifier',
-			name: componentName,
-		}
+		const componentName = _.startCase(
+			path
+				.basename(context.getFilename())
+				.replace(/\..+/, '')
+		).replace(/\s/g, '')
 
 		let defaultExportNode = null
 		let topLevelDeclarations = []
@@ -115,7 +112,7 @@ module.exports = {
 				if (!primaryComponentNode) {
 					return context.report({
 						node: firstNode,
-						message: `Expected the React file to have \`function ${componentName}\` or \`class ${componentName}\` outside \`React.memo\` or any other enhanced functions`,
+						message: `Expected to have a React component named "${componentName}"`,
 					})
 				}
 
@@ -132,7 +129,7 @@ module.exports = {
 
 				// Find `export default MyComponent` and report not having `export default` in front of `class` or `function` keyword
 				if (
-					_.isMatch(defaultExportNode.declaration, componentId) &&
+					_.isMatch(defaultExportNode.declaration, { type: 'Identifier', name: componentName }) &&
 					primaryComponentNode.type !== 'VariableDeclarator'
 				) {
 					return context.report({
@@ -328,7 +325,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected the React file to have `function A` or `class A` outside `React.memo` or any other enhanced functions',
+						message: 'Expected to have a React component named "A"',
 					},
 				],
 			},
@@ -372,7 +369,7 @@ module.exports = {
 				},
 				errors: [
 					{
-						message: 'Expected the React file to have `function A` or `class A` outside `React.memo` or any other enhanced functions',
+						message: 'Expected to have a React component named "A"',
 					},
 				],
 			},
