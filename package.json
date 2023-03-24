@@ -3,12 +3,13 @@
   "version": "3.22.0",
   "description": "A set of useful ESLint rules",
   "main": "index.js",
+  "files": [
+    "rules.js",
+    "edge/*.js"
+  ],
   "scripts": {
     "test": "node tests.js",
-    "docs": "node generateREADME.js && (git status --short | grep README.md && git add README.md && git commit -m \"Update README.md\") || echo \"No updates on README.md\"",
-    "preversion": "npm install && npm run test && npm run docs && git push --dry-run origin master",
-    "version": "npm publish",
-    "postversion": "git push --tags origin master"
+    "version": "npm publish"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "eslint": "^8.0.0"
   },
   "devDependencies": {
+    "@thisismanta/semantic-version": "^5.0.2",
     "@types/lodash": "^4.14.191",
     "@types/react": "^18.0.28",
     "moment": "^2.29.4"
