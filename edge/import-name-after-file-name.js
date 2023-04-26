@@ -12,6 +12,9 @@ module.exports = {
 		docs: {
 			description: 'enforce naming a default imported identifier after the file or the directory name (for an index file)',
 		},
+		schema: [
+			{ type: 'string' }
+		],
 	},
 	create: function (context) {
 		const stripper = new RegExp(context.options[0] || '')

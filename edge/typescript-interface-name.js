@@ -45,7 +45,6 @@ module.exports = {
 		invalid: [
 			{
 				code: `interface Window {}`,
-				options: ['PascalCase'],
 				parser: require.resolve('@typescript-eslint/parser'),
 				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the interface to start with "I"' }],
