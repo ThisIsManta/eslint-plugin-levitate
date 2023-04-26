@@ -52,7 +52,9 @@ module.exports = {
 
 					} else if (node.type === 'VariableDeclaration') {
 						for (const stub of node.declarations) {
-							if (_.isMatch(stub, { type: 'VariableDeclarator', init: { type: 'CallExpression', callee: { type: 'Identifier', name: 'require' } } })) {
+							if (
+								_.isMatch(stub, { type: 'VariableDeclarator', init: { type: 'CallExpression', callee: { type: 'Identifier', name: 'require' }, arguments: [{ type: 'Literal', value: 'react' }] } })
+							) {
 								if (stub.id.type === 'Identifier') {
 									output.Default = stub.id.name
 
@@ -252,6 +254,7 @@ module.exports = {
 			{
 				code: `
 				import React from 'react'
+				import SomethingElse from 'something-else'
 				export default class A extends React.PureComponent {}
 				`,
 				filename: 'A.js',
