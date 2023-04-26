@@ -10,7 +10,6 @@
 |`import-path-without-mentioning-index`|enforce writing an import path to an index file without mentioning "index.js"|Yes|
 |`new-line-before-chain`|enforce having a new line per chaining method||
 |`new-line-between-blocks`|enforce having new lines between blocks and before `else` and `catch`||
-|`new-line-within-statement`|enforce having new lines within statement||
 |`no-shortened-identifier`|enforce naming an identifier without the user-defined abbreviations||
 |`no-top-level-require`|enforce writing no top-level `require`||
 |`prefer-explicit-length-check`|enforce comparing `length` using an explicit comparison operator|Yes|
