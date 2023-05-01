@@ -16,7 +16,7 @@ module.exports = {
 	meta: {
 		type: 'layout',
 		docs: {
-			description: 'enforce consistent props sorting',
+			description: 'enforce consistent React props sorting',
 		},
 		schema: [
 			{
@@ -29,9 +29,14 @@ module.exports = {
 		fixable: 'code',
 	},
 	create: function (context) {
-		const matchers = (context.options[0] || DEFAULT_PROPS_ORDER).map(pattern => pattern === '*' ? null : new RegExp('^' + pattern.replace(/\*/g, '.+') + '$'))
+		const matchers = (context.options[0] || DEFAULT_PROPS_ORDER).map(pattern =>
+			pattern === '*' ? null : new RegExp('^' + pattern.replace(/\*/g, '.+') + '$')
+		)
+
 		const sourceCode = context.getSourceCode()
 		const wholeFileText = sourceCode.getText()
+
+		const propTypeAnnotatedNodes = new Set()
 
 		return {
 			TSTypeLiteral: function (root) { // Match `type Props = { ... }` and `function (props: { ... })`
@@ -39,57 +44,131 @@ module.exports = {
 					return
 				}
 
-				const propSegments = root.members.reduce((groups, node) => {
-					if (node.type === 'TSPropertySignature' && node.key.type === 'Identifier') {
-						if (groups.length === 0) {
-							groups.push({})
-						}
-						_.last(groups)[node.key.name] = node
-					} else if (groups.length > 0) {
-						// Skip processing non-literal attributes by creating a new group
-						groups.push({})
-					}
-					return groups
-				}, [])
-
-				for (const props of propSegments) {
+				for (const props of getPropSegments(root.members)) {
 					check(props)
 				}
 			},
 			JSXOpeningElement: function (root) {
-				const propSegments = root.attributes.reduce((groups, node) => {
-					if (node.type === 'JSXAttribute' && node.name.type === 'JSXIdentifier') {
-						if (groups.length === 0) {
-							groups.push({})
-						}
-						_.last(groups)[node.name.name] = node
-					} else if (groups.length > 0) {
-						// Skip processing non-literal attributes by creating a new group
-						groups.push({})
-					}
-					return groups
-				}, [])
-
-				for (const props of propSegments) {
+				for (const props of getPropSegments(root.attributes)) {
 					check(props)
 				}
 			},
-		}
+			ImportDeclaration: function (root) {
+				if (!_.isMatch(root, { source: { type: 'Literal', value: 'react' } })) {
+					return
+				}
 
-		function findPropTypeDeclaration(node) {
-			if (!node || node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') {
-				return null
-			}
+				function findDeclarativeNode(node) {
+					if (!node) {
+						return null
+					}
 
-			if (node.type === 'TSTypeAliasDeclaration' && node.id.type === 'Identifier' && /Props$/.test(node.id.name)) {
-				return node
-			}
+					if (node.type === 'TSAsExpression') {
+						return node
+					}
 
-			if (node.type === 'TSTypeAnnotation' && node.parent.type === 'Identifier' && node.parent.name === 'props') {
-				return node
-			}
+					if (node.type === 'TSTypeAnnotation') {
+						if (node.parent.typeAnnotation === node && (
+							node.parent.parent.type === 'VariableDeclarator' ||
+							node.parent.parent.type === 'AssignmentPattern' && node.parent.parent.left === node.parent
+						)) {
+							return node.parent.parent
+						}
 
-			return findPropTypeDeclaration(node.parent)
+						if (/^(Arrow)?Function(Declaration|Expression)$/.test(node.parent.type) && node.parent.returnType === node) {
+							return node.parent
+						}
+
+						return null
+					}
+
+					return findDeclarativeNode(node.parent)
+				}
+
+				const defaultImportNode = root.specifiers.find(node => node.type === 'ImportDefaultSpecifier')
+				if (defaultImportNode) {
+					const [{ references }] = sourceCode.getDeclaredVariables(defaultImportNode)
+					const nodes = _.chain(references)
+						.filter(({ identifier }) =>
+							_.isMatch(identifier, {
+								parent: {
+									type: 'TSQualifiedName',
+									left: _.pick(identifier, ['type', 'name']),
+									right: { type: 'Identifier', name: 'ComponentProps' },
+									parent: { type: 'TSTypeReference' }
+								}
+							})
+						)
+						.map(({ identifier }) => findDeclarativeNode(identifier.parent.parent.parent))
+						.compact()
+						.value()
+
+					for (const node of nodes) {
+						propTypeAnnotatedNodes.add(node)
+					}
+				}
+
+				const componentTypeNode = root.specifiers.find(node => _.isMatch(node, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'ComponentProps' } }))
+				if (componentTypeNode) {
+					const [{ references }] = sourceCode.getDeclaredVariables(componentTypeNode)
+					const nodes = _.chain(references)
+						.filter(({ identifier }) =>
+							_.isMatch(identifier, {
+								parent: {
+									type: 'TSTypeReference',
+									typeName: _.pick(identifier, ['type', 'name']),
+								}
+							})
+						)
+						.map(({ identifier }) => findDeclarativeNode(identifier.parent.parent))
+						.compact()
+						.value()
+
+					for (const node of nodes) {
+						propTypeAnnotatedNodes.add(node)
+					}
+				}
+			},
+			ObjectExpression: function (root) {
+				function findDeclarativeNode(node) {
+					if (!node) {
+						return null
+					}
+					
+					if (node.type === 'Property') {
+						return null
+					}
+
+					if (node.type === 'TSAsExpression') {
+						return node
+					}
+
+					if (node.type === 'VariableDeclarator' || node.type === 'AssignmentPattern') {
+						return node
+					}
+
+					if (node.type === 'BlockStatement') {
+						return null
+					}
+
+					if (node.type === 'ArrowFunctionExpression') {
+						return node
+					}
+
+					if (node.type === 'ReturnStatement' && node.parent.type === 'BlockStatement' && /^(Arrow)?Function(Declaration|Expression)$/.test(node.parent.parent.type)) {
+						return node.parent.parent
+					}
+
+					return findDeclarativeNode(node.parent)
+				}
+
+				const node = findDeclarativeNode(root)
+				if (node && propTypeAnnotatedNodes.has(node)) {
+					for (const props of getPropSegments(root.properties)) {
+						check(props)
+					}
+				}
+			},
 		}
 
 		function findIndex(name) {
@@ -279,6 +358,25 @@ module.exports = {
 					return (
 						<div />
 					)
+				}
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
+			{
+				code: `
+        import React from 'react'
+				const p1: React.ComponentProps<typeof C> = {
+					key: '',
+					ref: '',
+					others: {
+						key: '',
+						ref: '',
+					}
 				}
 				`,
 				parser: require.resolve('@typescript-eslint/parser'),
@@ -534,6 +632,173 @@ module.exports = {
 					}
 				]
 			},
+			{
+				code: `
+				import React from 'react'
+				const p1: React.ComponentProps<typeof C> = { ref: string, key: string }
+				const p2: React.ComponentProps<typeof C> = Object.assign({ ref: string, key: string }, { ref: string, key: string })
+				const p3 = { ref: string, key: string } as React.ComponentProps<typeof C>
+				function f1(p: React.ComponentProps<typeof C> = { ref: string, key: string }) {}
+				function f2(): React.ComponentProps<typeof C> {
+					const x = { ref: string, key: string }
+					return { ref: string, key: string }
+				}
+				const f3 = (): React.ComponentProps<typeof C> => ({ ref: string, key: string })
+				`,
+				output: `
+				import React from 'react'
+				const p1: React.ComponentProps<typeof C> = { key: string, ref: string }
+				const p2: React.ComponentProps<typeof C> = Object.assign({ key: string, ref: string }, { key: string, ref: string })
+				const p3 = { key: string, ref: string } as React.ComponentProps<typeof C>
+				function f1(p: React.ComponentProps<typeof C> = { key: string, ref: string }) {}
+				function f2(): React.ComponentProps<typeof C> {
+					const x = { ref: string, key: string }
+					return { key: string, ref: string }
+				}
+				const f3 = (): React.ComponentProps<typeof C> => ({ key: string, ref: string })
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 3,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 4,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 4,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 5,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 6,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 9,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 11,
+					},
+				]
+			},
+			{
+				code: `
+				import { ComponentProps } from 'react'
+				const p1: ComponentProps<typeof C> = { ref: string, key: string }
+				const p2: ComponentProps<typeof C> = Object.assign({ ref: string, key: string }, { ref: string, key: string })
+				const p3 = { ref: string, key: string } as ComponentProps<typeof C>
+				function f1(p: ComponentProps<typeof C> = { ref: string, key: string }) {}
+				function f2(): ComponentProps<typeof C> {
+					const x = { ref: string, key: string }
+					return { ref: string, key: string }
+				}
+				const f3 = (): ComponentProps<typeof C> => ({ ref: string, key: string })
+				`,
+				output: `
+				import { ComponentProps } from 'react'
+				const p1: ComponentProps<typeof C> = { key: string, ref: string }
+				const p2: ComponentProps<typeof C> = Object.assign({ key: string, ref: string }, { key: string, ref: string })
+				const p3 = { key: string, ref: string } as ComponentProps<typeof C>
+				function f1(p: ComponentProps<typeof C> = { key: string, ref: string }) {}
+				function f2(): ComponentProps<typeof C> {
+					const x = { ref: string, key: string }
+					return { key: string, ref: string }
+				}
+				const f3 = (): ComponentProps<typeof C> => ({ key: string, ref: string })
+				`,
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+				errors: [
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 3,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 4,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 4,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 5,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 6,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 9,
+					},
+					{
+						message: 'Expected the prop `key` to be sorted here',
+						line: 11,
+					},
+				]
+			},
 		],
 	},
+}
+
+function findPropTypeDeclaration(node) {
+	if (!node || node.type === 'Program' || /^(Arrow)?Function(Declaration|Expression)$/.test(node.type)) {
+		return null
+	}
+
+	if (node.type === 'TSTypeAliasDeclaration' && node.id.type === 'Identifier' && /Props$/.test(node.id.name)) {
+		return node
+	}
+
+	if (node.type === 'TSTypeAnnotation' && node.parent.type === 'Identifier' && node.parent.name === 'props') {
+		return node
+	}
+
+	return findPropTypeDeclaration(node.parent)
+}
+
+function getPropSegments(properties) {
+	return properties.reduce((groups, node) => {
+		const name = (() => {
+			if (_.isMatch(node, { type: 'JSXAttribute', name: { type: 'JSXIdentifier' } })) {
+				return node.name.name
+			}
+			if (_.isMatch(node, { type: 'TSPropertySignature', key: { type: 'Identifier' } })) {
+				return node.key.name
+			}
+			if (_.isMatch(node, { type: 'Property', key: { type: 'Identifier' } })) {
+				return node.key.name
+			}
+		})()
+
+		if (name) {
+			if (groups.length === 0) {
+				groups.push({})
+			}
+			_.last(groups)[name] = node
+		} else if (groups.length > 0) {
+			// Skip processing non-literal attributes by creating a new group
+			groups.push({})
+		}
+		return groups
+	}, [])
 }

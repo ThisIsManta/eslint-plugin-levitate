@@ -16,7 +16,7 @@
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`||
 |`react-export-default`|enforce writing React components consistently|Yes|
 |`react-prop-type`|enforce writing type definition for React props||
-|`react-sort-props`|enforce consistent props sorting|Yes|
+|`react-sort-props`|enforce consistent React props sorting|Yes|
 |`require-name-after-file-name`|enforce naming an identifier after the file name of its `require` statement||
 |`require-name-after-predefined-name`|enforce naming an identifier after the user-defined list of its `require` statement|Yes|
 |`sort-imports`|enforce sorting `import` statements. By default, this will sort according to [Renke](https://github.com/renke/import-sort/tree/master/packages/import-sort-style-module)|Yes|
