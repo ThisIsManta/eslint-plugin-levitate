@@ -3,10 +3,9 @@
   "version": "4.1.0",
   "description": "A set of useful ESLint rules",
   "main": "index.js",
-  "files": [
-    "rules.js",
-    "edge/*.js"
-  ],
+  "files": ["rules.js", "rules.js","edge/*.js", "edge/*.js",
+    "edge/*.js",
+    "edge/*.js"],
   "scripts": {
     "test": "node tests.js",
     "version": "npm publish"
@@ -26,20 +25,20 @@
   },
   "homepage": "https://github.com/ThisIsManta/eslint-plugin-levitate#readme",
   "peerDependencies": {
-    "@typescript-eslint/parser": "^5.0.0",
-    "eslint": "^8.39.0"
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0"
   },
   "devDependencies": {
     "@thisismanta/pessimist": "^1.2.0",
     "@thisismanta/semantic-version": "^5.0.2",
-    "@types/lodash": "^4.14.191",
-    "@types/react": "^18.0.28",
+    "@types/lodash": "^4.14.199",
+    "@types/react": "^18.2.23",
     "chalk": "^4.1.2",
     "detect-indent": "^6.1.0",
     "moment": "^2.29.4"
   },
   "dependencies": {
-    "glob": "^8.0.3",
+    "glob": "^10.3.10",
     "lodash": "^4.17.21",
     "pluralize": "^8.0.0"
   }
