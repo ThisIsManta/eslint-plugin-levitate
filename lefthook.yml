@@ -6,7 +6,7 @@ pre-commit:
   parallel: true
   commands:
     test:
-      run: npm run test
+      run: npm run test -- --bail
     readme:
       # Do not run generateREADME.js directly here as `git add` did not work
       run: npm run docs && git add ./README.md

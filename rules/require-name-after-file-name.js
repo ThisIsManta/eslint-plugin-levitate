@@ -76,8 +76,8 @@ module.exports = {
 	},
 	tests: {
 		valid: [
-			'var something = require("shawn-mendes")',
-			'var JamesArthur = require("./james-arthur")',
+			{ code: 'var something = require("shawn-mendes")' },
+			{ code: 'var JamesArthur = require("./james-arthur")' },
 			{
 				code: 'var JamesArthur = require("./james-arthur")',
 				filename: './rules/use-require-name-after-file-path.js',

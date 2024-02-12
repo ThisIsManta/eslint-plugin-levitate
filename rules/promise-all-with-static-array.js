@@ -45,9 +45,9 @@ module.exports = {
 	},
 	tests: {
 		valid: [
-			'Promise.all()',
-			'Promise.all([])',
-			'Promise.all([1, 2, 3])',
+			{ code: 'Promise.all()' },
+			{ code: 'Promise.all([])' },
+			{ code: 'Promise.all([1, 2, 3])' },
 			{
 				code: `
 					const Bluebird = require('bluebird')

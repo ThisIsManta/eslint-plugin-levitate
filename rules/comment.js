@@ -100,7 +100,11 @@ module.exports = {
 		}
 	},
 	tests: {
-		valid: ['// HACK: lorem', '// TODO: lorem', '// Lorem'],
+		valid: [
+			{ code: '// HACK: lorem' },
+			{ code: '// TODO: lorem' },
+			{ code: '// Lorem' },
+		],
 		invalid: [
 			{
 				code: '// Hack lorem',

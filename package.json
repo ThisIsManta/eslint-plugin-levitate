@@ -42,7 +42,7 @@
     "chalk": "^4.1.2",
     "detect-indent": "^6.1.0",
     "eslint": "^8.56.0",
-    "eslint-plugin-local": "^3.2.1",
+    "eslint-plugin-local": "^4.0.0",
     "lefthook": "^1.6.1",
     "moment": "^2.30.1"
   },
