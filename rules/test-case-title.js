@@ -1,9 +1,15 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 
 const ALLOWED_TEST_PATTERN = /^(returns|renders|calls|fetches|sets|throws|does not (return|render|call|fetch|set|throw) )/
 const DISALLOWED_WORDS = ['proper', 'correct', 'appropriate', 'accurate', 'perfect']
 const DISALLOWED_PATTERN = new RegExp('\\W((' + DISALLOWED_WORDS.join('|') + ')(ly)?)(\\W|$)', 'i')
 
+/**
+ * @type {RuleModule & { getText: typeof getText }}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -19,14 +25,22 @@ module.exports = {
 	create: function (context) {
 		return {
 			ExpressionStatement: function (root) {
-				const functionCall = _.get(root, 'expression.callee.name')
+				if (
+					root.expression.type !== 'CallExpression' ||
+					root.expression.callee.type !== 'Identifier' ||
+					root.expression.arguments.length < 2
+				) {
+					return 
+				}
+
+				const functionCall = root.expression.callee.name
 				if (functionCall !== 'it' && functionCall !== 'test') {
 					return
 				}
 
-				const titleNode = _.get(root, 'expression.arguments.0')
+				const titleNode = root.expression.arguments[0]
 				const titleText = getText(titleNode)
-				if (_.isString(titleText) === false) {
+				if (typeof titleText !== 'string') {
 					return
 				}
 
@@ -38,12 +52,13 @@ module.exports = {
 					})
 				}
 
-				if (DISALLOWED_PATTERN.test(titleText)) {
+				const bannedWord = titleText.match(DISALLOWED_PATTERN)?.[1]
+				if (bannedWord) {
 					return context.report({
 						node: titleNode,
 						messageId: 'vague',
 						data: {
-							word: titleText.match(DISALLOWED_PATTERN)[1]
+							word: bannedWord
 						}
 					})
 				}
@@ -120,12 +135,16 @@ module.exports = {
 	},
 }
 
+/**
+ * @param {ES.Node} node
+ * @return {string | undefined}
+ */
 function getText(node) {
 	if (!node) {
 		return undefined
 	}
 
-	if (node.type === 'Literal' && _.isString(node.value)) {
+	if (node.type === 'Literal' && typeof node.value === 'string') {
 		return node.value
 	}
 

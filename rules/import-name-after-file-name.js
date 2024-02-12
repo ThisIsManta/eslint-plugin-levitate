@@ -1,3 +1,6 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const fp = require('path')
 const _ = require('lodash')
 const { getImportFullPath } = require('./import-path-from-closest-index')
@@ -6,6 +9,9 @@ const { singular } = require('pluralize')
 const validIdentifierPattern = /^[A-Z_$][0-9A-Z_$]*$/i
 const acronym = /^(https?|xhr|html|xml|yml|url|pwa|io|ui|api|sdk)$/i
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -26,13 +32,17 @@ module.exports = {
 		return {
 			Program: function (root) {
 				_.chain(root.body)
-					.flatMap(node =>
-						context.getDeclaredVariables(
-							(node.type === 'ExportNamedDeclaration' || node.type === 'ExportDefaultDeclaration')
-								? node.declaration
-								: node
-						)
-					)
+					.flatMap(node =>{
+						if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+							return context.sourceCode.getDeclaredVariables(node.declaration)
+						}
+						if (node.type === 'ExportDefaultDeclaration' && node.declaration) {
+							// TODO: fix the bug where `MaybeNamedFunctionDeclaration` is not part of `NodeMap` from estree
+							const declaration = /** @type {any} */ (node.declaration)
+							return context.sourceCode.getDeclaredVariables(declaration)
+						}
+						return context.sourceCode.getDeclaredVariables(node)
+					})
 					.map(variable => variable.name)
 					.compact()
 					.value()
@@ -45,7 +55,7 @@ module.exports = {
 					return
 				}
 
-				const workPath = root.source.value
+				const workPath = String(root.source.value)
 				if (workPath.startsWith('.') === false) {
 					return
 				}
@@ -55,7 +65,7 @@ module.exports = {
 					return
 				}
 
-				const absoluteFilePath = getImportFullPath(context.getFilename(), workPath) || workPath
+				const absoluteFilePath = getImportFullPath(context.filename, workPath) || workPath
 				const strippedFileName = fp.basename(absoluteFilePath).replace(stripper, '').replace(/\..+/, '')
 				const strippedDirectoryName = fp.basename(fp.dirname(absoluteFilePath)).replace(stripper, '')
 

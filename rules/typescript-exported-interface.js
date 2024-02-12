@@ -1,3 +1,9 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -7,9 +13,12 @@ module.exports = {
 	},
 	create: function (context) {
 		return {
+			/**
+			 * @param {WithParent<ES.Node>} root
+			 */
 			TSInterfaceDeclaration: function (root) {
 				if (!root.parent || root.parent.type !== 'ExportNamedDeclaration') {
-					if (context.getAncestors().some(node => node.type === 'TSModuleDeclaration')) {
+					if (context.sourceCode.getAncestors(root).some(node => String(node.type) === 'TSModuleDeclaration')) {
 						return
 					}
 

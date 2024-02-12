@@ -1,7 +1,13 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 
 const { getText } = require('./test-case-title')
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -17,33 +23,40 @@ module.exports = {
 	create: function (context) {
 		return {
 			ExpressionStatement: function (root) {
-				const describeBlockFound = _.isMatch(root, { expression: { type: 'CallExpression', callee: { type: 'Identifier', name: 'describe' } } })
-				if (!describeBlockFound) {
+				if (
+					root.expression.type !== 'CallExpression' ||
+					root.expression.callee.type !== 'Identifier' ||
+					root.expression.callee.name !== 'describe' ||
+					root.expression.arguments.length < 2
+				) {
 					return
 				}
 
-				const describeNameNode = _.get(root, 'expression.arguments.0')
+				const describeNameNode = root.expression.arguments[0]
 				if (!describeNameNode) {
 					return
 				}
 
-				const describeBlockNode = _.get(root, 'expression.arguments.1.body')
-				if (!describeBlockNode || describeBlockNode.type !== 'BlockStatement') {
+				const describeBlockNode = 'body' in root.expression.arguments[1] ? root.expression.arguments[1].body : null
+				if (!describeBlockNode) {
 					return
 				}
 
-				const sourceCode = context.getSourceCode()
-				const currentScope = sourceCode.getScope(describeNameNode)
+				const currentScope = context.sourceCode.getScope(describeNameNode)
 
+				/**
+				 * @param {import('eslint').Scope.Scope} [scope=currentScope]
+				 * @return {Array<string>}
+				 */
 				function getAllVariables(scope = currentScope) {
 					if (!scope || scope.type === 'global') {
 						return []
 					}
 
-					return [...scope.variables.map(variable => variable.name), ...getAllVariables(scope.upper)]
+					return [...scope.variables.map(variable => variable.name), ...(scope.upper ? getAllVariables(scope.upper) : [])]
 				}
 
-				const targetNodes = (() => {
+				const targetNodes = (/** @return {Array<NodeLike>} */ () => {
 					if (describeNameNode.type === 'Identifier' || describeNameNode.type === 'MemberExpression') {
 						return [getNodeLike(describeNameNode)]
 					}
@@ -54,16 +67,20 @@ module.exports = {
 						if (propertyAccessorNames.length === 0) {
 							return [
 								{ type: 'Identifier', name: objectName },
-								...(getAllVariables().map(name => (
-									{ type: 'MemberExpression', object: { type: 'Identifier', name }, property: { type: 'Identifier', name: objectName } }
-								)))
+								...(getAllVariables().map(name => ({
+									type: /** @type {const} */ ('MemberExpression'),
+									object: { type: 'Identifier', name },
+									property: { type: 'Identifier', name: objectName }
+								})))
 							]
 						}
 
 						return [
-							propertyAccessorNames.reduce((object, name) => (
-								{ type: 'MemberExpression', object, property: { type: 'Identifier', name } }
-							), { type: 'Identifier', name: objectName })
+							propertyAccessorNames.reduce((object, name) => ({
+								type: 'MemberExpression',
+								object,
+								property: { type: 'Identifier', name }
+							}), /** @type {NodeLike} */({ type: 'Identifier', name: objectName }))
 						]
 					}
 
@@ -73,14 +90,19 @@ module.exports = {
 					return
 				}
 
-				const describeBlockScope = sourceCode.getScope(describeBlockNode)
-				function isUsedInDescribeBlock(scope) {
-					if (!scope) {
-						return false
-					}
+				const describeBlockScope = context.sourceCode.getScope(describeBlockNode)
 
+				/**
+				 * @param {import('eslint').Scope.Scope} scope
+				 * @return {boolean}
+				 */
+				function isUsedInDescribeBlock(scope) {
 					if (scope === describeBlockScope) {
 						return true
+					}
+
+					if (!scope.upper) {
+						return false
 					}
 
 					return isUsedInDescribeBlock(scope.upper)
@@ -254,6 +276,14 @@ module.exports = {
 	},
 }
 
+/**
+ * @typedef {Pick<ES.Identifier, 'type' | 'name'> | Pick<ES.Node, 'type'> | { type: 'MemberExpression', object: NodeLike, property: NodeLike }} NodeLike
+ */
+
+/**
+ * @param {ES.Node} node
+ * @return {NodeLike}
+ */
 function getNodeLike(node) {
 	if (node.type === 'MemberExpression') {
 		return { type: 'MemberExpression', object: getNodeLike(node.object), property: getNodeLike(node.property) }
@@ -266,31 +296,42 @@ function getNodeLike(node) {
 	return _.pick(node, 'type')
 }
 
+/**
+ * @param {NodeLike} node
+ * @return {string}
+ */
 function getObjectName(node) {
-	if (node.type === 'Identifier') {
+	if (node.type === 'Identifier' && 'name' in node) {
 		return node.name
 	}
 
-	if (node.type === 'MemberExpression') {
+	if (node.type === 'MemberExpression' && 'object' in node) {
 		return getObjectName(node.object)
 	}
 
 	return ''
 }
 
+/**
+ * @param {import('eslint').Scope.Scope} scope
+ * @param {string} name
+ */
 function getVariable(scope, name) {
-	if (!scope) {
-		return null
-	}
-
 	const variable = scope.variables.find(variable => variable.name === name)
 	if (variable) {
 		return variable
 	}
 
+	if (!scope.upper) {
+		return null
+	}
+
 	return getVariable(scope.upper, name)
 }
 
+/**
+ * @param {NodeLike & Partial<WithParent<NodeLike>>} node
+ */
 function getFullPropertyAccessorNode(node) {
 	if (node.parent && node.parent.type === 'MemberExpression') {
 		return getFullPropertyAccessorNode(node.parent)

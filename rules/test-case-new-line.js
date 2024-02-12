@@ -1,7 +1,13 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 
 const focusedAPI = /^(it|test|describe|(after|before)(All|Each))$/
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -16,65 +22,91 @@ module.exports = {
 			BlockStatement: check,
 		}
 
+		/**
+		 * @param {ES.Program | ES.BlockStatement} root
+		 */
 		function check(root) {
-			const nodeList = root.body.map((node, rank) => ({
-				node,
-				rank,
-				name: getLeftMostIdentifier(node.expression) || ''
-			}))
-
-			const sourceCode = context.getSourceCode()
+			const nodeList = root.body.map(
+				/**
+				 * @param {ES.ModuleDeclaration | ES.Statement | ES.Directive} node
+				 * @param {number} rank
+				 */
+				(node, rank) => ({
+					node,
+					rank,
+					name: node.type === 'ExpressionStatement' && getLeftMostIdentifier(node.expression) || ''
+				})
+			)
 
 			for (const { node, rank, name } of nodeList) {
 				const prev = nodeList[rank - 1]
 				const next = nodeList[rank + 1]
-				const aboveBlankLineCount = prev ? (node.loc.start.line - prev.node.loc.end.line - 1) : NaN
-				const belowBlankLineCount = next ? (next.node.loc.start.line - node.loc.end.line - 1) : NaN
+				const aboveBlankLineCount = prev && node.loc && prev.node.loc ? (node.loc.start.line - prev.node.loc.end.line - 1) : NaN
+				const belowBlankLineCount = next && node.loc && next.node.loc ? (next.node.loc.start.line - node.loc.end.line - 1) : NaN
 
 				if (focusedAPI.test(name)) {
 					if (aboveBlankLineCount <= 0) {
-						context.report({
-							node: sourceCode.getFirstToken(node),
-							message: 'Expected a blank line before this statement',
-							fix: fixer => fixer.insertTextAfter(prev.node, '\n')
-						})
+						const loc = context.sourceCode.getFirstToken(node)?.loc
+						if (loc) {
+							context.report({
+								loc,
+								message: 'Expected a blank line before this statement',
+								fix: fixer => fixer.insertTextAfter(prev.node, '\n')
+							})
+						}
 					}
 
 					if (belowBlankLineCount <= 0 && !focusedAPI.test(next.name)) {
-						context.report({
-							node: sourceCode.getLastToken(node),
-							message: 'Expected a blank line after this statement',
-							fix: fixer => fixer.insertTextAfter(node, '\n')
-						})
+						const loc = context.sourceCode.getLastToken(node)?.loc
+						if (loc) {
+							context.report({
+								loc,
+								message: 'Expected a blank line after this statement',
+								fix: fixer => fixer.insertTextAfter(node, '\n')
+							})
+						}
 					}
 				}
 
 				if (name == 'expect') {
 					if (aboveBlankLineCount <= 0 && prev.name !== 'expect') {
-						context.report({
-							node: sourceCode.getFirstToken(node),
-							message: 'Expected a blank line before this statement',
-							fix: fixer => fixer.insertTextAfter(prev.node, '\n')
-						})
-					} else if (aboveBlankLineCount >= 1 && prev.name === 'expect' && !sourceCode.commentsExistBetween(prev.node, node)) {
-						context.report({
-							node: sourceCode.getFirstToken(node),
-							message: 'Expected no blank line between `expect` statements',
-							fix: fixer => {
-								const range = [prev.node.range[1], node.range[0]]
-								// Preserve the existing indentations
-								const replacement = _.get(sourceCode.getText().substring(range[0], range[1]).match(/\n(.*)$/), '0', '\n')
-								return fixer.replaceTextRange(range, replacement)
-							}
-						})
+						const loc = context.sourceCode.getFirstToken(node)?.loc
+						if (loc) {
+							context.report({
+								loc,
+								message: 'Expected a blank line before this statement',
+								fix: fixer => fixer.insertTextAfter(prev.node, '\n')
+							})
+						}
+					} else if (aboveBlankLineCount >= 1 && prev.name === 'expect' && !context.sourceCode.commentsExistBetween(prev.node, node)) {
+						const loc = context.sourceCode.getFirstToken(node)?.loc
+						if (loc && prev.node.range && node.range) {
+							/**
+							 * @type {[number, number]}
+							 */
+							const range = [prev.node.range[1], node.range[0]]
+
+							context.report({
+								loc,
+								message: 'Expected no blank line between `expect` statements',
+								fix: fixer => {
+									// Preserve the existing indentations
+									const replacement = _.get(context.sourceCode.getText().substring(range[0], range[1]).match(/\n(.*)$/), '0', '\n')
+									return fixer.replaceTextRange(range, replacement)
+								}
+							})
+						}
 					}
 
 					if (belowBlankLineCount <= 0 && next.name !== 'expect') {
-						context.report({
-							node: sourceCode.getLastToken(node),
-							message: 'Expected a blank line after this statement',
-							fix: fixer => fixer.insertTextAfter(node, '\n')
-						})
+						const loc = context.sourceCode.getLastToken(node)?.loc
+						if (loc) {
+							context.report({
+								loc,
+								message: 'Expected a blank line after this statement',
+								fix: fixer => fixer.insertTextAfter(node, '\n')
+							})
+						}
 					}
 				}
 			}
@@ -283,6 +315,9 @@ it('aaa', async function() {
 	},
 }
 
+/**
+ * @param {ES.Node} root
+ */
 function getLeftMostIdentifier(root) {
 	if (!root) {
 		return null

@@ -1,7 +1,13 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const INDEX = /\/index(\.\w+)?$/
 
 const INDEX_INTERNAL = /^\.\.?(\/\.\.)*\/index/
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -14,8 +20,14 @@ module.exports = {
 		return {
 			ImportDeclaration: function (root) {
 				const path = root.source.value
-				const quote = root.source.raw.charAt(0)
-				if (path.startsWith('.') && INDEX.test(path) && INDEX_INTERNAL.test(path) === false) {
+				const quote = root.source.raw?.charAt(0)
+				if (
+					typeof path === 'string' &&
+					path.startsWith('.') &&
+					typeof quote === 'string' &&
+					INDEX.test(path) &&
+					INDEX_INTERNAL.test(path) === false
+				) {
 					const expectedPath = path.replace(INDEX, '')
 					return context.report({
 						node: root.source,

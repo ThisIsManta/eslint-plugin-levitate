@@ -1,5 +1,11 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
   meta: {
     type: 'suggestion',
@@ -10,24 +16,26 @@ module.exports = {
   },
   create: function (context) {
     return {
+      /**
+       * @param {TS.TSMethodSignature} root
+       */
       TSMethodSignature: function (root) {
-        const sourceCode = context.getSourceCode()
-        return context.report({
-          node: root,
+        context.report({
+          node: cast(root),
           message: 'Expected to be using arrow notation',
           fix: fixer => fixer.replaceText(
-            root,
-            sourceCode.getText(root.key) +
+            cast(root),
+            context.sourceCode.getText(cast(root.key)) +
             (root.optional ? '?' : '') +
             ': ' +
-            (root.typeParameters ? sourceCode.getText(root.typeParameters) : '') +
+            (root.typeParameters ? context.sourceCode.getText(cast(root.typeParameters)) : '') +
             '(' +
-            _.map(root.params, node => sourceCode.getText(node)).join(
+            _.map(root.params, node => context.sourceCode.getText(cast(node))).join(
               ', '
             ) +
             ') => ' +
             (root.returnType
-              ? sourceCode.getText(root.returnType).replace(/^:\s*/, '')
+              ? context.sourceCode.getText(cast(root.returnType)).replace(/^:\s*/, '')
               : 'void')
           ),
         })
@@ -116,4 +124,12 @@ module.exports = {
       },
     ],
   },
+}
+
+/**
+ * @param {*} node
+ * @return {ES.Node}
+ */
+function cast(node) {
+  return node
 }

@@ -1,6 +1,12 @@
-const path = require('path')
+/// <reference path="../types.d.ts" />
+// @ts-check
+
+const fp = require('path')
 const _ = require('lodash')
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -11,8 +17,8 @@ module.exports = {
 	},
 	create: function (context) {
 		const componentName = _.startCase(
-			path
-				.basename(context.getFilename())
+			fp
+				.basename(context.filename)
 				.replace(/\..+/, '')
 		).replace(/\s/g, '')
 
@@ -21,6 +27,9 @@ module.exports = {
 		let primaryComponentNode = null
 		let primaryComponentIsUsed = false
 
+		/**
+		 * @param {WithParent<ES.Identifier>} root
+		 */
 		function setIfPrimaryComponentIsUsed(root) {
 			if (root.name !== componentName) {
 				return
@@ -43,11 +52,22 @@ module.exports = {
 				defaultExportNode = root.body.find(node => node.type === 'ExportDefaultDeclaration')
 
 				const reactImport = root.body.reduce((output, node) => {
-					if (_.isMatch(node, { type: 'ImportDeclaration', source: { type: 'Literal', value: 'react' } }) && node.specifiers) {
+					if (
+						node.type === 'ImportDeclaration' &&
+						node.source.type === 'Literal' &&
+						node.source.value === 'react' &&
+						node.specifiers.length > 0
+					) {
 						return {
-							Default: _.get(node.specifiers.find(specifier => _.isMatch(specifier, { type: 'ImportDefaultSpecifier' })), 'local.name'),
-							Component: _.get(node.specifiers.find(specifier => _.isMatch(specifier, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'Component' } })), 'local.name'),
-							PureComponent: _.get(node.specifiers.find(specifier => _.isMatch(specifier, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'PureComponent' } })), 'local.name'),
+							Default: node.specifiers.find(specifier =>
+								_.isMatch(specifier, { type: 'ImportDefaultSpecifier' })
+							)?.local.name,
+							Component: node.specifiers.find(specifier =>
+								_.isMatch(specifier, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'Component' } })
+							)?.local.name,
+							PureComponent: node.specifiers.find(specifier =>
+								_.isMatch(specifier, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'PureComponent' } })
+							)?.local.name,
 						}
 
 					} else if (node.type === 'VariableDeclaration') {
@@ -60,11 +80,17 @@ module.exports = {
 
 								} else if (stub.id.type === 'ObjectPattern') {
 									for (const propertyNode of stub.id.properties) {
-										if (propertyNode.key.name === 'Component') {
-											output.Component = propertyNode.value.name
+										if (
+											propertyNode.type === 'Property' &&
+											propertyNode.key.type === 'Identifier' &&
+											propertyNode.value.type === 'Identifier'
+										) {
+											if (propertyNode.key.name === 'Component') {
+												output.Component = propertyNode.value.name
 
-										} else if (propertyNode.key.name === 'PureComponent') {
-											output.PureComponent = propertyNode.value.name
+											} else if (propertyNode.key.name === 'PureComponent') {
+												output.PureComponent = propertyNode.value.name
+											}
 										}
 									}
 								}
@@ -73,17 +99,20 @@ module.exports = {
 					}
 
 					return output
-				}, {})
+				}, /** @type {Partial<{ Default: string, Component: string, PureComponent: string }>} */({}))
 
 				topLevelDeclarations = _.chain(root.body)
-					.map(node => {
-						if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportNamedDeclaration') {
-							return node.declaration
+					.map(/** @return {ES.Node} */(node) => {
+						if (
+							(node.type === 'ExportDefaultDeclaration' || node.type === 'ExportNamedDeclaration') &&
+							node.declaration
+						) {
+							return /** @type {ES.Node} */ (node.declaration)
 						}
 
 						return node
 					})
-					.flatMap(node => context.getDeclaredVariables(node))
+					.flatMap(node => context.sourceCode.getDeclaredVariables(node))
 					.flatMap(({ name, defs }) => defs.map(({ type, node }) => ({ name, type, node })))
 					.uniqBy(definition => definition.node)
 					.value()
@@ -153,21 +182,22 @@ module.exports = {
 			},
 			'Program:exit': function (root) {
 				// Skip an empty file
-				const firstNode = context.getSourceCode().getFirstToken(root)
-				if (!firstNode) {
+				const firstToken = context.sourceCode.getFirstToken(root)
+				if (!firstToken) {
 					return
 				}
 
 				if (!primaryComponentNode) {
 					return context.report({
-						node: firstNode,
+						loc: firstToken.loc,
 						message: `Expected to have a React component named "${componentName}"`,
 					})
 				}
 
-				if (!defaultExportNode) {
+				const componentToken = context.sourceCode.getFirstToken(primaryComponentNode)
+				if (!defaultExportNode && componentToken) {
 					return context.report({
-						node: context.getSourceCode().getFirstToken(primaryComponentNode),
+						loc: componentToken.loc,
 						message: 'Expected `export default` to be here',
 					})
 				}
@@ -178,11 +208,13 @@ module.exports = {
 
 				// Find `export default MyComponent` and report not having `export default` in front of `class` or `function` keyword
 				if (
-					_.isMatch(defaultExportNode.declaration, { type: 'Identifier', name: componentName }) &&
-					primaryComponentNode.type !== 'VariableDeclarator'
+					defaultExportNode.declaration.type === 'Identifier' &&
+					defaultExportNode.declaration.name === componentName &&
+					primaryComponentNode.type !== 'VariableDeclarator' &&
+					componentToken
 				) {
 					return context.report({
-						node: context.getSourceCode().getFirstToken(primaryComponentNode),
+						loc: componentToken.loc,
 						message: 'Expected `export default` to be here',
 						fix: primaryComponentNode.parent.type === 'ExportNamedDeclaration' ? undefined : fixer => [
 							fixer.insertTextBefore(primaryComponentNode, 'export default '),
@@ -435,6 +467,18 @@ module.exports = {
 					ecmaFeatures: { jsx: true },
 				},
 			},
+			{
+				code: `
+				export const A = React.memo(() => { return <div></div> })
+				export default () => <A />
+				`,
+				filename: 'A.js',
+				parserOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					ecmaFeatures: { jsx: true },
+				},
+			},
 		],
 		invalid: [
 			{
@@ -648,24 +692,29 @@ module.exports = {
 	},
 }
 
+/**
+ * @param {ES.Function | null | undefined} node
+ * @return {boolean}
+ */
 function isReactFunctionalComponent(node) {
 	if (!node) {
 		return false
 	}
 
 	if (node.type === 'ArrowFunctionExpression' && node.expression) {
-		return node.body.type === 'JSXElement' || node.body.type === 'JSXFragment'
+		const type = /** @type {string} */ (node.body.type)
+		return type === 'JSXElement' || type === 'JSXFragment'
 	}
 
 	return (
 		node.body &&
 		node.body.type === 'BlockStatement' &&
-		node.body.body.some(
-			stub =>
-				stub.type === 'ReturnStatement' &&
-				stub.argument &&
-				(stub.argument.type === 'JSXElement' ||
-					stub.argument.type === 'JSXFragment')
+		node.body.body.some(stub =>
+			stub.type === 'ReturnStatement' &&
+			stub.argument && (
+				/** @type {string} */(stub.argument.type) === 'JSXElement' ||
+				/** @type {string} */(stub.argument.type) === 'JSXFragment'
+			)
 		)
 	)
 }

@@ -1,5 +1,11 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -12,48 +18,48 @@ module.exports = {
 		fixable: 'code',
 	},
 	create: function (context) {
-		const ruleList = []
-		if (context.options.length > 0 && _.isObject(context.options[0])) {
-			_.forEach(context.options[0], function (requirePath, variableName) {
-				let requirePathMatcher
-				if (requirePath.startsWith('/')) {
-					requirePathMatcher = new RegExp(requirePath.substring(1, requirePath.lastIndexOf('/'), requirePath.substring(requirePath.lastIndexOf('/') + 1)))
-				} else {
-					requirePathMatcher = new RegExp('^' + _.escapeRegExp(requirePath) + '$')
-				}
-				ruleList.push([requirePathMatcher, variableName])
+		/**
+		 * @type {Array<[string, RegExp]>}
+		 */
+		const ruleList = Object.entries(context.options?.[0] || [])
+			.map(([variableName, requirePath]) => {
+				const matcher = requirePath.startsWith('/')
+					? new RegExp(requirePath.substring(1, requirePath.lastIndexOf('/'), requirePath.substring(requirePath.lastIndexOf('/') + 1)))
+					: new RegExp('^' + _.escapeRegExp(requirePath) + '$')
+				return [variableName, matcher]
 			})
-		}
-
-		const sourceCode = context.getSourceCode()
 
 		return {
-			VariableDeclaration: function (rootNode) {
-				if (rootNode.declarations.length === 0 || rootNode.declarations[0].type !== 'VariableDeclarator' || rootNode.declarations[0].init === null || rootNode.declarations[0].init.callee === undefined || rootNode.declarations[0].init.callee.name !== 'require' || rootNode.declarations[0].init.arguments.length === 0 || rootNode.declarations[0].init.arguments[0].type !== 'Literal') {
-					return null
+			VariableDeclarator: function (root) {
+				if (
+					!root.init ||
+					root.init.type !== 'CallExpression' ||
+					root.init.callee.type !== 'Identifier' ||
+					root.init.callee.name !== 'require' ||
+					root.init.arguments.length === 0
+				) {
+					return
 				}
 
-				const workNode = rootNode.declarations[0]
-
-				let workPath = workNode.init.arguments[0].value
-				if (/^\.\.?\/.+/.test(workPath)) {
-					workPath = workPath.replace(/\.js$/, '')
+				const firstArgument = root.init.arguments[0]
+				if (firstArgument.type !== 'Literal' || typeof firstArgument.value !== 'string') {
+					return
 				}
 
-				const actualVariableName = workNode.id.name || sourceCode.getText(workNode.id)
+				const actualVariableName = root.id.type === 'Identifier' ? root.id.name : context.sourceCode.getText(root.id)
+				const requirePath = firstArgument.value.replace(/\.(c|m)?jsx?$/, '')
 
-				for (const rule of ruleList) {
-					const [requirePathMatcher, variableName] = rule
-					if (requirePathMatcher.test(workPath)) {
+				for (const [variableName, requirePathMatcher] of ruleList) {
+					if (requirePathMatcher.test(requirePath)) {
 						const expectVariableName = /\$\d/.test(variableName)
-							? workPath.replace(requirePathMatcher, variableName)
+							? requirePath.replace(requirePathMatcher, variableName)
 							: variableName
 
 						if (expectVariableName !== actualVariableName) {
-							return context.report({
-								node: workNode.id,
+							context.report({
+								node: root.id,
 								message: `Expected "${actualVariableName}" to be "${expectVariableName}".`,
-								fix: fixer => fixer.replaceText(workNode.id, expectVariableName)
+								fix: fixer => fixer.replaceText(root.id, expectVariableName)
 							})
 						}
 

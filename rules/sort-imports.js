@@ -1,32 +1,58 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
+const fs = require('fs')
 const _ = require('lodash')
 
-const NODE_APIS = [
-	'addon', 'assert', 'buffer', 'child_process', 'cluster', 'console', 'crypto', 'dgram', 'dns', 'domain', 'events', 'fs', 'http', 'http', 'https', 'net', 'os', 'path', 'punycode', 'querystring', 'readline', 'repl', 'stream', 'string_decoder', 'timers', 'tls', 'tty', 'url', 'util', 'v8', 'vm', 'zlib',
-].reduce((hash, name) => {
-	hash[name] = true
-	return hash
-}, {})
+const getNodeAPIs = _.memoize(() => {
+	const text = fs.readFileSync('node_modules/@types/node/index.d.ts', 'utf-8')
+	return text.match(/^\/\/\/ \<reference path="(.+?)"/gm)
+		?.map(line => line.match(/path="(.+?)\.d\.ts"/)?.[1])
+		.filter(/** @return {name is string} */(name) => typeof name === 'string' && name !== 'globals.global') || []
+})
 
+/**
+ * @param {ES.ImportDeclaration} node
+ * @return {string}
+ */
+function getImportPath(node) {
+	return String(node.source.value)
+}
+
+/**
+ * @param {string} path
+ * @return {number}
+ */
+function countDots(path) {
+	return path.match(/\.\./g)?.length || 0
+}
+
+/**
+ * @type {Record<string, Array<(node: ES.ImportDeclaration, options: { longestDotCount: number }) => boolean | number | string>>}
+ */
 const SORT_TYPES = {
 	module: [
 		// See https://github.com/renke/import-sort/tree/master/packages/import-sort-style-module
-		node => node.specifiers.length === 0 && node.source.value.startsWith('.') === false,
+		node => node.specifiers.length === 0 && getImportPath(node).startsWith('.') === false,
 		node => node.specifiers.length === 0,
-		node => NODE_APIS[node.source.value] && node.source.value.toLowerCase(),
-		node => node.source.value.startsWith('.') === false && node.source.value.toLowerCase(),
+		node => (getNodeAPIs().includes(getImportPath(node)) || getImportPath(node).startsWith('node:')) && getImportPath(node).toLowerCase(),
+		node => getImportPath(node).startsWith('.') === false && getImportPath(node).toLowerCase(),
 		(node, { longestDotCount }) => {
-			const currentDotCount = (node.source.value.match(/\./g) || []).length
+			const currentDotCount = countDots(getImportPath(node))
 			const reverseDotCount = Math.abs(currentDotCount - longestDotCount)
-			return _.padStart(reverseDotCount, longestDotCount.toString().length, '0') + node.source.value.toLowerCase()
+			return _.padStart(reverseDotCount.toString(), longestDotCount.toString().length, '0') + getImportPath(node).toLowerCase()
 		},
 	],
 	manta: [
-		node => node.specifiers.length > 0 && node.source.value.startsWith('.') === false && (node.source.value.startsWith('react') ? '0' : '1') + node.source.value.toLowerCase(),
-		node => node.specifiers.length > 0 && node.source.value.toLowerCase(),
-		node => node.source.value.toLowerCase(),
+		node => node.specifiers.length > 0 && getImportPath(node).startsWith('.') === false && (getImportPath(node).startsWith('react') ? '0' : '1') + getImportPath(node).toLowerCase(),
+		node => node.specifiers.length > 0 && getImportPath(node).toLowerCase(),
+		node => getImportPath(node).toLowerCase(),
 	]
 }
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -39,38 +65,59 @@ module.exports = {
 		fixable: 'code'
 	},
 	create: function (context) {
+		/**
+		 * @type {Map<ES.Node, Array<ES.Comment>>}
+		 */
 		const rightComments = new Map()
+
+		/**
+		 * @type {Map<ES.Node, Array<ES.Comment>>}
+		 */
 		const aboveComments = new Map()
 
 		return {
-			Program: function (rootNode) {
-				if (rootNode.sourceType !== 'module' || rootNode.body.length === 0) {
+			Program: function (root) {
+				if (root.sourceType !== 'module' || root.body.length === 0) {
 					return null
 				}
 
-				const totalImportList = rootNode.body.filter(node => node.type === 'ImportDeclaration')
+				const totalImportList = root.body.filter(/** @return {node is ES.ImportDeclaration} */(node) => node.type === 'ImportDeclaration')
 				if (totalImportList.length === 0) {
 					return null
 				}
 
-				for (let index = 0; index < totalImportList.length; index++) {
-					const workNode = totalImportList[index]
-					rightComments.set(workNode, context.getCommentsAfter(workNode).filter(node => node.loc.start.line === workNode.loc.end.line))
+				for (const thisNode of totalImportList) {
+					rightComments.set(
+						thisNode,
+						context.sourceCode.getCommentsAfter(thisNode).filter(node => node.loc?.start.line === thisNode.loc?.end.line)
+					)
 				}
 
 				for (let index = 0; index < totalImportList.length; index++) {
-					const workNode = totalImportList[index]
+					const thisNode = totalImportList[index]
 					const prevNode = totalImportList[index - 1]
-					aboveComments.set(workNode, _.differenceWith(context.getCommentsBefore(workNode), rightComments.get(prevNode) || [], (a, b) => _.isEqual(a.loc, b.loc)))
+					aboveComments.set(
+						thisNode,
+						_.differenceWith(
+							context.sourceCode.getCommentsBefore(thisNode),
+							rightComments.get(prevNode) || [],
+							(a, b) => _.isEqual(a.loc, b.loc)
+						)
+					)
 				}
 
 				let workingImportList = _.clone(totalImportList)
 
-				const longestDotCount = _.chain(totalImportList).map(node => (node.source.value.match(/\./g) || []).length).max().value()
+				const longestDotCount = _.chain(totalImportList)
+					.map(node => countDots(getImportPath(node)))
+					.max()
+					.value()
 
 				const nestedImportList = SORT_TYPES[context.options[0] || 'module'].map(rule => {
-					const func = node => rule(node, { longestDotCount })
-					const pendingImportList = _.chain(workingImportList).filter(func).sortBy(func).value()
+					const pendingImportList = _.chain(workingImportList)
+						.filter(node => !!rule(node, { longestDotCount }))
+						.sortBy(node => rule(node, { longestDotCount }))
+						.value()
 					workingImportList = _.difference(workingImportList, pendingImportList)
 					return pendingImportList
 				}).filter(list => list.length > 0)
@@ -79,7 +126,10 @@ module.exports = {
 
 				const firstOfGroupImportList = nestedImportList.map(list => list[0])
 
-				const totalMixedList = rootNode.body.slice(rootNode.body.indexOf(_.first(totalImportList)), rootNode.body.indexOf(_.last(totalImportList)) + 1)
+				const totalMixedList = root.body.slice(
+					root.body.indexOf(/** @type {any} */(_.first(totalImportList))),
+					root.body.indexOf(/** @type {any} */(_.last(totalImportList))) + 1
+				)
 
 				const sortedOtherList = totalMixedList.filter(node => node.type !== 'ImportDeclaration')
 
@@ -97,25 +147,34 @@ module.exports = {
 						const prevNode = sortedMixedList[index - 1]
 						const workNode = sortNode
 
-						const lastNode = _.maxBy([prevNode, ...rightComments.get(prevNode)], node => node.loc.end.line)
-						const nextNode = _.minBy([workNode, ...aboveComments.get(workNode)], node => node.loc.start.line)
+						const lastNode = _.maxBy([prevNode, ...(rightComments.get(prevNode) || [])], node => node.loc?.end.line)
+						const nextNode = _.minBy([workNode, ...(aboveComments.get(workNode) || [])], node => node.loc?.start.line)
+						if (!lastNode || !lastNode.loc || !lastNode.range || !nextNode || !nextNode.loc || !nextNode.range) {
+							continue
+						}
+
 						const lineDiff = nextNode.loc.start.line - lastNode.loc.end.line
 
-						if (firstOfGroupImportList.includes(workNode)) {
+						if (firstOfGroupImportList.includes(/** @type {any} */(workNode))) {
 							if (lineDiff !== 2) {
+								const { range } = nextNode
 								context.report({
 									node: workNode,
 									message: 'Expected a blank line before this import statement.',
-									fix: fixer => fixer.insertTextBeforeRange(nextNode.range, '\n')
+									fix: fixer => fixer.insertTextBeforeRange(range, '\n')
 								})
 							}
 
 						} else {
 							if (lineDiff !== 1) {
+								/**
+								 * @type {[number, number]}
+								 */
+								const range = [lastNode.range[1], nextNode.range[0]]
 								context.report({
 									node: workNode,
 									message: 'Unexpected a blank line before this import statement.',
-									fix: fixer => fixer.replaceTextRange([lastNode.range[1], nextNode.range[0]], '\n')
+									fix: fixer => fixer.replaceTextRange(range, '\n')
 								})
 							}
 						}
@@ -123,17 +182,24 @@ module.exports = {
 						continue
 					}
 
-					let reportedNode
-					let reportedMessage
-					if (realNode.type === 'ImportDeclaration') {
-						reportedNode = realNode
-						const expectedIndex = sortedMixedList.indexOf(realNode)
-						reportedMessage = `Expected this import statement to be placed after "${sortedMixedList[expectedIndex - 1].source.value}".`
+					const [reportedNode, reportedMessage] = (() => {
+						if (realNode.type === 'ImportDeclaration') {
+							const expectedIndex = sortedMixedList.indexOf(realNode)
+							const referenceNode = sortedMixedList[expectedIndex - 1]
+							return [
+								realNode,
+								`Expected this import statement to be placed after ${referenceNode.type === 'ImportDeclaration' ? `"${getImportPath(referenceNode)}"` : context.sourceCode.getText(referenceNode)}.`
+							]
+						} else {
+							return [
+								/** @type {ES.ImportDeclaration} */ (totalMixedList.slice(index).find(node => node.type === 'ImportDeclaration')),
+								'Expected import statements to be placed consecutively.'
+							]
+						}
+					})()
 
-					} else {
-						reportedNode = totalMixedList.slice(index).find(node => node.type === 'ImportDeclaration')
-						reportedMessage = 'Expected import statements to be placed consecutively.'
-					}
+					const firstNode = totalMixedList[0]
+					const lastNode = totalMixedList[totalMixedList.length - 1]
 
 					return context.report({
 						node: reportedNode,
@@ -141,12 +207,15 @@ module.exports = {
 						fix: fixer => (
 							fixer.replaceTextRange(
 								[
-									_.chain([_.first(totalMixedList), ...aboveComments.get(_.first(totalMixedList))])
-										.map(node => node.range[0])
+									_.chain([
+										firstNode,
+										...(aboveComments.get(firstNode) || [])
+									])
+										.map(node => node.range?.[0])
 										.min()
 										.value(),
-									_.chain([_.last(totalMixedList), ...rightComments.get(_.last(totalMixedList))])
-										.map(node => node.range[1])
+									_.chain([lastNode, ...(rightComments.get(lastNode) || [])])
+										.map(node => node.range?.[1])
 										.max()
 										.value()
 								],
@@ -155,13 +224,18 @@ module.exports = {
 										list => [
 											'',
 											...list.map(node => (
-												aboveComments.get(node).map(node => context.getSourceCode().getText(node)).join('\n') + '\n' +
-												context.getSourceCode().getText(node) + ' ' + rightComments.get(node).map(node => context.getSourceCode().getText(node)).join(' ')
+												aboveComments.get(node)
+													?.map(node => context.sourceCode.getText(/** @type {any} */(node)))
+													.join('\n') + '\n' +
+												context.sourceCode.getText(node) + ' ' +
+												rightComments.get(node)
+													?.map(node => context.sourceCode.getText(/** @type {any} */(node)))
+													.join(' ')
 											).trim())
 										].join('\n')
 									).join('\n').trim() +
 									'\n' + '\n' +
-									sortedOtherList.map(node => context.getSourceCode().getText(node)).join('\n')
+									sortedOtherList.map(node => context.sourceCode.getText(node)).join('\n')
 								).trim()
 							)
 						)
@@ -169,19 +243,25 @@ module.exports = {
 				}
 
 				const lastImport = _.last(sortedImportList)
-				const afterLastImport = rootNode.body[rootNode.body.indexOf(lastImport) + 1]
-				if (afterLastImport) {
-					const afterLastImportText = context.getSourceCode().getText(afterLastImport)
-					// TODO
-					const betweenTheLines = context.getSourceCode().getText(afterLastImport, afterLastImport.range[0] - lastImport.range[1])
-					const newLineCount = (betweenTheLines.substring(0, betweenTheLines.length - afterLastImportText.length).match(/\n/g) || []).length
-					if (newLineCount < 2) {
-						context.report({
-							node: lastImport,
-							message: 'Expected a blank line after the last import statement.',
-							fix: fixer => fixer.replaceText(lastImport, context.getSourceCode().getText(lastImport) + '\n')
-						})
-					}
+				if (!lastImport || !lastImport.range) {
+					return
+				}
+
+				const afterLastImport = root.body[root.body.indexOf(lastImport) + 1]
+				if (!afterLastImport || !afterLastImport.range) {
+					return
+				}
+
+				const afterLastImportText = context.sourceCode.getText(afterLastImport)
+				// TODO
+				const betweenTheLines = context.sourceCode.getText(afterLastImport, afterLastImport.range[0] - lastImport.range[1])
+				const newLineCount = (betweenTheLines.substring(0, betweenTheLines.length - afterLastImportText.length).match(/\n/g) || []).length
+				if (newLineCount < 2) {
+					context.report({
+						node: lastImport,
+						message: 'Expected a blank line after the last import statement.',
+						fix: fixer => fixer.replaceText(lastImport, context.sourceCode.getText(lastImport) + '\n')
+					})
 				}
 			}
 		}

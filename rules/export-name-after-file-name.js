@@ -1,6 +1,12 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const fp = require('path')
 const _ = require('lodash')
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -14,9 +20,8 @@ module.exports = {
 				if (
 					!root.source ||
 					root.source.type !== 'Literal' ||
-					!root.source.value.startsWith('.') ||
-					!root.specifiers ||
-					root.specifiers.length === 0
+					typeof root.source.value !== 'string' ||
+					root.source.value.startsWith('.') === false
 				) {
 					return
 				}

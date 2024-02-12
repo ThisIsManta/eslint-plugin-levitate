@@ -1,5 +1,9 @@
-const _ = require('lodash')
+/// <reference path="../types.d.ts" />
+// @ts-check
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
   meta: {
     type: 'problem',
@@ -8,25 +12,28 @@ module.exports = {
     },
   },
   create: function (context) {
+    /**
+     * @param {ES.FunctionExpression} root
+     */
     function check(root) {
-      const parentNodes = context.getAncestors()
+      const parentNodes = context.sourceCode.getAncestors(root)
+      const lastParentNode = parentNodes.at(-1)
 
       if (
         root.type === 'FunctionExpression' &&
-        _.isMatch(_.last(parentNodes), {
-          type: 'MethodDefinition',
-          key: { type: 'Identifier', name: 'constructor' },
-        })
+        lastParentNode &&
+        lastParentNode.type === 'MethodDefinition' &&
+        lastParentNode.key.type === 'Identifier' &&
+        lastParentNode.key.name === 'constructor'
       ) {
         return
       }
 
       if (
         parentNodes.some(node =>
-          _.isMatch(node, {
-            type: 'CallExpression',
-            callee: { type: 'Identifier', name: 'compose' },
-          })
+          node.type === 'CallExpression' &&
+          node.callee.type === 'Identifier' &&
+          node.callee.name === 'compose'
         )
       ) {
         return
@@ -34,10 +41,9 @@ module.exports = {
 
       if (
         parentNodes.some(node =>
-          _.isMatch(node, {
-            type: 'VariableDeclarator',
-            id: { type: 'Identifier', name: 'enhance' },
-          })
+          node.type === 'VariableDeclarator' &&
+          node.id.type === 'Identifier' &&
+          node.id.name === 'enhance'
         )
       ) {
         return
@@ -47,7 +53,7 @@ module.exports = {
         root.params.length > 0 &&
         root.params[0].type === 'Identifier' &&
         root.params[0].name === 'props' &&
-        !root.params[0].typeAnnotation
+        (!('typeAnnotation' in root.params[0]) || !root.params[0].typeAnnotation)
       ) {
         return context.report({
           node: root.params[0],

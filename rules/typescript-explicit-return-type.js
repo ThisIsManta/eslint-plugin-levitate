@@ -1,5 +1,11 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const CONDITION = 'onlyIfMoreThanOneReturns'
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'problem',
@@ -21,28 +27,38 @@ module.exports = {
 					return null
 				}
 
-				if (root.declaration.type === 'FunctionDeclaration' && !root.declaration.returnType && checkForReturnViolation(root.declaration)) {
+				if (
+					root.declaration.type === 'FunctionDeclaration' &&
+					!('returnType' in root.declaration && root.declaration.returnType) &&
+					checkForReturnViolation(root.declaration)
+				) {
 					return context.report({
 						node: root.declaration,
 						message: `Expected an exported function must have a return type.`,
 					})
 				}
 
-				if (root.declaration.type === 'VariableDeclaration' && root.declaration.declarations) {
+				if (
+					root.declaration.type === 'VariableDeclaration' &&
+					root.declaration.declarations
+				) {
 					for (const node of root.declaration.declarations) {
 						if (node.type !== 'VariableDeclarator') {
 							continue
 						}
 
-						if (node.id.typeAnnotation) {
+						if ('typeAnnotation' in node.id && node.id.typeAnnotation) {
 							continue
 						}
 
-						if (!node.init || node.init.type !== 'ArrowFunctionExpression' && node.init.type !== 'FunctionExpression') {
+						if (
+							!node.init ||
+							node.init.type !== 'ArrowFunctionExpression' && node.init.type !== 'FunctionExpression'
+						) {
 							continue
 						}
 
-						if (node.init.returnType) {
+						if ('returnType' in node.init && node.init.returnType) {
 							continue
 						}
 
@@ -56,21 +72,34 @@ module.exports = {
 				}
 			},
 			FunctionDeclaration: function (root) {
-				if (root.id && root.id.type === 'Identifier' && !root.returnType && checkForReturnViolation(root)) {
+				if (
+					root.id &&
+					root.id.type === 'Identifier' &&
+					!('returnType' in root && root.returnType) &&
+					checkForReturnViolation(root)
+				) {
 					untypedFunctionHash[root.id.name] = root
 				}
 			},
 			VariableDeclarator: function (root) {
 				if (
-					root.id && root.id.type === 'Identifier' && !root.id.typeAnnotation &&
-					root.init && (root.init.type === 'FunctionExpression' || root.init.type === 'ArrowFunctionExpression') && !root.init.returnType &&
+					root.id &&
+					root.id.type === 'Identifier' &&
+					!('typeAnnotation' in root.id && root.id.typeAnnotation) &&
+					root.init &&
+					(root.init.type === 'FunctionExpression' || root.init.type === 'ArrowFunctionExpression') &&
+					!('returnType' in root.init && root.init.returnType) &&
 					checkForReturnViolation(root.init)
 				) {
 					untypedFunctionHash[root.id.name] = root.init
 				}
 			},
 			ExportDefaultDeclaration: function (root) {
-				if (root.declaration && root.declaration.type === 'Identifier' && untypedFunctionHash[root.declaration.name]) {
+				if (
+					root.declaration &&
+					root.declaration.type === 'Identifier' &&
+					untypedFunctionHash[root.declaration.name]
+				) {
 					context.report({
 						node: untypedFunctionHash[root.declaration.name],
 						message: `Expected an exported function must have a return type.`,
@@ -79,17 +108,21 @@ module.exports = {
 			},
 		}
 
-		// Return true, if and only if it violates the option
+		/**
+		 * Returns true, if and only if it violates the option
+		 * @param {ES.FunctionDeclaration | ES.FunctionExpression | ES.ArrowFunctionExpression} node
+		 * @return {boolean}
+		 */
 		function checkForReturnViolation(node) {
 			if (context.options[0] !== CONDITION) {
 				return true
 			}
 
-			if (node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement') {
+			if (node.body.type !== 'BlockStatement') {
 				return false
 			}
 
-			const returnNodes = getReturns(node.body)
+			const returnNodes = getReturnStatements(node.body)
 			if (returnNodes.length === 0) {
 				return false
 			}
@@ -102,7 +135,7 @@ module.exports = {
 			}
 
 			if (earlyReturnNodes.every(node =>
-				node.argument === null ||
+				!node.argument ||
 				node.argument.type === 'Identifier' && node.argument.name === 'undefined' ||
 				node.argument.type === 'UnaryExpression' && node.argument.operator === 'void'
 			)) {
@@ -304,7 +337,11 @@ module.exports = {
 	},
 }
 
-function getReturns(node) {
+/**
+ * @param {ES.Node} node
+ * @return {Array<ES.ReturnStatement>}
+ */
+function getReturnStatements(node) {
 	if (!node) {
 		return []
 
@@ -315,14 +352,17 @@ function getReturns(node) {
 		return []
 	}
 
+	/**
+	 * @type {ReturnType<typeof getReturnStatements>}
+	 */
 	let results = []
-	for (const name in node) {
-		if (name === 'loc' || name === 'range' || name == 'parent') {
+	for (const key in node) {
+		if (key === 'loc' || key === 'range' || key == 'parent') {
 			continue
 		}
 
-		if (typeof node[name] === 'object') {
-			results = results.concat(getReturns(node[name]))
+		if (typeof node[key] === 'object') {
+			results = results.concat(getReturnStatements(node[key]))
 		}
 	}
 	return results

@@ -1,8 +1,10 @@
-const ruleList = require('./rules.js')
+const fs = require('fs')
 
-module.exports = {
-	rules: ruleList.reduce(function (hash, name) {
-		hash[name] = require('./edge/' + name)
+const rules = fs.readdirSync(__dirname + '/rules')
+	.map(name => name.replace(/\.js$/, ''))
+	.reduce(function (hash, name) {
+		hash[name] = require('./rules/' + name)
 		return hash
 	}, {})
-}
+
+module.exports = { rules }

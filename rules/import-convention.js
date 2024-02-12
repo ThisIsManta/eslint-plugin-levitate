@@ -1,7 +1,13 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 const fs = require('fs')
 const fp = require('path')
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -43,11 +49,19 @@ module.exports = {
 		const rules = context.options.map(({ path, named, ...rest }) => ({
 			...rest,
 			path: new RegExp(path),
-			named: _.isArray(named)
+			named: Array.isArray(named)
 				? named.map(({ name, ...rest }) => ({ ...rest, name: new RegExp(name) }))
 				: named
 		}))
 
+		/**
+		 * @param {Object} options
+		 * @param {Rule.Node} options.root
+		 * @param {string} options.modulePath
+		 * @param {ES.Identifier} [options.namespaceNode]
+		 * @param {ES.Identifier} [options.defaultNode]
+		 * @param {Array<{ originalNode: ES.Identifier, givenNode?: ES.Identifier }>} [options.namedWrappers]
+		 */
 		function check({ root, modulePath, namespaceNode, defaultNode, namedWrappers }) {
 			const rule = rules.find(({ path }) => path.test(modulePath))
 			if (!rule) {
@@ -100,9 +114,15 @@ module.exports = {
 						return modulePath.replace(rule.path, rule.default)
 					}
 
-					if (rule.default === true && !modulePath.startsWith('.') && !modulePath.startsWith('/') && context.parserPath.includes('@typescript-eslint/parser'.replace('/', fp.sep))) {
+					if (
+						rule.default === true &&
+						!modulePath.startsWith('.') &&
+						!modulePath.startsWith('/') &&
+						context.parserPath &&
+						context.parserPath.includes('@typescript-eslint/parser'.replace('/', fp.sep))
+					) {
 						try {
-							const name = findType(modulePath, fp.dirname(context.getFilename()))
+							const name = findType(modulePath, fp.dirname(context.filename))
 							if (name) {
 								return name
 							}
@@ -121,10 +141,18 @@ module.exports = {
 				}
 
 				// Forbid writing `default.xxx` where `xxx` is in named import list
-				if (rule.named === true || _.isArray(rule.named)) {
-					const accessors = context.getDeclaredVariables(defaultNode.parent)[0].references
-						.filter(node => _.isMatch(node, { identifier: { parent: { type: 'MemberExpression', property: { type: 'Identifier' } } } }))
-						.map(node => node.identifier.parent.property)
+				if ((rule.named === true || Array.isArray(rule.named)) && 'parent' in defaultNode) {
+					const parentNode = /** @type {Rule.Node} */ (defaultNode.parent)
+					const accessors = _.compact(
+						context.sourceCode.getDeclaredVariables(parentNode)[0].references
+							.map((node) => {
+								const identifier = /** @type {Rule.Node} */ (node.identifier)
+								return (
+									identifier.parent.type === 'MemberExpression' &&
+									identifier.parent.property.type === 'Identifier'
+								) ? identifier.parent.property : null
+							})
+					)
 
 					for (const accessor of accessors) {
 						if (rule.named === true) {
@@ -152,14 +180,14 @@ module.exports = {
 				})
 			}
 
-			if (_.isArray(namedWrappers) && namedWrappers.length > 0 && rule.named === false) {
+			if (Array.isArray(namedWrappers) && namedWrappers.length > 0 && rule.named === false) {
 				context.report({
 					node: root,
 					message: `Unexpected any named imports.`,
 				})
 			}
 
-			if (_.isArray(namedWrappers) && _.isArray(rule.named)) {
+			if (Array.isArray(namedWrappers) && Array.isArray(rule.named)) {
 				for (const { originalNode, givenNode } of namedWrappers) {
 					const subrule = rule.named.find(({ name }) => name.test(originalNode.name))
 
@@ -203,10 +231,10 @@ module.exports = {
 
 		return {
 			ImportDeclaration: function (root) {
-				const modulePath = root.source.value
-				const namespaceNode = root.specifiers.find(node => node.type === 'ImportNamespaceSpecifier')
-				const defaultNode = root.specifiers.find(node => node.type === 'ImportDefaultSpecifier')
-				const namedNodes = root.specifiers.filter(node => node.type === 'ImportSpecifier')
+				const modulePath = String(root.source.value)
+				const namespaceNode = root.specifiers.find((node) => node.type === 'ImportNamespaceSpecifier')
+				const defaultNode = root.specifiers.find(/** @return {node is ES.ImportDefaultSpecifier} */(node) => node.type === 'ImportDefaultSpecifier')
+				const namedNodes = root.specifiers.filter(/** @return {node is ES.ImportSpecifier} */(node) => node.type === 'ImportSpecifier')
 
 				check({
 					root,
@@ -217,14 +245,15 @@ module.exports = {
 				})
 			},
 			CallExpression: function (root) {
-				if (!_.isMatch(root, {
-					callee: { type: 'Identifier', name: 'require' },
-					arguments: [{ type: 'Literal' }]
-				})) {
+				if (
+					root.callee.type !== 'Identifier' ||
+					root.callee.name !== 'require' ||
+					root.arguments[0].type !== 'Literal'
+				) {
 					return
 				}
 
-				const modulePath = root.arguments[0].value
+				const modulePath = String(root.arguments[0].value)
 
 				if (root.parent.type === 'VariableDeclarator') {
 					if (root.parent.id.type === 'Identifier') {
@@ -239,12 +268,18 @@ module.exports = {
 						check({
 							root: root.parent,
 							modulePath,
-							namedWrappers: root.parent.id.properties.map(node => ({ originalNode: node.key, givenNode: node.value }))
+							namedWrappers: _.compact(root.parent.id.properties.map((node) =>
+								node.type === 'Property' &&
+									node.key.type === 'Identifier' &&
+									node.value.type === 'Identifier'
+									? ({ originalNode: node.key, givenNode: node.value })
+									: null
+							))
 						})
 					}
 				}
 
-				if (root.parent.type === 'MemberExpression') {
+				if (root.parent.type === 'MemberExpression' && root.parent.property.type === 'Identifier') {
 					if (root.parent.parent.type === 'VariableDeclarator' && root.parent.parent.id.type === 'Identifier') {
 						check({
 							root: root.parent,
@@ -268,66 +303,82 @@ module.exports = {
 			{
 				code: `import XXX from 'xxx'`,
 				options: [{ path: 'aaa', default: false }, { path: 'bbb', default: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from 'aaa'`,
 				options: [{ path: 'aaa', default: true }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from 'aaa'`,
 				options: [{ path: 'aaa', default: 'AAA' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from 'aaa'`,
 				options: [{ path: '(.*)', default: '$1' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: ``,
 				options: [{ path: 'aaa', namespace: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as AAA from 'aaa'`,
 				options: [{ path: 'aaa', namespace: true }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as AAA from 'aaa'`,
 				options: [{ path: 'aaa', namespace: 'AAA' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as aaa from 'aaa'`,
 				options: [{ path: '(.*)', namespace: '$1' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import 'aaa'`,
 				options: [{ path: 'aaa', named: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from 'aaa'`,
 				options: [{ path: 'aaa', named: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as AAA from 'aaa'`,
 				options: [{ path: 'aaa', named: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import { XXX } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'XXX' }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import { aaa } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: false }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import { aaa as AAA } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: 'AAA' }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import { useState as makeState } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: '^use(\\w+)', rename: 'make$1' }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import React, { useEffect } from 'react'`,
 				options: [{ path: 'react', default: 'React', named: [{ name: /^use\W+/ }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -335,8 +386,9 @@ module.exports = {
 					import moment from 'moment'
 				`,
 				filename: fp.join(__dirname, 'import-convention.js'),
-				parser: require.resolve('@typescript-eslint/parser'),
 				options: [{ path: '.*', default: true }],
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -348,6 +400,7 @@ module.exports = {
 					}
 				`,
 				options: [{ path: 'react', default: 'React', named: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -359,6 +412,7 @@ module.exports = {
 					}
 				`,
 				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -375,77 +429,92 @@ module.exports = {
 					const _ = require('lodash')
 				`,
 				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }, { path: '^lodash$', default: true, namespace: true }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `import XXX from 'aaa'`,
 				options: [{ path: 'aaa', default: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected the default import.' }],
 			},
 			{
 				code: `import 'aaa'`,
 				options: [{ path: 'aaa', default: true }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the default import.' }],
 			},
 			{
 				code: `import XXX from 'aaa'`,
 				options: [{ path: 'aaa', default: 'AAA' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the default import to be "AAA".' }],
 			},
 			{
 				code: `import XXX from 'aaa'`,
 				options: [{ path: '(.*)', default: '$1' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the default import to be "aaa".' }],
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
 				options: [{ path: 'aaa', namespace: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected the namespace import.' }],
 			},
 			{
 				code: `import 'aaa'`,
 				options: [{ path: 'aaa', namespace: true }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the namespace import.' }],
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
 				options: [{ path: 'aaa', namespace: 'AAA' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the namespace import to be "AAA".' }],
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
 				options: [{ path: '(.*)', namespace: '$1' }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the namespace import to be "aaa".' }],
 			},
 			{
 				code: `import { AAA } from 'aaa'`,
 				options: [{ path: 'aaa', named: false }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected any named imports.' }],
 			},
 			{
 				code: `import { aaa as XXX } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: false }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the named import to be "aaa".' }],
 			},
 			{
 				code: `import { aaa as XXX } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: 'AAA' }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the named import to be "AAA".' }],
 			},
 			{
 				code: `import { useState } from 'react'`,
 				options: [{ path: '^react$', named: [{ name: '^use(\\w+)$', rename: 'make$1' }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the named import to be "makeState".' }],
 			},
 			{
 				code: `import { aaa } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', forbidden: true }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected the named import "aaa".' }],
 			},
 			{
 				code: `import React, { memo } from 'react'`,
 				options: [{ path: 'react', default: 'X', named: [{ name: '^(?!use)', forbidden: true }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [
 					{ message: 'Expected the default import to be "X".' },
 					{ message: 'Unexpected the named import "memo".' },
@@ -457,8 +526,9 @@ module.exports = {
 					import Moment from 'moment'
 				`,
 				filename: fp.join(__dirname, 'import-convention.js'),
-				parser: require.resolve('@typescript-eslint/parser'),
 				options: [{ path: '.*', default: true }],
+				parser: require.resolve('@typescript-eslint/parser'),
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [
 					{ message: 'Expected the default import to be "React".' },
 					{ message: 'Expected the default import to be "moment".' },
@@ -474,6 +544,7 @@ module.exports = {
 					}
 				`,
 				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [
 					{ message: 'Expected "useState" to be imported directly.' },
 					{ message: 'Expected "useMemo" to be imported directly.' },
@@ -492,6 +563,7 @@ module.exports = {
 					const { get } = require('lodash')
 				`,
 				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }, { path: '^lodash$', default: true, namespace: true }],
+				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [
 					{ message: 'Unexpected the named import "memo".' },
 					{ message: 'Expected "useState" to be imported directly.' },
@@ -504,67 +576,86 @@ module.exports = {
 	}
 }
 
-const findType = _.memoize((moduleName, workingDirectoryPath) => {
-	const ts = require('typescript')
+const findType = _.memoize(
+	/**
+	 * @param {string} moduleName
+	 * @param {string} workingDirectoryPath
+	 * @return {string | null}
+	 */
+	(moduleName, workingDirectoryPath) => {
+		const ts = require('typescript')
 
-	const typeDefinitionPath = (() => {
-		const directoryParts = _.trim(workingDirectoryPath, fp.sep).split(/\\|\//g)
-		for (let index = directoryParts.length; index > 1; index--) {
-			const basePath = directoryParts.slice(0, index)
+		const typeDefinitionPath = (() => {
+			const directoryParts = _.trim(workingDirectoryPath, fp.sep).split(/\\|\//g)
+			for (let index = directoryParts.length; index > 1; index--) {
+				const basePath = directoryParts.slice(0, index)
 
-			const directModulePath = fp.join(...basePath, 'node_modules', moduleName)
-			if (fs.existsSync(directModulePath) && fs.lstatSync(directModulePath).isDirectory()) {
-				const packagePath = fp.join(directModulePath, 'package.json')
-				if (fs.existsSync(packagePath)) {
-					const packageJson = require(packagePath)
-					if (typeof packageJson.types === 'string') {
-						return fp.resolve(directModulePath, packageJson.types)
-					}
-					if (typeof packageJson.typings === 'string') {
-						return fp.resolve(directModulePath, packageJson.typings)
+				const directModulePath = fp.join(...basePath, 'node_modules', moduleName)
+				if (fs.existsSync(directModulePath) && fs.lstatSync(directModulePath).isDirectory()) {
+					const packagePath = fp.join(directModulePath, 'package.json')
+					if (fs.existsSync(packagePath)) {
+						const packageJson = require(packagePath)
+						if (typeof packageJson.types === 'string') {
+							return fp.resolve(directModulePath, packageJson.types)
+						}
+						if (typeof packageJson.typings === 'string') {
+							return fp.resolve(directModulePath, packageJson.typings)
+						}
 					}
 				}
-			}
 
-			const typeModulePath = fp.join(...basePath, 'node_modules', '@types', moduleName)
-			if (fs.existsSync(typeModulePath) && fs.lstatSync(typeModulePath).isDirectory()) {
-				return fp.join(typeModulePath, 'index.d.ts')
+				const typeModulePath = fp.join(...basePath, 'node_modules', '@types', moduleName)
+				if (fs.existsSync(typeModulePath) && fs.lstatSync(typeModulePath).isDirectory()) {
+					return fp.join(typeModulePath, 'index.d.ts')
+				}
+			}
+		})()
+
+		if (!typeDefinitionPath) {
+			return null
+		}
+
+		const root = ts.createSourceFile(typeDefinitionPath, fs.readFileSync(typeDefinitionPath, 'utf-8'), ts.ScriptTarget.Latest)
+
+		// Match `declare module "x" {}`
+		const scopedModules = _.compact(
+			root.statements.map(node =>
+				ts.isModuleDeclaration(node) &&
+					node.body &&
+					ts.isModuleBlock(node.body)
+					? node.body
+					: null
+			)
+		)
+
+		const statements = root.statements.concat(...scopedModules.map(node => node.statements))
+
+		// Match `export = X;`
+		for (const node of statements) {
+			if (
+				ts.isExportAssignment(node) &&
+				ts.isIdentifier(node.expression) &&
+				typeof node.expression.escapedText === 'string'
+			) {
+				return node.expression.escapedText
 			}
 		}
-	})()
 
-	if (!typeDefinitionPath) {
-		return undefined
-	}
+		// Match `export as namespace X;`
+		for (const node of statements) {
+			if (
+				ts.isNamespaceExportDeclaration(node) &&
+				ts.isIdentifier(node.name) &&
+				typeof node.name.escapedText === 'string'
+			) {
+				return node.name.escapedText
+			}
+		}
 
-	const root = ts.createSourceFile(typeDefinitionPath, fs.readFileSync(typeDefinitionPath, 'utf-8'), ts.ScriptTarget.Latest)
-
-	// Match `declare module "x" {}`
-	const scopedModules = root.statements.filter(node => _.isMatch(node, {
-		kind: ts.SyntaxKind.ModuleDeclaration,
-		name: { kind: ts.SyntaxKind.StringLiteral, text: moduleName }
-	}))
-
-	const statements = root.statements.concat(...scopedModules.map(node => node.statements))
-
-	// Match `export = X;`
-	const defaultExportNode = statements.find(node => _.isMatch(node, {
-		kind: ts.SyntaxKind.ExportAssignment,
-		expression: { kind: ts.SyntaxKind.Identifier },
-	}))
-	if (defaultExportNode) {
-		return defaultExportNode.expression.escapedText
-	}
-
-	// Match `export as namespace X;`
-	const namespaceExportNode = root.statements.find(node => _.isMatch(node, {
-		kind: ts.SyntaxKind.NamespaceExportDeclaration,
-		name: { kind: ts.SyntaxKind.Identifier },
-	}))
-	if (namespaceExportNode) {
-		return namespaceExportNode.name.escapedText
-	}
-}, (...params) => params.join('|'))
+		return null
+	},
+	(...params) => params.join('|')
+)
 
 function normalizeIdentifierName(name) {
 	return name

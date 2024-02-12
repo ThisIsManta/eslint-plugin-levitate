@@ -1,5 +1,11 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -24,7 +30,9 @@ module.exports = {
 			FunctionExpression: checkFunctionLike,
 			ArrowFunctionExpression: checkFunctionLike,
 			VariableDeclarator: function (root) {
-				check(root.id)
+				if ('name' in root.id) {
+					check(root.id)
+				}
 			},
 			TSTypeAliasDeclaration: function (root) {
 				check(root.id)
@@ -34,14 +42,22 @@ module.exports = {
 			},
 		}
 
+		/**
+		 * @param {ES.FunctionDeclaration} root
+		 */
 		function checkFunctionLike(root) {
 			check(root.id)
 
 			for (const node of root.params) {
-				check(node)
+				if ('name' in node) {
+					check(node)
+				}
 			}
 		}
 
+		/**
+		 * @param {ES.Node & { name: string }} node 
+		 */
 		function check(node) {
 			if (!node) {
 				return
@@ -83,14 +99,13 @@ module.exports = {
 						suggestedName += node.name.substring(traversedIndex)
 					}
 
-					const sourceCode = context.getSourceCode()
-					const optionalTypeAnnotation = node.typeAnnotation ? sourceCode.getText(node.typeAnnotation) : ''
-					return [
-						{
-							desc: `Did you mean "${suggestedName}"?`,
-							fix: fixer => fixer.replaceText(node, suggestedName + optionalTypeAnnotation)
-						}
-					]
+					const optionalTypeAnnotation = 'typeAnnotation' in node && node.typeAnnotation
+						? context.sourceCode.getText(/** @type {ES.Node} */(node.typeAnnotation))
+						: ''
+					return [{
+						desc: `Did you mean "${suggestedName}"?`,
+						fix: fixer => fixer.replaceText(node, suggestedName + optionalTypeAnnotation)
+					}]
 				})()
 			})
 		}
@@ -246,6 +261,11 @@ module.exports = {
 	},
 }
 
+/**
+ * @param {string} referenceWord
+ * @param {string} word
+ * @returns {string | undefined}
+ */
 function sameCase(referenceWord, word) {
 	if (word === undefined) {
 		return undefined

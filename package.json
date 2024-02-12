@@ -4,15 +4,14 @@
   "description": "A set of useful ESLint rules",
   "main": "index.js",
   "files": [
-    "rules.js",
-    "rules.js",
-    "edge/*.js",
-    "edge/*.js",
-    "edge/*.js",
-    "edge/*.js"
+    "rules/*.js"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "test": "node tests.js",
+    "docs": "node ./generateREADME.js",
+    "test": "eslint-plugin-local test",
     "version": "npm publish"
   },
   "repository": {
@@ -31,18 +30,24 @@
   "homepage": "https://github.com/ThisIsManta/eslint-plugin-levitate#readme",
   "peerDependencies": {
     "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "^8.0.0"
+    "eslint": "~8.0.0"
   },
   "devDependencies": {
     "@thisismanta/pessimist": "^1.2.0",
-    "@thisismanta/semantic-version": "^5.0.2",
-    "@types/lodash": "^4.14.199",
-    "@types/react": "^18.2.23",
+    "@thisismanta/semantic-version": "^8.0.0",
+    "@types/eslint": "^8.0.0",
+    "@types/lodash": "^4.14.202",
+    "@types/react": "^18.2.53",
+    "@typescript-eslint/parser": "^6.21.0",
     "chalk": "^4.1.2",
     "detect-indent": "^6.1.0",
-    "moment": "^2.29.4"
+    "eslint": "^8.56.0",
+    "eslint-plugin-local": "^3.2.1",
+    "lefthook": "^1.6.1",
+    "moment": "^2.30.1"
   },
   "dependencies": {
+    "@types/node": "*",
     "glob": "^10.3.10",
     "lodash": "^4.17.21",
     "pluralize": "^8.0.0"

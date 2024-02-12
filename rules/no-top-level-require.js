@@ -1,3 +1,9 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -12,7 +18,7 @@ module.exports = {
 					return
 				}
 
-				for (const node of context.getAncestors().reverse()) {
+				for (const node of context.sourceCode.getAncestors(root).reverse()) {
 					if (
 						node.type === 'BlockStatement' ||
 						node.type === 'ArrowFunctionExpression' ||

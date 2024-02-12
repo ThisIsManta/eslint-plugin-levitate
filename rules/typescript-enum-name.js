@@ -1,3 +1,6 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 
 const STYLES = {
@@ -18,6 +21,9 @@ const STYLES = {
 const options = Object.keys(STYLES)
 const defaultOption = options[0]
 
+/**
+ * @type {RuleModule}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -33,6 +39,9 @@ module.exports = {
 	},
 	create: function (context) {
 		return {
+			/**
+			 * @param {TS.TSEnumDeclaration} root
+			 */
 			TSEnumDeclaration: function (root) {
 				if (!context.options || !STYLES[context.options[0]]) {
 					return null

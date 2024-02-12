@@ -1,7 +1,13 @@
+/// <reference path="../types.d.ts" />
+// @ts-check
+
 const _ = require('lodash')
 const fs = require('fs')
 const fp = require('path')
 
+/**
+ * @type {RuleModule & { getSupportedExtensions: typeof getSupportedExtensions, getImportFullPath: typeof getImportFullPath }}
+ */
 module.exports = {
 	meta: {
 		type: 'suggestion',
@@ -12,7 +18,7 @@ module.exports = {
 	create: function (context) {
 		return {
 			ImportDeclaration: function (root) {
-				const importRelativePath = root.source.value
+				const importRelativePath = String(root.source.value)
 				if (importRelativePath.startsWith('.') === false) {
 					return null
 				}
@@ -57,12 +63,21 @@ module.exports = {
 	getImportFullPath,
 }
 
+/**
+ * @param {string} currentFullPath
+ * @return {Array<string>}
+ */
 function getSupportedExtensions(currentFullPath) {
 	return fp.extname(currentFullPath) === '.ts'
 		? ['.ts', '.tsx', '.js', '.jsx']
 		: ['.js', '.jsx', '.ts', '.tsx']
 }
 
+/**
+ * @param {string} currentFullPath
+ * @param {string} importRelativePath
+ * @return {string | null}
+ */
 function getImportFullPath(currentFullPath, importRelativePath) {
 	const supportedExtensions = getSupportedExtensions(currentFullPath)
 
