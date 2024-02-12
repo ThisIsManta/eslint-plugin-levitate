@@ -30,7 +30,7 @@
   "homepage": "https://github.com/ThisIsManta/eslint-plugin-levitate#readme",
   "peerDependencies": {
     "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "~8.0.0"
+    "eslint": "^8.0.0"
   },
   "devDependencies": {
     "@thisismanta/pessimist": "^1.2.0",
