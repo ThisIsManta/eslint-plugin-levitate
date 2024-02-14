@@ -6,7 +6,7 @@ const INDEX = /\/index(\.\w+)?$/
 const INDEX_INTERNAL = /^\.\.?(\/\.\.)*\/index/
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

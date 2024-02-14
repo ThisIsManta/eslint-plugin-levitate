@@ -10,7 +10,7 @@ const validIdentifierPattern = /^[A-Z_$][0-9A-Z_$]*$/i
 const acronym = /^(https?|xhr|html|xml|yml|url|pwa|io|ui|api|sdk)$/i
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

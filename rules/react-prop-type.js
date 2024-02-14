@@ -2,7 +2,7 @@
 // @ts-check
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
   meta: {

@@ -6,7 +6,7 @@ const fp = require('path')
 const glob = require('glob').sync
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

@@ -8,7 +8,7 @@ const DISALLOWED_WORDS = ['proper', 'correct', 'appropriate', 'accurate', 'perfe
 const DISALLOWED_PATTERN = new RegExp('\\W((' + DISALLOWED_WORDS.join('|') + ')(ly)?)(\\W|$)', 'i')
 
 /**
- * @type {RuleModule & { getText: typeof getText }}
+ * @type {Rule & { getText: typeof getText }}
  */
 module.exports = {
 	meta: {

@@ -22,7 +22,7 @@ const options = Object.keys(STYLES)
 const defaultOption = options[0]
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

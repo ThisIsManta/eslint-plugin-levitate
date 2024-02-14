@@ -6,7 +6,7 @@ const fs = require('fs')
 const fp = require('path')
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {
@@ -56,7 +56,7 @@ module.exports = {
 
 		/**
 		 * @param {Object} options
-		 * @param {Rule.Node} options.root
+		 * @param {ES.Node} options.root
 		 * @param {string} options.modulePath
 		 * @param {ES.Identifier} [options.namespaceNode]
 		 * @param {ES.Identifier} [options.defaultNode]
@@ -142,11 +142,11 @@ module.exports = {
 
 				// Forbid writing `default.xxx` where `xxx` is in named import list
 				if ((rule.named === true || Array.isArray(rule.named)) && 'parent' in defaultNode) {
-					const parentNode = /** @type {Rule.Node} */ (defaultNode.parent)
+					const parentNode = /** @type {ES.Node} */ (defaultNode.parent)
 					const accessors = _.compact(
 						context.sourceCode.getDeclaredVariables(parentNode)[0].references
 							.map((node) => {
-								const identifier = /** @type {Rule.Node} */ (node.identifier)
+								const identifier = /** @type {WithParent<ES.Node>} */ (node.identifier)
 								return (
 									identifier.parent.type === 'MemberExpression' &&
 									identifier.parent.property.type === 'Identifier'

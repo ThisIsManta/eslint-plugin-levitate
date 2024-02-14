@@ -10,7 +10,7 @@ const URL = /^\s(?:See\s*:\s*)?(\w+:\/\/.+)/i
 const ESLINT = /^eslint-(disable|enable)/
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

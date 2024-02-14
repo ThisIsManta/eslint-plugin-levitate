@@ -4,7 +4,7 @@
 const CONDITION = 'onlyIfMoreThanOneReturns'
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

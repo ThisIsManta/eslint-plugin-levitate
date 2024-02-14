@@ -6,7 +6,7 @@ const _ = require('lodash')
 const { getText } = require('./test-case-title')
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

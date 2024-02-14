@@ -1,4 +1,4 @@
-/// <reference path="../types.d.ts" />
+
 // @ts-check
 
 const fs = require('fs')
@@ -12,7 +12,7 @@ const getNodeAPIs = _.memoize(() => {
 })
 
 /**
- * @param {ES.ImportDeclaration} node
+ * @param {import('estree').ImportDeclaration} node
  * @return {string}
  */
 function getImportPath(node) {
@@ -28,7 +28,7 @@ function countDots(path) {
 }
 
 /**
- * @type {Record<string, Array<(node: ES.ImportDeclaration, options: { longestDotCount: number }) => boolean | number | string>>}
+ * @type {Record<string, Array<(node: import('estree').ImportDeclaration, options: { longestDotCount: number }) => boolean | number | string>>}
  */
 const SORT_TYPES = {
 	module: [
@@ -51,7 +51,7 @@ const SORT_TYPES = {
 }
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

@@ -4,7 +4,7 @@
 const _ = require('lodash')
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
   meta: {

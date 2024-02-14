@@ -1,26 +1,18 @@
-import * as ESLint from 'eslint'
-import * as ESTree from 'estree'
-import * as TSTypes from './node_modules/@typescript-eslint/types/dist/generated/ast-spec.d.ts'
+import type * as ESTree from 'estree'
+import type * as TSTypes from '@typescript-eslint/types/dist/generated/ast-spec.d.ts'
+import type * as Plugin from 'eslint-plugin-local'
 
 declare global {
-	interface RuleModule extends ESLint.Rule.RuleModule {
-		tests?: {
-			valid?: Array<ESLint.RuleTester.ValidTestCase>
-			invalid?: Array<ESLint.RuleTester.InvalidTestCase>
-		}
-	}
+	type Rule = Plugin.Rule
 
-	namespace Rule {
-		export = ESLint.Rule
-	}
-
-	type BaseNode<T> = T extends TS.Node ? TS.Node : ES.Node
+	type BaseNode<T> = T extends TS.Node ? TS.Node : ESTree.Node
 
 	type WithParent<T extends object> = T & {
 		parent: WithParent<BaseNode<T>>
 	}
 
 	namespace ES {
+		export type Node = WithParent<ESTree.Node>
 		export = ESTree
 	}
 

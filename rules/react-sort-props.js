@@ -16,7 +16,7 @@ const DEFAULT_PROPS_ORDER = [
 ]
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {

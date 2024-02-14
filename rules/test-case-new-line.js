@@ -6,7 +6,7 @@ const _ = require('lodash')
 const focusedAPI = /^(it|test|describe|(after|before)(All|Each))$/
 
 /**
- * @type {RuleModule}
+ * @type {Rule}
  */
 module.exports = {
 	meta: {
