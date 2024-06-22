@@ -34,20 +34,29 @@ module.exports = {
 		valid: [
 			{
 				code: `export interface x {}`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 			{
 				code: `declare global { interface x {} }`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 		],
 		invalid: [
 			{
 				code: `interface x {}`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 				errors: [{ message: 'Expected interfaces to be exported.' }],
 			},
 		],

@@ -148,14 +148,14 @@ module.exports = {
 				code: `
 				describe('xxx')
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
 				describe('', function() {})
 				describe('', () => {})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -166,7 +166,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -177,7 +177,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -191,7 +191,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -202,7 +202,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -213,7 +213,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -224,7 +224,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -235,7 +235,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -246,7 +246,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
@@ -259,7 +259,7 @@ module.exports = {
 					})
 				})
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'unexpected' }],
 			},
 			{
@@ -269,7 +269,7 @@ module.exports = {
 				})
 				doSomething()
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'unused' }],
 			},
 		],

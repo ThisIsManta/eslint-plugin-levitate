@@ -40,48 +40,51 @@ module.exports = {
 		valid: [
 			{
 				code: 'require',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'require()',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'require(a)',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'const f = () => require("m")',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'const f = () => { require("m") }',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'class S { m = require("m") }',
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 			{
 				code: 'const s = `${require("m")}`',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: 'require("m")',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected `require` to be `import` syntax' }],
 			},
 			{
 				code: 'const m = require("m")',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected `require` to be `import` syntax' }],
 			},
 			{
 				code: 'require("m").call()',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected `require` to be `import` syntax' }],
 			},
 		],

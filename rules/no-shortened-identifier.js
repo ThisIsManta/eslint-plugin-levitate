@@ -120,10 +120,10 @@ module.exports = {
 				type Idx = {}
 				enum TABLE_IDX {}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
 				},
 			},
 		],
@@ -137,10 +137,10 @@ module.exports = {
 				enum _TABLE_IDX_ {}
 				`,
 				options: [{ idx: 'index' }],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
 				},
 				errors: [
 					{

@@ -50,11 +50,13 @@ module.exports = {
           onClick: <T>(a, b, c) => void
         }
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
-          ecmaFeatures: { jsx: true },
+          parser: require('@typescript-eslint/parser'),
+          parserOptions: {
+            ecmaFeatures: { jsx: true },
+          },
         },
       },
     ],
@@ -65,11 +67,13 @@ module.exports = {
           onClick<T>(a, b, c): void
         }
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
-          ecmaFeatures: { jsx: true },
+          parser: require('@typescript-eslint/parser'),
+          parserOptions: {
+            ecmaFeatures: { jsx: true },
+          },
         },
         errors: [
           { message: 'Expected to be using arrow notation' },
@@ -86,11 +90,13 @@ module.exports = {
           onClose?()
         }
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
-          ecmaFeatures: { jsx: true },
+          parser: require('@typescript-eslint/parser'),
+          parserOptions: {
+            ecmaFeatures: { jsx: true },
+          },
         },
         errors: [
           { message: 'Expected to be using arrow notation' },
@@ -107,11 +113,13 @@ module.exports = {
           onClose?<T>()
         }
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
-          ecmaFeatures: { jsx: true },
+          parser: require('@typescript-eslint/parser'),
+          parserOptions: {
+            ecmaFeatures: { jsx: true },
+          },
         },
         errors: [
           { message: 'Expected to be using arrow notation' },

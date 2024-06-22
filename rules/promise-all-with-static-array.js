@@ -53,18 +53,18 @@ module.exports = {
 					const Bluebird = require('bluebird')
 					Bluebird.all([1, 2, 3])
 				`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: 'Promise.all([1, 2, 3, ...x])',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'error', }]
 			},
 			{
 				code: 'Promise.all(x)',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'error', }]
 			},
 		]

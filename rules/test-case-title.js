@@ -69,66 +69,66 @@ module.exports = {
 		valid: [
 			{
 				code: 'it("returns something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("renders something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("calls something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("fetches something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("sets something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("throws an error", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("does not return something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it(`returns ${something}`, function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: 'it("does not renders something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'start' }],
 			},
 			{
 				code: 'it("displays something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'start' }],
 			},
 			{
 				code: 'it("should do something", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'start' }],
 			},
 			{
 				code: 'it("renders properly", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'vague' }],
 			},
 			{
 				code: 'it("renders proper data", function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'vague' }],
 			},
 			{
 				code: 'it(`${something}returns`, function() {})',
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'start' }],
 			},
 		],

@@ -76,10 +76,10 @@ module.exports = {
         const B = function (props: Props) {}
         const C = (props: Props) => {}
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
+          parser: require('@typescript-eslint/parser'),
         },
       },
       {
@@ -88,10 +88,10 @@ module.exports = {
         const B = function (param) {}
         const C = (param) => {}
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
+          parser: require('@typescript-eslint/parser'),
         },
       },
       {
@@ -100,30 +100,30 @@ module.exports = {
           constructor(props) {}
         }
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
+          parser: require('@typescript-eslint/parser'),
         },
       },
       {
         code: `
         compose(withSelectors(props => ({})))
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
+          parser: require('@typescript-eslint/parser'),
         },
       },
       {
         code: `
         const enhance = props => {}
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
+          parser: require('@typescript-eslint/parser'),
         },
       },
     ],
@@ -132,10 +132,10 @@ module.exports = {
         code: `
         function A(props) {}
         `,
-        parser: require.resolve('@typescript-eslint/parser'),
-        parserOptions: {
+        languageOptions: {
           ecmaVersion: 6,
           sourceType: 'module',
+          parser: require('@typescript-eslint/parser'),
         },
         errors: [
           {

@@ -367,11 +367,13 @@ module.exports = {
 					)
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 			},
 			{
@@ -392,11 +394,13 @@ module.exports = {
 				}
 				`,
 				options: [['key', 'on*']],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 			},
 			{
@@ -409,11 +413,13 @@ module.exports = {
 					)
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 			},
 			{
@@ -424,11 +430,13 @@ module.exports = {
 					)
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 			},
 			{
@@ -443,11 +451,13 @@ module.exports = {
 					}
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 			},
 		],
@@ -497,11 +507,13 @@ module.exports = {
 					)
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 				errors: [
 					{
@@ -549,11 +561,13 @@ module.exports = {
 					)
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 				errors: [
 					{
@@ -617,11 +631,13 @@ module.exports = {
 					)
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 				errors: [
 					{
@@ -663,11 +679,13 @@ module.exports = {
 					// Comment 6
 				}
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 				errors: [
 					{
@@ -683,11 +701,13 @@ module.exports = {
 				output: `
 				type Props = { key: string; ref: string }
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 				errors: [
 					{
@@ -721,11 +741,13 @@ module.exports = {
 				}
 				const f3 = (): React.ComponentProps<typeof C> => ({ key: string, ref: string })
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 				errors: [
 					{
@@ -783,11 +805,13 @@ module.exports = {
 				}
 				const f3 = (): ComponentProps<typeof C> => ({ key: string, ref: string })
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					},
 				},
 				errors: [
 					{

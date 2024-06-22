@@ -42,29 +42,29 @@ module.exports = {
 		valid: [
 			{
 				code: `import AAA from 'aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from './aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from '../aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import XXX from './index'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import XXX from '../../../index'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `import XXX from '../src/index'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "../src/index" to be "../src".' }],
 				output: `import XXX from '../src'`,
 			},

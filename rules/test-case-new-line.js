@@ -130,8 +130,11 @@ describe('xxx', function() {
 
 describe('yyy', function() {})
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 			{
 				code: `
@@ -140,8 +143,11 @@ it('aaa', function() {
 	expect(2).not.toBe(2)
 })
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 			{
 				code: `
@@ -152,8 +158,11 @@ it('aaa', function() {
 	expect(2).not.toBe(2)
 })
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 			{
 				code: `
@@ -171,8 +180,11 @@ it('aaa', async function() {
 	done()
 })
 				`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 		],
 		invalid: [
@@ -209,8 +221,11 @@ describe('yyy', function() {})
 						line: 9,
 					},
 				],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 				output: `
 describe('xxx', function() {
 	beforeAll(() => {})
@@ -242,8 +257,11 @@ it('aaa', function() {
 						message: 'Expected no blank line between `expect` statements',
 					},
 				],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 				output: `
 it('aaa', function() {
 
@@ -293,8 +311,11 @@ it('aaa', async function() {
 						line: 10,
 					},
 				],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 				output: `
 it('aaa', async function() {
 	setUp()

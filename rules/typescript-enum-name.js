@@ -61,34 +61,49 @@ module.exports = {
 		valid: [
 			{
 				code: `enum PascalCase {}`,
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 			{
 				code: `enum PascalCase {}`,
 				options: ['PascalCase'],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 			{
 				code: `enum camelCase {}`,
 				options: ['camelCase'],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 			{
 				code: `enum SNAKE_CASE {}`,
 				options: ['SNAKE_CASE'],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 			},
 		],
 		invalid: [
 			{
 				code: `enum SNAKE_CASE {}`,
 				options: ['PascalCase'],
-				parser: require.resolve('@typescript-eslint/parser'),
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: {
+					ecmaVersion: 6,
+					sourceType: 'module',
+					parser: require('@typescript-eslint/parser'),
+				},
 				errors: [{ message: 'Expected the enumeration to be named "SnakeCase".' }],
 			},
 		]

@@ -129,84 +129,84 @@ module.exports = {
 		valid: [
 			{
 				code: `import { a } from './aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as Aaa from './aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from './aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from './aaa.js'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from './aaa.react.js'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from '../xxx-yyy/aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import XxxYyy from '../xxx-yyy/index'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import createIO from '../createIO'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import operationQueue from '../operation-queue'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as FlashMessage from '../tw-flash-message'`,
 				options: ['^tw-'],
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as MessageAPI from '../messages/api'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as MessageURLs from '../messages/urls'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import bbb from './aaa'; const aaa = 1`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import bbb from './aaa'; export function aaa() {}`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import bbb from './aaa'; export default function aaa() {}`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from './aaa/reducer'; import bbb from './aaa/reducer'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `import XXX from './aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "aaa"' }],
 			},
 			{
 				code: `import * as XXX from './aaa'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "Aaa"' }],
 			},
 			{
 				code: `import * as XXX from '../xxx-yyy/index'`,
-				parserOptions: { ecmaVersion: 6, sourceType: 'module' },
+				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "XxxYyy"' }],
 			},
 		]

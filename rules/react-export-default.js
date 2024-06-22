@@ -265,10 +265,12 @@ module.exports = {
 				export default function A() { return <div></div> }
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -277,10 +279,12 @@ module.exports = {
 				export default class A extends React.Component {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -290,10 +294,12 @@ module.exports = {
 				export default class A extends React.PureComponent {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -302,10 +308,12 @@ module.exports = {
 				export default class A extends Component {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -314,10 +322,12 @@ module.exports = {
 				export default class A extends PureComponent {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -326,10 +336,12 @@ module.exports = {
 				export default class A extends React.Component {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -338,10 +350,12 @@ module.exports = {
 				export default class A extends React.PureComponent {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -350,10 +364,12 @@ module.exports = {
 				export default class A extends Component {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -362,10 +378,12 @@ module.exports = {
 				export default class A extends PureComponent {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -374,10 +392,12 @@ module.exports = {
 				export default enhance(A)
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -386,10 +406,12 @@ module.exports = {
 				export default () => <A />
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -398,10 +420,12 @@ module.exports = {
 				export default () => <A />
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -409,10 +433,12 @@ module.exports = {
 				export default function A(props) { return <div></div> }
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -425,10 +451,12 @@ module.exports = {
 				}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -437,10 +465,12 @@ module.exports = {
 				export default () => <A />
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -449,10 +479,12 @@ module.exports = {
 				export default React.memo(() => { return <A/> })
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -461,10 +493,12 @@ module.exports = {
 				export default () => <A />
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 			{
@@ -473,10 +507,12 @@ module.exports = {
 				export default () => <A />
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 			},
 		],
@@ -486,10 +522,12 @@ module.exports = {
 				const x = 123
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -505,10 +543,12 @@ module.exports = {
 				export default function A() { return <div></div> }
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -530,10 +570,12 @@ module.exports = {
 				export default (props) => <div></div>
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -547,10 +589,12 @@ module.exports = {
 				export default (props) => { return <A /> }
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -563,10 +607,12 @@ module.exports = {
 				function A(props) { return <div></div> }
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -580,10 +626,12 @@ module.exports = {
 				export default A//EOL
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -601,10 +649,12 @@ module.exports = {
 				export default class B extends React.Component {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -621,10 +671,12 @@ module.exports = {
 				export default class B extends React.PureComponent { render() { return <A /> } }
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -638,10 +690,12 @@ module.exports = {
 				export default function B(props) {}
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -658,10 +712,12 @@ module.exports = {
 				const B = React.memo(function C() { return <div></div> })
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
@@ -675,10 +731,12 @@ module.exports = {
 				export default A
 				`,
 				filename: 'A.js',
-				parserOptions: {
+				languageOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
-					ecmaFeatures: { jsx: true },
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
 				errors: [
 					{
