@@ -42,29 +42,23 @@ module.exports = {
 		valid: [
 			{
 				code: `import AAA from 'aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from './aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from '../aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import XXX from './index'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import XXX from '../../../index'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `import XXX from '../src/index'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "../src/index" to be "../src".' }],
 				output: `import XXX from '../src'`,
 			},

@@ -74,51 +74,42 @@ module.exports = {
 			{
 				code: `const AAA = require('aaa')`,
 				options: [{ AAA: 'aaa' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `const AAA = require('./aaa')`,
 				options: [{ 'AAA': '//aaa$/' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `const AAA = require('./aaa')`,
 				options: [{ 'AAA': '//aaa$/' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `const AAA = require('aaa123')`,
 				options: [{ 'AAA$1': '/aaa(\d+)/' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `const XXX = require('AAA')`,
 				options: [{ 'XXX': '/aaa/i' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `const XXX = require('xxx')`,
 				options: [{ AAA: 'aaa' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `const AAA = require('aaa')`,
 				options: [{ AAA: '//aaa$' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `const XXX = require('aaa')`,
 				options: [{ AAA: 'aaa' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "AAA".' }],
 				output: `const AAA = require('aaa')`,
 			},
 			{
 				code: `const { AAA } = require('aaa')`,
 				options: [{ AAA: 'aaa' }],
-				languageOptions: { ecmaVersion: 9, sourceType: 'module' },
 				errors: [{ message: 'Expected "{ AAA }" to be "AAA".' }],
 				output: `const AAA = require('aaa')`,
 			},

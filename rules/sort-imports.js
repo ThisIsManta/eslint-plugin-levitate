@@ -276,7 +276,6 @@ import Config from '../../config/main'
 import UserConstants from './UserConstants'
 				`,
 				options: ['module'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -305,7 +304,6 @@ import aaaaa from './aaaaa'
 import bbbbb from './bbbbb'
 				`,
 				options: ['module'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -332,7 +330,6 @@ import 'b'
 import 'c'
 				`,
 				options: ['manta'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -344,7 +341,6 @@ xxx
 import 'b'
 				`,
 				options: ['manta'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
@@ -354,7 +350,6 @@ import 'aa'
 const e = 3.14
 import 'bb'
 				`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected import statements to be placed consecutively.' }],
 				output: `
 import 'aa'
@@ -378,7 +373,6 @@ import './a'
 import 'a'
 				`,
 				options: ['module'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected this import statement to be placed after "path".' }],
 				output: `
 import 'a'
@@ -404,7 +398,6 @@ import 'a'
 import './a'
 				`,
 				options: ['module'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected a blank line before this import statement.' }],
 				output: `
 import 'a'
@@ -419,7 +412,6 @@ import './a'
 import './b'
 				`,
 				options: ['module'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected a blank line before this import statement.' }],
 				output: `
 import './a'
@@ -437,7 +429,6 @@ xxx
 import 'a'
 				`,
 				options: ['manta'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected this import statement to be placed after "a".' }],
 				output: `
 // Note
@@ -460,7 +451,6 @@ xxx
 import React from 'react'
 				`,
 				options: ['manta'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected this import statement to be placed after "react".' }],
 				output: `
 // Note

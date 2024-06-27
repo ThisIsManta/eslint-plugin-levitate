@@ -266,8 +266,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -280,8 +278,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -295,8 +291,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -309,8 +303,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -323,8 +315,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -337,8 +327,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -351,8 +339,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -365,8 +351,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -379,8 +363,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -393,8 +375,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -407,8 +387,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -421,8 +399,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -434,8 +410,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -452,8 +426,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -466,8 +438,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -480,8 +450,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -494,8 +462,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -508,8 +474,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -523,8 +487,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -544,8 +506,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -571,8 +531,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -590,8 +548,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -608,8 +564,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -627,8 +581,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -650,8 +602,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -672,8 +622,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -691,8 +639,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -713,8 +659,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}
@@ -732,8 +676,6 @@ module.exports = {
 				`,
 				filename: 'A.js',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
 					}

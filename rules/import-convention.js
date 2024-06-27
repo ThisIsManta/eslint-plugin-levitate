@@ -303,82 +303,66 @@ module.exports = {
 			{
 				code: `import XXX from 'xxx'`,
 				options: [{ path: 'aaa', default: false }, { path: 'bbb', default: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from 'aaa'`,
 				options: [{ path: 'aaa', default: true }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from 'aaa'`,
 				options: [{ path: 'aaa', default: 'AAA' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from 'aaa'`,
 				options: [{ path: '(.*)', default: '$1' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: ``,
 				options: [{ path: 'aaa', namespace: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as AAA from 'aaa'`,
 				options: [{ path: 'aaa', namespace: true }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as AAA from 'aaa'`,
 				options: [{ path: 'aaa', namespace: 'AAA' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as aaa from 'aaa'`,
 				options: [{ path: '(.*)', namespace: '$1' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import 'aaa'`,
 				options: [{ path: 'aaa', named: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import AAA from 'aaa'`,
 				options: [{ path: 'aaa', named: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as AAA from 'aaa'`,
 				options: [{ path: 'aaa', named: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import { XXX } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'XXX' }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import { aaa } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: false }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import { aaa as AAA } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: 'AAA' }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import { useState as makeState } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: '^use(\\w+)', rename: 'make$1' }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import React, { useEffect } from 'react'`,
 				options: [{ path: 'react', default: 'React', named: [{ name: /^use\W+/ }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -388,8 +372,6 @@ module.exports = {
 				filename: fp.join(__dirname, 'import-convention.js'),
 				options: [{ path: '.*', default: true }],
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 				},
 			},
@@ -403,7 +385,6 @@ module.exports = {
 					}
 				`,
 				options: [{ path: 'react', default: 'React', named: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -415,7 +396,6 @@ module.exports = {
 					}
 				`,
 				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `
@@ -432,92 +412,77 @@ module.exports = {
 					const _ = require('lodash')
 				`,
 				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }, { path: '^lodash$', default: true, namespace: true }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `import XXX from 'aaa'`,
 				options: [{ path: 'aaa', default: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected the default import.' }],
 			},
 			{
 				code: `import 'aaa'`,
 				options: [{ path: 'aaa', default: true }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the default import.' }],
 			},
 			{
 				code: `import XXX from 'aaa'`,
 				options: [{ path: 'aaa', default: 'AAA' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the default import to be "AAA".' }],
 			},
 			{
 				code: `import XXX from 'aaa'`,
 				options: [{ path: '(.*)', default: '$1' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the default import to be "aaa".' }],
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
 				options: [{ path: 'aaa', namespace: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected the namespace import.' }],
 			},
 			{
 				code: `import 'aaa'`,
 				options: [{ path: 'aaa', namespace: true }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the namespace import.' }],
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
 				options: [{ path: 'aaa', namespace: 'AAA' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the namespace import to be "AAA".' }],
 			},
 			{
 				code: `import * as XXX from 'aaa'`,
 				options: [{ path: '(.*)', namespace: '$1' }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the namespace import to be "aaa".' }],
 			},
 			{
 				code: `import { AAA } from 'aaa'`,
 				options: [{ path: 'aaa', named: false }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected any named imports.' }],
 			},
 			{
 				code: `import { aaa as XXX } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: false }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the named import to be "aaa".' }],
 			},
 			{
 				code: `import { aaa as XXX } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', rename: 'AAA' }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the named import to be "AAA".' }],
 			},
 			{
 				code: `import { useState } from 'react'`,
 				options: [{ path: '^react$', named: [{ name: '^use(\\w+)$', rename: 'make$1' }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the named import to be "makeState".' }],
 			},
 			{
 				code: `import { aaa } from 'aaa'`,
 				options: [{ path: 'aaa', named: [{ name: 'aaa', forbidden: true }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Unexpected the named import "aaa".' }],
 			},
 			{
 				code: `import React, { memo } from 'react'`,
 				options: [{ path: 'react', default: 'X', named: [{ name: '^(?!use)', forbidden: true }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [
 					{ message: 'Expected the default import to be "X".' },
 					{ message: 'Unexpected the named import "memo".' },
@@ -529,11 +494,6 @@ module.exports = {
 				`,
 				filename: fp.join(__dirname, 'import-convention.js'),
 				options: [{ path: '.*', default: 'React' }],
-				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					parser: require('@typescript-eslint/parser'),
-				},
 				errors: [
 					{ message: 'Expected the default import to be "React".' },
 				],
@@ -548,7 +508,6 @@ module.exports = {
 					}
 				`,
 				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }] }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [
 					{ message: 'Expected "useState" to be imported directly.' },
 					{ message: 'Expected "useMemo" to be imported directly.' },
@@ -567,7 +526,6 @@ module.exports = {
 					const { get } = require('lodash')
 				`,
 				options: [{ path: 'react', default: 'React', named: [{ name: '^use' }, { name: '.*', forbidden: true }] }, { path: '^lodash$', default: true, namespace: true }],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [
 					{ message: 'Unexpected the named import "memo".' },
 					{ message: 'Expected "useState" to be imported directly.' },

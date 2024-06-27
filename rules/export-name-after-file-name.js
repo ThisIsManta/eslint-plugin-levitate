@@ -54,25 +54,20 @@ module.exports = {
 		valid: [
 			{
 				code: `export { default as MyComponent } from './MyComponent.react'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `export { default as SomethingElse } from './My-Component.react'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `export { SomethingElse } from './MyComponent.react'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `export * from './MyComponent.react'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `export { default as Component } from './MyComponent.react'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected the default export name "Component" to be after its file name "MyComponent"' }],
 			},
 		]

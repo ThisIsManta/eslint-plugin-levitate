@@ -69,66 +69,52 @@ module.exports = {
 		valid: [
 			{
 				code: 'it("returns something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("renders something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("calls something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("fetches something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("sets something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("throws an error", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it("does not return something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'it(`returns ${something}`, function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: 'it("does not renders something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'start' }],
 			},
 			{
 				code: 'it("displays something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'start' }],
 			},
 			{
 				code: 'it("should do something", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'start' }],
 			},
 			{
 				code: 'it("renders properly", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'vague' }],
 			},
 			{
 				code: 'it("renders proper data", function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'vague' }],
 			},
 			{
 				code: 'it(`${something}returns`, function() {})',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ messageId: 'start' }],
 			},
 		],

@@ -35,16 +35,12 @@ module.exports = {
 			{
 				code: `export interface x {}`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 				},
 			},
 			{
 				code: `declare global { interface x {} }`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 				},
 			},
@@ -53,8 +49,6 @@ module.exports = {
 			{
 				code: `interface x {}`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 				},
 				errors: [{ message: 'Expected interfaces to be exported.' }],

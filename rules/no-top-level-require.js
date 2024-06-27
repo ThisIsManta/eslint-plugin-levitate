@@ -40,51 +40,40 @@ module.exports = {
 		valid: [
 			{
 				code: 'require',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'require()',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'require(a)',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'const f = () => require("m")',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'const f = () => { require("m") }',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: 'class S { m = require("m") }',
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 				},
 			},
 			{
 				code: 'const s = `${require("m")}`',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: 'require("m")',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected `require` to be `import` syntax' }],
 			},
 			{
 				code: 'const m = require("m")',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected `require` to be `import` syntax' }],
 			},
 			{
 				code: 'require("m").call()',
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected `require` to be `import` syntax' }],
 			},
 		],

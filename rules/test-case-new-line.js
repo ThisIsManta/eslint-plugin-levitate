@@ -130,11 +130,6 @@ describe('xxx', function() {
 
 describe('yyy', function() {})
 				`,
-				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					parser: require('@typescript-eslint/parser'),
-				},
 			},
 			{
 				code: `
@@ -143,11 +138,6 @@ it('aaa', function() {
 	expect(2).not.toBe(2)
 })
 				`,
-				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					parser: require('@typescript-eslint/parser'),
-				},
 			},
 			{
 				code: `
@@ -158,11 +148,6 @@ it('aaa', function() {
 	expect(2).not.toBe(2)
 })
 				`,
-				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					parser: require('@typescript-eslint/parser'),
-				},
 			},
 			{
 				code: `
@@ -181,8 +166,6 @@ it('aaa', async function() {
 })
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 				},
 			},
@@ -221,11 +204,6 @@ describe('yyy', function() {})
 						line: 9,
 					},
 				],
-				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					parser: require('@typescript-eslint/parser'),
-				},
 				output: `
 describe('xxx', function() {
 	beforeAll(() => {})
@@ -257,11 +235,6 @@ it('aaa', function() {
 						message: 'Expected no blank line between `expect` statements',
 					},
 				],
-				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					parser: require('@typescript-eslint/parser'),
-				},
 				output: `
 it('aaa', function() {
 
@@ -311,11 +284,6 @@ it('aaa', async function() {
 						line: 10,
 					},
 				],
-				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
-					parser: require('@typescript-eslint/parser'),
-				},
 				output: `
 it('aaa', async function() {
 	setUp()

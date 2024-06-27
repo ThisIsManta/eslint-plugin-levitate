@@ -368,8 +368,6 @@ module.exports = {
 				}
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -395,8 +393,6 @@ module.exports = {
 				`,
 				options: [['key', 'on*']],
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -414,8 +410,6 @@ module.exports = {
 				}
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -431,8 +425,6 @@ module.exports = {
 				}
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -452,8 +444,6 @@ module.exports = {
 				}
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -508,8 +498,6 @@ module.exports = {
 				}
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -562,8 +550,6 @@ module.exports = {
 				}
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -632,8 +618,6 @@ module.exports = {
 				}
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -680,8 +664,6 @@ module.exports = {
 				}
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -702,8 +684,6 @@ module.exports = {
 				type Props = { key: string; ref: string }
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -742,8 +722,6 @@ module.exports = {
 				const f3 = (): React.ComponentProps<typeof C> => ({ key: string, ref: string })
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },
@@ -806,8 +784,6 @@ module.exports = {
 				const f3 = (): ComponentProps<typeof C> => ({ key: string, ref: string })
 				`,
 				languageOptions: {
-					ecmaVersion: 6,
-					sourceType: 'module',
 					parser: require('@typescript-eslint/parser'),
 					parserOptions: {
 						ecmaFeatures: { jsx: true },

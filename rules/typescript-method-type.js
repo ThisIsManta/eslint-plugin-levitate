@@ -51,8 +51,6 @@ module.exports = {
         }
         `,
         languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
           parser: require('@typescript-eslint/parser'),
           parserOptions: {
             ecmaFeatures: { jsx: true },
@@ -68,8 +66,6 @@ module.exports = {
         }
         `,
         languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
           parser: require('@typescript-eslint/parser'),
           parserOptions: {
             ecmaFeatures: { jsx: true },
@@ -91,8 +87,6 @@ module.exports = {
         }
         `,
         languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
           parser: require('@typescript-eslint/parser'),
           parserOptions: {
             ecmaFeatures: { jsx: true },
@@ -114,8 +108,6 @@ module.exports = {
         }
         `,
         languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
           parser: require('@typescript-eslint/parser'),
           parserOptions: {
             ecmaFeatures: { jsx: true },

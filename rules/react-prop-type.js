@@ -77,8 +77,6 @@ module.exports = {
         const C = (props: Props) => {}
         `,
         languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
           parser: require('@typescript-eslint/parser'),
         },
       },
@@ -88,11 +86,6 @@ module.exports = {
         const B = function (param) {}
         const C = (param) => {}
         `,
-        languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
-          parser: require('@typescript-eslint/parser'),
-        },
       },
       {
         code: `
@@ -100,31 +93,16 @@ module.exports = {
           constructor(props) {}
         }
         `,
-        languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
-          parser: require('@typescript-eslint/parser'),
-        },
       },
       {
         code: `
         compose(withSelectors(props => ({})))
         `,
-        languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
-          parser: require('@typescript-eslint/parser'),
-        },
       },
       {
         code: `
         const enhance = props => {}
         `,
-        languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
-          parser: require('@typescript-eslint/parser'),
-        },
       },
     ],
     invalid: [
@@ -132,11 +110,6 @@ module.exports = {
         code: `
         function A(props) {}
         `,
-        languageOptions: {
-          ecmaVersion: 6,
-          sourceType: 'module',
-          parser: require('@typescript-eslint/parser'),
-        },
         errors: [
           {
             message: 'Expected to have type definition',

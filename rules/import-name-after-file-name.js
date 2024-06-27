@@ -129,84 +129,65 @@ module.exports = {
 		valid: [
 			{
 				code: `import { a } from './aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as Aaa from './aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from './aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from './aaa.js'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from './aaa.react.js'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from '../xxx-yyy/aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import XxxYyy from '../xxx-yyy/index'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import createIO from '../createIO'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import operationQueue from '../operation-queue'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as FlashMessage from '../tw-flash-message'`,
 				options: ['^tw-'],
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as MessageAPI from '../messages/api'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import * as MessageURLs from '../messages/urls'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import bbb from './aaa'; const aaa = 1`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import bbb from './aaa'; export function aaa() {}`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import bbb from './aaa'; export default function aaa() {}`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 			{
 				code: `import aaa from './aaa/reducer'; import bbb from './aaa/reducer'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 			},
 		],
 		invalid: [
 			{
 				code: `import XXX from './aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "aaa"' }],
 			},
 			{
 				code: `import * as XXX from './aaa'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "Aaa"' }],
 			},
 			{
 				code: `import * as XXX from '../xxx-yyy/index'`,
-				languageOptions: { ecmaVersion: 6, sourceType: 'module' },
 				errors: [{ message: 'Expected "XXX" to be "XxxYyy"' }],
 			},
 		]
@@ -219,11 +200,17 @@ function upperEach(text) {
 
 /**
  * Returns capitalized first character of each word, except the first word, while keeping everything else untouched
+ * @param {string} text
+ * @return {string}
  */
 function upperSecond(text) {
 	return _.words(text).map((word, rank) => rank === 0 ? _.toLower(word) : _.upperFirst(word)).join('')
 }
 
+/**
+ * @param {string} text
+ * @return {string}
+ */
 function upperAllIfAcronym(text) {
 	const single = singular(text)
 	if (acronym.test(single)) {
@@ -234,6 +221,11 @@ function upperAllIfAcronym(text) {
 }
 
 const digitOnly = /^\d+$/
+
+/**
+ * @param {string} text
+ * @return {string}
+ */
 function noLeadingDigits(text) {
 	return _.dropWhile(_.words(text), word => digitOnly.test(word)).join('-')
 }
