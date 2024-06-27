@@ -23,7 +23,7 @@ module.exports = {
 					return null
 				}
 
-				const currentFullPath = context.getFilename()
+				const currentFullPath = context.filename
 				const importFullPath = getImportFullPath(currentFullPath, importRelativePath)
 				if (importFullPath === null) {
 					return null

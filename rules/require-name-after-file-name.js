@@ -50,7 +50,7 @@ module.exports = {
 				const properName = _.chain(filePath.split('/')).last().camelCase().value().replace(/^\w/, char => char.toUpperCase())
 
 				if (context.options.length > 0 && context.options[0].length > 0) {
-					const fullPath = fp.resolve(context.getFilename())/*.split(/\\|\//g)*/
+					const fullPath = fp.resolve(context.filename)
 					let index = -1
 					let found = false
 					while (++index < context.options[0].length) {
