@@ -1,5 +1,5 @@
 import type * as ESTree from 'estree'
-import type * as TSTypes from '@typescript-eslint/types/dist/generated/ast-spec.d.ts'
+import type { TSESTree } from '@typescript-eslint/types'
 import type * as Plugin from 'eslint-plugin-local'
 
 declare global {
@@ -17,6 +17,6 @@ declare global {
 	}
 
 	namespace TS {
-		export = TSTypes
+		export = TSESTree
 	}
 }
