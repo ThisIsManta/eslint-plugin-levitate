@@ -1,10 +1,9 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -43,7 +42,7 @@ module.exports = {
 		}
 
 		/**
-		 * @param {ES.FunctionDeclaration} root
+		 * @param {import('estree').FunctionDeclaration} root
 		 */
 		function checkFunctionLike(root) {
 			check(root.id)
@@ -56,7 +55,7 @@ module.exports = {
 		}
 
 		/**
-		 * @param {ES.Node & { name: string }} node 
+		 * @param {import('estree').Node & { name: string }} node 
 		 */
 		function check(node) {
 			if (!node) {
@@ -100,7 +99,7 @@ module.exports = {
 					}
 
 					const optionalTypeAnnotation = 'typeAnnotation' in node && node.typeAnnotation
-						? context.sourceCode.getText(/** @type {ES.Node} */(node.typeAnnotation))
+						? context.sourceCode.getText(/** @type {import('estree').Node} */(node.typeAnnotation))
 						: ''
 					return [{
 						desc: `Did you mean "${suggestedName}"?`,
@@ -110,7 +109,7 @@ module.exports = {
 			})
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `

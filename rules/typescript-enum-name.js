@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
@@ -22,7 +21,7 @@ const options = Object.keys(STYLES)
 const defaultOption = options[0]
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -40,7 +39,7 @@ module.exports = {
 	create: function (context) {
 		return {
 			/**
-			 * @param {TS.TSEnumDeclaration} root
+			 * @param {import('@typescript-eslint/types').TSESTree.TSEnumDeclaration} root
 			 */
 			TSEnumDeclaration: function (root) {
 				if (!context.options || !STYLES[context.options[0]]) {
@@ -57,7 +56,7 @@ module.exports = {
 			}
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `enum PascalCase {}`,

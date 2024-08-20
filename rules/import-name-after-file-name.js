@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const fp = require('path')
@@ -10,7 +9,7 @@ const validIdentifierPattern = /^[A-Z_$][0-9A-Z_$]*$/i
 const acronym = /^(https?|xhr|html|xml|yml|url|pwa|io|ui|api|sdk)$/i
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -125,7 +124,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `import { a } from './aaa'`,

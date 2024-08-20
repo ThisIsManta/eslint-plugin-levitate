@@ -1,8 +1,7 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
   meta: {
@@ -13,7 +12,7 @@ module.exports = {
   },
   create: function (context) {
     /**
-     * @param {ES.FunctionExpression} root
+     * @param {import('estree').FunctionExpression} root
      */
     function check(root) {
       const parentNodes = context.sourceCode.getAncestors(root)
@@ -68,7 +67,7 @@ module.exports = {
       ArrowFunctionExpression: check,
     }
   },
-  tests: {
+  tests: process.env.TEST && {
     valid: [
       {
         code: `

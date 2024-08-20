@@ -1,8 +1,7 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -13,9 +12,6 @@ module.exports = {
 	},
 	create: function (context) {
 		return {
-			/**
-			 * @param {WithParent<ES.Node>} root
-			 */
 			TSInterfaceDeclaration: function (root) {
 				if (!root.parent || root.parent.type !== 'ExportNamedDeclaration') {
 					if (context.sourceCode.getAncestors(root).some(node => String(node.type) === 'TSModuleDeclaration')) {
@@ -30,7 +26,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `export interface x {}`,

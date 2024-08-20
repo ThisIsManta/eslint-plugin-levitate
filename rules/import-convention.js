@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
@@ -6,7 +5,7 @@ const fs = require('fs')
 const fp = require('path')
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -56,11 +55,11 @@ module.exports = {
 
 		/**
 		 * @param {Object} options
-		 * @param {ES.Node} options.root
+		 * @param {import('estree').Node} options.root
 		 * @param {string} options.modulePath
-		 * @param {ES.Identifier} [options.namespaceNode]
-		 * @param {ES.Identifier} [options.defaultNode]
-		 * @param {Array<{ originalNode: ES.Identifier, givenNode?: ES.Identifier }>} [options.namedWrappers]
+		 * @param {import('estree').Identifier} [options.namespaceNode]
+		 * @param {import('estree').Identifier} [options.defaultNode]
+		 * @param {Array<{ originalNode: import('estree').Identifier, givenNode?: import('estree').Identifier }>} [options.namedWrappers]
 		 */
 		function check({ root, modulePath, namespaceNode, defaultNode, namedWrappers }) {
 			const rule = rules.find(({ path }) => path.test(modulePath))
@@ -142,11 +141,11 @@ module.exports = {
 
 				// Forbid writing `default.xxx` where `xxx` is in named import list
 				if ((rule.named === true || Array.isArray(rule.named)) && 'parent' in defaultNode) {
-					const parentNode = /** @type {ES.Node} */ (defaultNode.parent)
+					const parentNode = /** @type {import('estree').Node} */ (defaultNode.parent)
 					const accessors = _.compact(
 						context.sourceCode.getDeclaredVariables(parentNode)[0].references
 							.map((node) => {
-								const identifier = /** @type {WithParent<ES.Node>} */ (node.identifier)
+								const identifier = /** @type {import('eslint').Rule.Node} */ (node.identifier)
 								return (
 									identifier.parent.type === 'MemberExpression' &&
 									identifier.parent.property.type === 'Identifier'
@@ -233,8 +232,8 @@ module.exports = {
 			ImportDeclaration: function (root) {
 				const modulePath = String(root.source.value)
 				const namespaceNode = root.specifiers.find((node) => node.type === 'ImportNamespaceSpecifier')
-				const defaultNode = root.specifiers.find(/** @return {node is ES.ImportDefaultSpecifier} */(node) => node.type === 'ImportDefaultSpecifier')
-				const namedNodes = root.specifiers.filter(/** @return {node is ES.ImportSpecifier} */(node) => node.type === 'ImportSpecifier')
+				const defaultNode = root.specifiers.find(/** @return {node is import('estree').ImportDefaultSpecifier} */(node) => node.type === 'ImportDefaultSpecifier')
+				const namedNodes = root.specifiers.filter(/** @return {node is import('estree').ImportSpecifier} */(node) => node.type === 'ImportSpecifier')
 
 				check({
 					root,
@@ -298,7 +297,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `import XXX from 'xxx'`,

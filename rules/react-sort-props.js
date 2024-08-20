@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
@@ -16,7 +15,12 @@ const DEFAULT_PROPS_ORDER = [
 ]
 
 /**
- * @type {Rule}
+ * @template {import('@typescript-eslint/types').TSESTree.Node} T
+ * @typedef {T & { parent: T }} WithParent<T>
+ */
+
+/**
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -48,7 +52,7 @@ module.exports = {
 
 		return {
 			/**
-			 * @param {WithParent<TS.TSTypeLiteral>} root
+			 * @param {WithParent<import('@typescript-eslint/types').TSESTree.TSTypeLiteral>} root
 			 */
 			TSTypeLiteral: function (root) { // Match `type Props = { ... }` and `function (props: { ... })`
 				if (!findPropTypeDeclaration(root.parent)) {
@@ -60,7 +64,7 @@ module.exports = {
 				}
 			},
 			/**
-			 * @param {TS.JSXOpeningElement} root
+			 * @param {import('@typescript-eslint/types').TSESTree.JSXOpeningElement} root
 			 */
 			JSXOpeningElement: function (root) {
 				for (const props of getPropSegments(root.attributes)) {
@@ -76,8 +80,8 @@ module.exports = {
 				}
 
 				/**
-				 * @param {WithParent<TS.Node>} node
-				 * @return {TS.Node | null}
+				 * @param {import('@typescript-eslint/types').TSESTree.Node | undefined} node
+				 * @return {import('@typescript-eslint/types').TSESTree.Node | null}
 				 */
 				function findDeclarativeNode(node) {
 					if (!node) {
@@ -131,8 +135,8 @@ module.exports = {
 							})
 						)
 						.map((reference) => {
-							const identifier = /** @type {WithParent<TS.Identifier>} */ (reference.identifier)
-							return findDeclarativeNode(identifier.parent.parent.parent)
+							const identifier = /** @type {import('@typescript-eslint/types').TSESTree.Identifier} */ (reference.identifier)
+							return findDeclarativeNode(identifier.parent?.parent?.parent)
 						})
 						.compact()
 						.value()
@@ -155,7 +159,7 @@ module.exports = {
 							})
 						)
 						.map((reference) => {
-							const identifier = /** @type {WithParent<TS.Identifier>} */ (reference.identifier)
+							const identifier = /** @type {WithParent<import('@typescript-eslint/types').TSESTree.Identifier>} */ (reference.identifier)
 							return findDeclarativeNode(identifier.parent.parent)
 						})
 						.compact()
@@ -168,11 +172,11 @@ module.exports = {
 			},
 
 			/**
-			 * @param {WithParent<TS.ObjectExpression>} root
+			 * @param {WithParent<import('@typescript-eslint/types').TSESTree.ObjectExpression>} root
 			 */
 			ObjectExpression: function (root) {
 				/**
-				 * @param {WithParent<TS.Node>} node
+				 * @param {import('@typescript-eslint/types').TSESTree.Node | undefined} node
 				 */
 				function findDeclarativeNode(node) {
 					if (!node) {
@@ -245,7 +249,7 @@ module.exports = {
 		}
 
 		/**
-		 * @param {Record<string, TS.Node>} props
+		 * @param {Record<string, import('@typescript-eslint/types').TSESTree.Node>} props
 		 */
 		function check(props) {
 			const originalNames = _.keys(props)
@@ -259,13 +263,13 @@ module.exports = {
 			const takenComments = new Set()
 			const surroundingCommentMap = new Map()
 			for (const node of _.values(props)) {
-				const aboveComments = context.sourceCode.getCommentsBefore(/** @type {ES.Node} */(node))
+				const aboveComments = context.sourceCode.getCommentsBefore(/** @type {import('estree').Node} */(node))
 					.filter(comment => !takenComments.has(comment))
 				for (const comment of aboveComments) {
 					takenComments.add(comment)
 				}
 
-				const rightComment = context.sourceCode.getCommentsAfter(/** @type {ES.Node} */(node)).find(comment =>
+				const rightComment = context.sourceCode.getCommentsAfter(/** @type {import('estree').Node} */(node)).find(comment =>
 					comment.type === 'Line' &&
 					comment.loc?.start.line === node.loc.end.line
 				)
@@ -277,8 +281,8 @@ module.exports = {
 			}
 
 			/**
-			 * @param {TS.Node} node
-			 * @return {TS.Range}
+			 * @param {import('@typescript-eslint/types').TSESTree.Node} node
+			 * @return {import('@typescript-eslint/types').TSESTree.Range}
 			 */
 			function getNodeRangeWithComments(node) {
 				const { aboveComments, rightComment } = surroundingCommentMap.get(node)
@@ -305,13 +309,13 @@ module.exports = {
 								}
 
 								const expandedOriginalRange = getNodeRangeWithComments(originalNode)
-								const [originalSeparator] = context.sourceCode.getText(/** @type {ES.Node} */(originalNode)).match(/[;,]$/) || ['']
+								const [originalSeparator] = context.sourceCode.getText(/** @type {import('estree').Node} */(originalNode)).match(/[;,]$/) || ['']
 
 								const replacementNode = props[sortedNames[index]]
 								const expandedReplacementRange = getNodeRangeWithComments(replacementNode)
 								const replacementText =
 									wholeFileText.substring(expandedReplacementRange[0], replacementNode.range[0]) +
-									context.sourceCode.getText(/** @type {ES.Node} */(replacementNode)).replace(/[;,]$/, '') + originalSeparator +
+									context.sourceCode.getText(/** @type {import('estree').Node} */(replacementNode)).replace(/[;,]$/, '') + originalSeparator +
 									wholeFileText.substring(replacementNode.range[1], expandedReplacementRange[1])
 
 								return fixer.replaceTextRange(expandedOriginalRange, replacementText)
@@ -326,7 +330,7 @@ module.exports = {
 			}
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `
@@ -825,7 +829,7 @@ module.exports = {
 }
 
 /**
- * @param {WithParent<TS.Node>} node
+ * @param {import('@typescript-eslint/types').TSESTree.Node | undefined} node
  */
 function findPropTypeDeclaration(node) {
 	if (
@@ -858,7 +862,7 @@ function findPropTypeDeclaration(node) {
 }
 
 /**
- * @param {Array<TS.TypeElement | TS.ObjectLiteralElement | TS.JSXAttribute | TS.JSXSpreadAttribute>} properties
+ * @param {Array<import('@typescript-eslint/types').TSESTree.TypeElement | import('@typescript-eslint/types').TSESTree.ObjectLiteralElement | import('@typescript-eslint/types').TSESTree.JSXAttribute | import('@typescript-eslint/types').TSESTree.JSXSpreadAttribute>} properties
  */
 function getPropSegments(properties) {
 	return properties.reduce((groups, node) => {
@@ -885,5 +889,5 @@ function getPropSegments(properties) {
 			groups.push({})
 		}
 		return groups
-	}, /** @type {Array<Record<string, TS.Node>>} */([]))
+	}, /** @type {Array<Record<string, import('@typescript-eslint/types').TSESTree.Node>>} */([]))
 }

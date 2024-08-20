@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const INDEX = /\/index(\.\w+)?$/
@@ -6,7 +5,7 @@ const INDEX = /\/index(\.\w+)?$/
 const INDEX_INTERNAL = /^\.\.?(\/\.\.)*\/index/
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -38,7 +37,7 @@ module.exports = {
 			}
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `import AAA from 'aaa'`,

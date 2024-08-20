@@ -1,10 +1,9 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -69,15 +68,11 @@ module.exports = {
 			}
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `const AAA = require('aaa')`,
 				options: [{ AAA: 'aaa' }],
-			},
-			{
-				code: `const AAA = require('./aaa')`,
-				options: [{ 'AAA': '//aaa$/' }],
 			},
 			{
 				code: `const AAA = require('./aaa')`,

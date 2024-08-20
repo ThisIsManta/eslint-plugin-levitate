@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
@@ -6,7 +5,7 @@ const _ = require('lodash')
 const { getText } = require('./test-case-title')
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -142,7 +141,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `
@@ -265,11 +264,11 @@ module.exports = {
 }
 
 /**
- * @typedef {Pick<ES.Identifier, 'type' | 'name'> | Pick<ES.Node, 'type'> | { type: 'MemberExpression', object: NodeLike, property: NodeLike }} NodeLike
+ * @typedef {Pick<import('estree').Identifier, 'type' | 'name'> | Pick<import('estree').Node, 'type'> | { type: 'MemberExpression', object: NodeLike, property: NodeLike }} NodeLike
  */
 
 /**
- * @param {ES.Node} node
+ * @param {import('estree').Node} node
  * @return {NodeLike}
  */
 function getNodeLike(node) {
@@ -318,7 +317,7 @@ function getVariable(scope, name) {
 }
 
 /**
- * @param {NodeLike & Partial<WithParent<NodeLike>>} node
+ * @param {NodeLike & { parent?: NodeLike }} node
  */
 function getFullPropertyAccessorNode(node) {
 	if (node.parent && node.parent.type === 'MemberExpression') {

@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
@@ -6,7 +5,7 @@ const fp = require('path')
 const glob = require('glob').sync
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -74,7 +73,7 @@ module.exports = {
 			}
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{ code: 'var something = require("shawn-mendes")' },
 			{ code: 'var JamesArthur = require("./james-arthur")' },

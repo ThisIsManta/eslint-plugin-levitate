@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
@@ -8,7 +7,7 @@ const DISALLOWED_WORDS = ['proper', 'correct', 'appropriate', 'accurate', 'perfe
 const DISALLOWED_PATTERN = new RegExp('\\W((' + DISALLOWED_WORDS.join('|') + ')(ly)?)(\\W|$)', 'i')
 
 /**
- * @type {Rule & { getText: typeof getText }}
+ * @type {import('eslint').Rule.RuleModule & { getText: typeof getText }}
  */
 module.exports = {
 	meta: {
@@ -65,7 +64,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: 'it("returns something", function() {})',
@@ -122,7 +121,7 @@ module.exports = {
 }
 
 /**
- * @param {ES.Node} node
+ * @param {import('estree').Node} node
  * @return {string | undefined}
  */
 function getText(node) {
@@ -135,7 +134,7 @@ function getText(node) {
 	}
 
 	if (node.type === 'TemplateLiteral') {
-		return _.get(node, 'quasis.0.value.cooked')
+		return _.get(node, 'quasis.0.value.cooked', undefined)
 	}
 }
 

@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const FORMAL = /^\s(HACK|TODO):(\s\S|$)/
@@ -10,7 +9,7 @@ const URL = /^\s(?:See\s*:\s*)?(\w+:\/\/.+)/i
 const ESLINT = /^eslint-(disable|enable)/
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -99,7 +98,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{ code: '// HACK: lorem' },
 			{ code: '// TODO: lorem' },

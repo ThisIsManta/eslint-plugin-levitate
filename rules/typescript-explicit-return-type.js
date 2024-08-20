@@ -1,10 +1,9 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const CONDITION = 'onlyIfMoreThanOneReturns'
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -110,7 +109,7 @@ module.exports = {
 
 		/**
 		 * Returns true, if and only if it violates the option
-		 * @param {ES.FunctionDeclaration | ES.FunctionExpression | ES.ArrowFunctionExpression} node
+		 * @param {import('estree').FunctionDeclaration | import('estree').FunctionExpression | import('estree').ArrowFunctionExpression} node
 		 * @return {boolean}
 		 */
 		function checkForReturnViolation(node) {
@@ -145,7 +144,7 @@ module.exports = {
 			return true
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `
@@ -360,8 +359,8 @@ module.exports = {
 }
 
 /**
- * @param {ES.Node} node
- * @return {Array<ES.ReturnStatement>}
+ * @param {import('estree').Node} node
+ * @return {Array<import('estree').ReturnStatement>}
  */
 function getReturnStatements(node) {
 	if (!node) {

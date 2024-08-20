@@ -1,11 +1,10 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const fp = require('path')
 const _ = require('lodash')
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -50,7 +49,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `export { default as MyComponent } from './MyComponent.react'`,

@@ -3,10 +3,8 @@ commit-msg:
     lint:
       run: npx lint-commit-message {1}
 pre-commit:
-  parallel: true
   commands:
     test:
-      run: npm run test -- --bail
-    readme:
-      # Do not run generateREADME.js directly here as `git add` did not work
-      run: npm run docs && git add ./README.md
+      run: npm run test
+    build:
+      run: npm run build --silent | xargs git add

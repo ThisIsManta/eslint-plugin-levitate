@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
@@ -6,7 +5,7 @@ const _ = require('lodash')
 const focusedAPI = /^(it|test|describe|(after|before)(All|Each))$/
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -23,12 +22,12 @@ module.exports = {
 		}
 
 		/**
-		 * @param {ES.Program | ES.BlockStatement} root
+		 * @param {import('estree').Program | import('estree').BlockStatement} root
 		 */
 		function check(root) {
 			const nodeList = root.body.map(
 				/**
-				 * @param {ES.ModuleDeclaration | ES.Statement | ES.Directive} node
+				 * @param {import('estree').ModuleDeclaration | import('estree').Statement | import('estree').Directive} node
 				 * @param {number} rank
 				 */
 				(node, rank) => ({
@@ -112,7 +111,7 @@ module.exports = {
 			}
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `
@@ -305,7 +304,8 @@ it('aaa', async function() {
 }
 
 /**
- * @param {ES.Node} root
+ * @param {import('estree').Node} root
+ * @return {string | null}
  */
 function getLeftMostIdentifier(root) {
 	if (!root) {

@@ -1,4 +1,3 @@
-
 // @ts-check
 
 const fs = require('fs')
@@ -51,7 +50,7 @@ const SORT_TYPES = {
 }
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -66,12 +65,12 @@ module.exports = {
 	},
 	create: function (context) {
 		/**
-		 * @type {Map<ES.Node, Array<ES.Comment>>}
+		 * @type {Map<import('estree').Node, Array<import('estree').Comment>>}
 		 */
 		const rightComments = new Map()
 
 		/**
-		 * @type {Map<ES.Node, Array<ES.Comment>>}
+		 * @type {Map<import('estree').Node, Array<import('estree').Comment>>}
 		 */
 		const aboveComments = new Map()
 
@@ -81,7 +80,7 @@ module.exports = {
 					return null
 				}
 
-				const totalImportList = root.body.filter(/** @return {node is ES.ImportDeclaration} */(node) => node.type === 'ImportDeclaration')
+				const totalImportList = root.body.filter(/** @return {node is import('estree').ImportDeclaration} */(node) => node.type === 'ImportDeclaration')
 				if (totalImportList.length === 0) {
 					return null
 				}
@@ -192,7 +191,7 @@ module.exports = {
 							]
 						} else {
 							return [
-								/** @type {ES.ImportDeclaration} */ (totalMixedList.slice(index).find(node => node.type === 'ImportDeclaration')),
+								/** @type {import('estree').ImportDeclaration} */ (totalMixedList.slice(index).find(node => node.type === 'ImportDeclaration')),
 								'Expected import statements to be placed consecutively.'
 							]
 						}
@@ -266,7 +265,7 @@ module.exports = {
 			}
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `

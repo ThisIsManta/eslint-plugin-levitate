@@ -1,11 +1,10 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const fp = require('path')
 const _ = require('lodash')
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
 	meta: {
@@ -28,7 +27,7 @@ module.exports = {
 		let primaryComponentIsUsed = false
 
 		/**
-		 * @param {WithParent<ES.Identifier>} root
+		 * @param {import('estree').Identifier & import('eslint').Rule.NodeParentExtension} root
 		 */
 		function setIfPrimaryComponentIsUsed(root) {
 			if (root.name !== componentName) {
@@ -102,12 +101,12 @@ module.exports = {
 				}, /** @type {Partial<{ Default: string, Component: string, PureComponent: string }>} */({}))
 
 				topLevelDeclarations = _.chain(root.body)
-					.map(/** @return {ES.Node} */(node) => {
+					.map(/** @return {import('estree').Node} */(node) => {
 						if (
 							(node.type === 'ExportDefaultDeclaration' || node.type === 'ExportNamedDeclaration') &&
 							node.declaration
 						) {
-							return /** @type {ES.Node} */ (node.declaration)
+							return /** @type {import('estree').Node} */ (node.declaration)
 						}
 
 						return node
@@ -257,7 +256,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `
@@ -693,7 +692,7 @@ module.exports = {
 }
 
 /**
- * @param {ES.Function | null | undefined} node
+ * @param {import('estree').Function | null | undefined} node
  * @return {boolean}
  */
 function isReactFunctionalComponent(node) {

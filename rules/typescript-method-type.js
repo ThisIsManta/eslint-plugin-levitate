@@ -1,10 +1,9 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
 
 /**
- * @type {Rule}
+ * @type {import('eslint').Rule.RuleModule}
  */
 module.exports = {
   meta: {
@@ -17,7 +16,7 @@ module.exports = {
   create: function (context) {
     return {
       /**
-       * @param {TS.TSMethodSignature} root
+       * @param {import('@typescript-eslint/types').TSESTree.TSMethodSignature} root
        */
       TSMethodSignature: function (root) {
         context.report({
@@ -42,7 +41,7 @@ module.exports = {
       },
     }
   },
-  tests: {
+  tests: process.env.TEST && {
     valid: [
       {
         code: `
@@ -128,7 +127,7 @@ module.exports = {
 
 /**
  * @param {*} node
- * @return {ES.Node}
+ * @return {import('eslint').Rule.Node}
  */
 function cast(node) {
   return node

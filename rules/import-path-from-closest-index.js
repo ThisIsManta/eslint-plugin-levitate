@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 // @ts-check
 
 const _ = require('lodash')
@@ -6,7 +5,7 @@ const fs = require('fs')
 const fp = require('path')
 
 /**
- * @type {Rule & { getSupportedExtensions: typeof getSupportedExtensions, getImportFullPath: typeof getImportFullPath }}
+ * @type {import('eslint').Rule.RuleModule & { getSupportedExtensions: typeof getSupportedExtensions, getImportFullPath: typeof getImportFullPath }}
  */
 module.exports = {
 	meta: {
