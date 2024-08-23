@@ -2,7 +2,7 @@
 
 const _ = require('lodash')
 
-const ALLOWED_TEST_PATTERN = /^(includes|returns|renders|calls|fetches|sets|throws|is empty|does not (include|return|render|call|fetch|set|throw) )|is not empty/
+const ALLOWED_TEST_PATTERN = /^(includes|returns|renders|calls|fetches|sets|throws|is empty|does not (include|return|render|call|fetch|set|throw) |is not empty)/
 const DISALLOWED_WORDS = ['proper', 'correct', 'appropriate', 'accurate', 'perfect']
 const DISALLOWED_PATTERN = new RegExp('\\W((' + DISALLOWED_WORDS.join('|') + ')(ly)?)(\\W|$)', 'i')
 
