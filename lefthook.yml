@@ -7,4 +7,4 @@ pre-commit:
     test:
       run: npm run test
     build:
-      run: npm run build --silent | xargs git add
+      run: npm run --silent build | xargs git add
