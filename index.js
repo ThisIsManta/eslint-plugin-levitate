@@ -88,6 +88,283 @@ var require_comment = __commonJS({
   }
 });
 
+// rules/consecutive-block-new-line.js
+var require_consecutive_block_new_line = __commonJS({
+  "rules/consecutive-block-new-line.js"(exports2, module2) {
+    var _ = require("lodash");
+    module2.exports = {
+      meta: {
+        docs: {
+          description: "enforce having a new line at the end of a non-last block and the other way around"
+        },
+        fixable: "whitespace",
+        messages: {
+          add: "Expected an empty line before here",
+          remove: "Expected no empty lines before here"
+        }
+      },
+      create: function(context) {
+        return {
+          BlockStatement: function(node) {
+            const openBrace = context.sourceCode.getFirstToken(node);
+            if (!openBrace?.loc || !openBrace?.range) {
+              return;
+            }
+            const nextToken = context.sourceCode.getTokenAfter(openBrace, { includeComments: true });
+            if (!nextToken?.loc || !nextToken?.range) {
+              return;
+            }
+            const closeBrace = context.sourceCode.getLastToken(node);
+            if (!closeBrace?.loc || !closeBrace?.range) {
+              return;
+            }
+            const prevToken = context.sourceCode.getTokenBefore(closeBrace, { includeComments: true });
+            if (!prevToken?.loc || !prevToken?.range) {
+              return;
+            }
+            if (prevToken.type === "Punctuator" && prevToken.value === "{") {
+              return;
+            }
+            const leadingNewLineCount = nextToken.loc.end.line - openBrace.loc.end.line;
+            if (leadingNewLineCount > 1) {
+              const range = [
+                openBrace.range[1],
+                context.sourceCode.getIndexFromLoc({ line: nextToken.loc.start.line, column: 0 }) - 1
+              ];
+              context.report({
+                loc: { start: { line: openBrace.loc.end.line + 1, column: 0 }, end: nextToken.loc.start },
+                messageId: "remove",
+                fix: (fixer) => fixer.removeRange(range)
+              });
+            }
+            const trailingNewLineCount = closeBrace.loc.start.line - prevToken.loc.end.line;
+            if (node.parent.type === "IfStatement" && node.parent.consequent === node && !!node.parent.alternate || node.parent.type === "TryStatement" && node.parent.block === node || node.parent.type === "SwitchCase" && node.parent.consequent.length === 1 && node.parent.consequent[0] === node && node.parent.parent.type === "SwitchStatement" && node.parent.parent.cases.indexOf(node.parent) < node.parent.parent.cases.length - 1) {
+              if (trailingNewLineCount === 1) {
+                const range = [
+                  prevToken.range[1],
+                  prevToken.range[1]
+                ];
+                context.report({
+                  loc: { start: closeBrace.loc.start, end: closeBrace.loc.start },
+                  messageId: "add",
+                  fix: (fixer) => fixer.insertTextBeforeRange(range, "\n")
+                });
+              }
+            } else {
+              if (trailingNewLineCount > 1) {
+                const range = [
+                  prevToken.range[1],
+                  context.sourceCode.getIndexFromLoc({ line: closeBrace.loc.start.line, column: 0 }) - 1
+                ];
+                context.report({
+                  loc: { start: { line: prevToken.loc.end.line + 1, column: 0 }, end: closeBrace.loc.start },
+                  messageId: "remove",
+                  fix: (fixer) => fixer.removeRange(range)
+                });
+              }
+            }
+          },
+          SwitchStatement: function(root) {
+            for (let index = 0; index < root.cases.length; index++) {
+              const node = root.cases[index];
+              if (node.consequent.length === 1 && node.consequent[0].type === "BlockStatement") {
+                continue;
+              }
+              let lastToken = context.sourceCode.getLastToken(node, { includeComments: true });
+              while (lastToken) {
+                const nextToken2 = context.sourceCode.getTokenAfter(lastToken, { includeComments: true });
+                if (nextToken2 && (nextToken2.type === "Line" || nextToken2.type === "Block") && nextToken2.loc?.start.line === lastToken.loc?.end.line) {
+                  lastToken = nextToken2;
+                } else {
+                  break;
+                }
+              }
+              if (!lastToken?.loc || !lastToken?.range) {
+                continue;
+              }
+              const nextToken = context.sourceCode.getTokenAfter(lastToken, { includeComments: true });
+              if (!nextToken?.loc || !nextToken?.range) {
+                continue;
+              }
+              const newLineCount = nextToken.loc.start.line - lastToken.loc.end.line;
+              if (node.consequent.length === 0 || index !== root.cases.length - 1) {
+                if (newLineCount > 1) {
+                  const range = [
+                    lastToken.range[1],
+                    context.sourceCode.getIndexFromLoc({ line: nextToken.loc.start.line, column: 0 }) - 1
+                  ];
+                  context.report({
+                    loc: { start: { line: lastToken.loc.end.line + 1, column: 0 }, end: nextToken.loc.start },
+                    messageId: "remove",
+                    fix: (fixer) => fixer.removeRange(range)
+                  });
+                }
+              } else {
+                if (newLineCount < 2) {
+                  const range = [
+                    lastToken.range[1],
+                    lastToken.range[1]
+                  ];
+                  context.report({
+                    loc: { start: nextToken.loc.start, end: nextToken.loc.start },
+                    messageId: "add",
+                    fix: (fixer) => fixer.insertTextBeforeRange(range, "\n")
+                  });
+                }
+              }
+            }
+          }
+        };
+      },
+      tests: {
+        valid: [
+          {
+            code: `
+				function f() {}
+				function g() {
+				}
+				function h() {
+
+				}
+				function i() {
+					// Comment
+				}
+				function j() { // Comment
+				}
+				`
+          },
+          {
+            code: `
+				if (a) {}
+				if (a) {
+				}
+				if (a) {
+					// Comment
+				}
+				`
+          },
+          {
+            code: `
+				if (a) {
+					// Comment
+
+				} else {
+					// Comment
+				}
+				`
+          },
+          {
+            code: `
+				try {
+					// Comment
+
+				} catch {
+					// Comment
+				}
+				`
+          }
+        ],
+        invalid: [
+          {
+            code: `
+				if (a) {
+					// Comment
+				} else {
+					// Comment
+
+				}
+				`,
+            errors: [
+              { messageId: "add", line: 4, column: 5 },
+              { messageId: "remove", line: 6, column: 1 }
+            ],
+            output: `
+				if (a) {
+					// Comment
+
+				} else {
+					// Comment
+				}
+				`
+          },
+          {
+            code: `
+				try {
+					// Comment
+				} catch {
+					// Comment
+
+				}
+				`,
+            errors: [
+              { messageId: "add", line: 4, column: 5 },
+              { messageId: "remove", line: 6, column: 1 }
+            ],
+            output: `
+				try {
+					// Comment
+
+				} catch {
+					// Comment
+				}
+				`
+          },
+          {
+            code: `
+				function f() {
+
+					// Comment
+				
+				}
+				`,
+            errors: [
+              { messageId: "remove", line: 3, column: 1 },
+              { messageId: "remove", line: 5, column: 1 }
+            ],
+            output: `
+				function f() {
+					// Comment
+				}
+				`
+          },
+          {
+            code: `
+				switch (a) {
+					case 1: // Comment
+
+					case 2: {
+						// Comment
+					} // Comment
+					default: {
+						// Comment
+
+					}
+				}
+				`,
+            errors: [
+              { messageId: "remove", line: 4, column: 1 },
+              { messageId: "add", line: 7, column: 6 },
+              { messageId: "remove", line: 10, column: 1 }
+            ],
+            output: `
+				switch (a) {
+					case 1: // Comment
+					case 2: {
+						// Comment
+
+					} // Comment
+					default: {
+						// Comment
+					}
+				}
+				`
+          }
+        ]
+      }
+    };
+  }
+});
+
 // rules/export-name-after-file-name.js
 var require_export_name_after_file_name = __commonJS({
   "rules/export-name-after-file-name.js"(exports2, module2) {
@@ -837,6 +1114,300 @@ var require_no_top_level_require = __commonJS({
   }
 });
 
+// rules/parameter-new-line.js
+var require_parameter_new_line = __commonJS({
+  "rules/parameter-new-line.js"(exports2, module2) {
+    var _ = require("lodash");
+    module2.exports = {
+      meta: {
+        docs: {
+          description: "enforce having consistent new lines between parameters"
+        },
+        fixable: "whitespace",
+        messages: {
+          add: "Expected a new line here",
+          remove: "Unexpected a new line here"
+        }
+      },
+      create: function(context) {
+        return {
+          FunctionDeclaration: check,
+          FunctionExpression: check,
+          ArrowFunctionExpression: check,
+          CallExpression: check,
+          NewExpression: check
+        };
+        function check(root) {
+          const params = "arguments" in root ? root.arguments : root.params;
+          if (params.length === 0) {
+            return;
+          }
+          const openParen = context.sourceCode.getTokenBefore(params[0]);
+          const closeParen = context.sourceCode.getTokenAfter(params[params.length - 1], { filter: (token) => token.value === ")" });
+          if (!openParen || !closeParen) {
+            return;
+          }
+          const multilineNeeded = context.sourceCode.commentsExistBetween(openParen, closeParen) || params.some((node, index, nodeList) => {
+            const prevNode = nodeList[index - 1];
+            if (!prevNode) {
+              return false;
+            }
+            return prevNode.loc?.end.line !== node.loc?.start.line;
+          });
+          for (let index = 0; index <= params.length; index++) {
+            const prevNode = index === params.length ? context.sourceCode.getTokenBefore(closeParen) : context.sourceCode.getTokenBefore(params[index]);
+            const nextNode = index === params.length ? closeParen : context.sourceCode.getFirstToken(params[index]);
+            if (!prevNode || !prevNode.loc || !prevNode.range || !nextNode || !nextNode.loc || !nextNode.range) {
+              continue;
+            }
+            if (multilineNeeded) {
+              const tokens = [
+                prevNode,
+                ...context.sourceCode.getTokensBetween(prevNode, nextNode, { includeComments: true }),
+                nextNode
+              ];
+              for (let index2 = 1; index2 < tokens.length; index2++) {
+                const prevToken = tokens[index2 - 1];
+                const nextToken = tokens[index2];
+                if (!prevToken.loc || !prevToken.range || !nextToken.loc || !nextToken.range) {
+                  continue;
+                }
+                const newLineCount = nextToken.loc.start.line - prevToken.loc.end.line;
+                if (newLineCount === 0) {
+                  context.report({
+                    loc: { start: nextToken.loc.start, end: nextToken.loc.start },
+                    messageId: "add",
+                    fix: (fixer) => fixer.insertTextBefore(
+                      /** @type {import('eslint').AST.Token} */
+                      nextToken,
+                      "\n"
+                    )
+                  });
+                } else if (newLineCount > 1) {
+                  const range = [
+                    prevToken.range[1],
+                    nextToken.range[0]
+                  ];
+                  context.report({
+                    loc: { start: prevToken.loc.end, end: nextToken.loc.start },
+                    messageId: "remove",
+                    fix: (fixer) => fixer.replaceTextRange(range, "\n")
+                  });
+                }
+              }
+            } else {
+              if (prevNode.loc.end.line !== nextNode.loc.start.line) {
+                const range = [
+                  prevNode.value === "," ? prevNode.range[0] : prevNode.range[1],
+                  nextNode.range[0]
+                ];
+                context.report({
+                  loc: { start: context.sourceCode.getLocFromIndex(range[0]), end: context.sourceCode.getLocFromIndex(range[1]) },
+                  messageId: "remove",
+                  fix: (fixer) => fixer.replaceTextRange(range, "")
+                });
+              }
+            }
+          }
+        }
+      },
+      tests: {
+        valid: [
+          {
+            code: `
+				function f() {}
+				f()
+				new Goo()
+        `
+          },
+          {
+            code: `
+				function f(a, b, c) {}
+				const g = function (a, b, c) {}
+				const h = (a, b, c) => {}
+				f(a, b, c)
+				new Goo(a, b, c)
+        `
+          },
+          {
+            code: `
+				function f(
+					a,
+					b,
+					c,
+				) {}
+				f(
+					a,
+					b,
+					c,
+				)
+				new Goo(
+					a,
+					b,
+					c,
+				)
+        `
+          },
+          {
+            code: `
+				function f(
+					// Comment
+					a,
+				) {}
+				f(
+					// Comment
+					a,
+				)
+        `
+          },
+          {
+            code: `
+				beforeEach(() => {
+				})
+				it('test title', () => {
+				}, { timeout: 30000 })
+        `
+          }
+        ],
+        invalid: [
+          {
+            code: `
+				function f(a, b,
+				c) {}
+				f(a, b,
+				c)
+        `,
+            errors: [
+              { messageId: "add", line: 2, column: 16 },
+              { messageId: "add", line: 2, column: 19 },
+              { messageId: "add", line: 3, column: 6 },
+              { messageId: "add", line: 4, column: 7 },
+              { messageId: "add", line: 4, column: 10 },
+              { messageId: "add", line: 5, column: 6 }
+            ],
+            output: `
+				function f(
+a, 
+b,
+				c
+) {}
+				f(
+a, 
+b,
+				c
+)
+        `
+          },
+          {
+            code: `
+				function f(
+					a,
+				) {}
+				f(
+					a,
+				)
+        `,
+            errors: [
+              { messageId: "remove", line: 2, column: 16 },
+              { messageId: "remove", line: 3, column: 7 },
+              { messageId: "remove", line: 5, column: 7 },
+              { messageId: "remove", line: 6, column: 7 }
+            ],
+            output: `
+				function f(a) {}
+				f(a)
+        `
+          },
+          {
+            code: `
+				function f(// Comment
+					a) {}
+				f(// Comment
+					a)
+				`,
+            errors: [
+              { messageId: "add", line: 2, column: 16 },
+              { messageId: "add", line: 3, column: 7 },
+              { messageId: "add", line: 4, column: 7 },
+              { messageId: "add", line: 5, column: 7 }
+            ],
+            output: `
+				function f(
+// Comment
+					a
+) {}
+				f(
+// Comment
+					a
+)
+				`
+          },
+          {
+            code: `
+				function f(/* Comment */a
+				) {}
+				f(/* Comment */a
+				)
+        `,
+            errors: [
+              { messageId: "add", line: 2, column: 16 },
+              { messageId: "add", line: 2, column: 29 },
+              { messageId: "add", line: 4, column: 7 },
+              { messageId: "add", line: 4, column: 20 }
+            ],
+            output: `
+				function f(
+/* Comment */
+a
+				) {}
+				f(
+/* Comment */
+a
+				)
+        `
+          },
+          {
+            code: `
+				function f(/* Comment */
+
+				// Comment
+				
+				a) {}
+				f(/* Comment */
+
+				// Comment
+
+				a)
+        `,
+            errors: [
+              { messageId: "add", line: 2, column: 16 },
+              { messageId: "remove", line: 2, column: 29 },
+              { messageId: "remove", line: 4, column: 15 },
+              { messageId: "add", line: 6, column: 6 },
+              { messageId: "add", line: 7, column: 7 },
+              { messageId: "remove", line: 7, column: 20 },
+              { messageId: "remove", line: 9, column: 15 },
+              { messageId: "add", line: 11, column: 6 }
+            ],
+            output: `
+				function f(
+/* Comment */
+// Comment
+a
+) {}
+				f(
+/* Comment */
+// Comment
+a
+)
+        `
+          }
+        ]
+      }
+    };
+  }
+});
+
 // rules/promise-all-with-static-array.js
 var require_promise_all_with_static_array = __commonJS({
   "rules/promise-all-with-static-array.js"(exports2, module2) {
@@ -1074,6 +1645,250 @@ var require_react_export_default = __commonJS({
         stub.argument.type === "JSXFragment")
       );
     }
+  }
+});
+
+// rules/react-new-line.js
+var require_react_new_line = __commonJS({
+  "rules/react-new-line.js"(exports2, module2) {
+    var _ = require("lodash");
+    module2.exports = {
+      meta: {
+        docs: {
+          description: "enforce having an additional empty line between React elements if one of them spreads multiple lines"
+        },
+        fixable: "whitespace",
+        messages: {
+          add: "Expected an additional empty line here for readability",
+          remove: "Unexpected an empty line here"
+        }
+      },
+      create: function(context) {
+        return {
+          /**
+           *
+           * @param {import('@typescript-eslint/types').TSESTree.JSXElement} root
+           */
+          JSXElement: function(root) {
+            const nonSpacingNodes = root.children.filter(
+              (node) => node.type !== "JSXText" || node.raw.trim().length > 0
+            );
+            if (nonSpacingNodes.length < 2) {
+              return;
+            }
+            const spacingNodes = _.compact(
+              root.children.map((node, index, array) => {
+                if (index === 0 || index === array.length - 1) {
+                  return null;
+                }
+                if (node.type === "JSXText" && node.value.trim().length === 0) {
+                  const prevNode = array[index - 1];
+                  const nextNode = array[index + 1];
+                  return { prevNode, node, nextNode };
+                }
+                return null;
+              })
+            );
+            for (const { prevNode, node, nextNode } of spacingNodes) {
+              if (node.value === " ") {
+                continue;
+              }
+              if (prevNode.type === "JSXExpressionContainer" && prevNode.expression.type === "Literal" && typeof prevNode.expression.value === "string" && /^\s+$/.test(prevNode.expression.value)) {
+                continue;
+              }
+              const newLineCount = node.value.match(/\n/g)?.length ?? 0;
+              if (prevNode.loc.start.line === prevNode.loc.end.line && nextNode.loc.start.line === nextNode.loc.end.line) {
+                if (newLineCount > 1) {
+                  context.report({
+                    loc: {
+                      start: { line: node.loc.start.line + 1, column: 0 },
+                      end: { line: node.loc.start.line + 1, column: 0 }
+                    },
+                    messageId: "remove",
+                    fix: (fixer) => fixer.replaceText(
+                      node,
+                      context.sourceCode.getText(
+                        /** @type {any} */
+                        node
+                      ).replace(/^[ \t]*\n/, "")
+                    )
+                  });
+                }
+              } else {
+                if (newLineCount === 1) {
+                  context.report({
+                    loc: {
+                      start: node.loc.start,
+                      end: node.loc.start
+                    },
+                    messageId: "add",
+                    fix: (fixer) => fixer.insertTextBefore(node, "\n")
+                  });
+                }
+              }
+            }
+          }
+        };
+      },
+      tests: {
+        valid: [
+          {
+            code: `
+        function Component() {
+          return <div />
+        }
+        `,
+            languageOptions: {
+              parserOptions: {
+                ecmaFeatures: { jsx: true }
+              }
+            }
+          },
+          {
+            code: `
+        function Component() {
+          return (
+            <div>
+              <p>
+                text
+              </p>
+            </div>
+          )
+        }
+        `,
+            languageOptions: {
+              parserOptions: {
+                ecmaFeatures: { jsx: true }
+              }
+            }
+          },
+          {
+            code: `
+        function Component() {
+          return (
+            <div>
+              <span></span>
+              <span></span>
+            </div>
+          )
+        }
+        `,
+            languageOptions: {
+              parserOptions: {
+                ecmaFeatures: { jsx: true }
+              }
+            }
+          },
+          {
+            code: `
+        function Component() {
+          return (
+            <div>
+              <i /> <i />
+
+              <p>
+                text
+              </p>
+            </div>
+          )
+        }
+        `,
+            languageOptions: {
+              parser: require("@typescript-eslint/parser"),
+              parserOptions: {
+                ecmaFeatures: { jsx: true }
+              }
+            }
+          },
+          {
+            code: `
+        function Component() {
+          return (
+            <div>
+              <i />{' '}
+              <p>
+                text
+              </p>
+            </div>
+          )
+        }
+        `,
+            languageOptions: {
+              parser: require("@typescript-eslint/parser"),
+              parserOptions: {
+                ecmaFeatures: { jsx: true }
+              }
+            }
+          }
+        ],
+        invalid: [
+          {
+            code: `
+        function Component() {
+          return (
+            <div>
+              <i /> <i />
+              <p>
+                text
+              </p>
+            </div>
+          )
+        }
+        `,
+            languageOptions: {
+              parser: require("@typescript-eslint/parser"),
+              parserOptions: {
+                ecmaFeatures: { jsx: true }
+              }
+            },
+            errors: [{ messageId: "add", line: 5, column: 26 }],
+            output: `
+        function Component() {
+          return (
+            <div>
+              <i /> <i />
+
+              <p>
+                text
+              </p>
+            </div>
+          )
+        }
+        `
+          },
+          {
+            code: `
+        function Component() {
+          return (
+            <div>
+              <span></span>
+
+              <span></span>
+            </div>
+          )
+        }
+        `,
+            languageOptions: {
+              parser: require("@typescript-eslint/parser"),
+              parserOptions: {
+                ecmaFeatures: { jsx: true }
+              }
+            },
+            errors: [{ messageId: "remove", line: 6 }],
+            output: `
+        function Component() {
+          return (
+            <div>
+              <span></span>
+              <span></span>
+            </div>
+          )
+        }
+        `
+          }
+        ]
+      }
+    };
   }
 });
 
@@ -2335,6 +3150,7 @@ module.exports = {
   },
   rules: {
     "comment": require_comment(),
+    "consecutive-block-new-line": require_consecutive_block_new_line(),
     "export-name-after-file-name": require_export_name_after_file_name(),
     "import-convention": require_import_convention(),
     "import-name-after-file-name": require_import_name_after_file_name(),
@@ -2342,8 +3158,10 @@ module.exports = {
     "import-path-without-mentioning-index": require_import_path_without_mentioning_index(),
     "no-shortened-identifier": require_no_shortened_identifier(),
     "no-top-level-require": require_no_top_level_require(),
+    "parameter-new-line": require_parameter_new_line(),
     "promise-all-with-static-array": require_promise_all_with_static_array(),
     "react-export-default": require_react_export_default(),
+    "react-new-line": require_react_new_line(),
     "react-prop-type": require_react_prop_type(),
     "react-sort-props": require_react_sort_props(),
     "require-name-after-file-name": require_require_name_after_file_name(),

@@ -5,6 +5,7 @@ Note that 🔧 indicates the rule is [auto-fixable](https://eslint.org/docs/late
 |Rule|Description|
 |---|---|
 |`comment`|enforce starting a single-line comment with either `TODO:`, `HACK:`, `See {url}`, or a first-capitalized word|
+|`consecutive-block-new-line` 🔧|enforce having a new line at the end of a non-last block and the other way around|
 |`export-name-after-file-name`|enforce naming a default exported identifier after the file name|
 |`import-convention`|enforce naming imported identifiers after the user-defined list|
 |`import-name-after-file-name`|enforce naming a default imported identifier after the file or the directory name (for an index file)|
@@ -12,8 +13,10 @@ Note that 🔧 indicates the rule is [auto-fixable](https://eslint.org/docs/late
 |`import-path-without-mentioning-index` 🔧|enforce writing an import path to an index file without mentioning "index.js"|
 |`no-shortened-identifier`|enforce naming an identifier without the user-defined abbreviations|
 |`no-top-level-require`|enforce writing no top-level `require`|
+|`parameter-new-line` 🔧|enforce having consistent new lines between parameters|
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`|
 |`react-export-default` 🔧|enforce writing React components consistently|
+|`react-new-line` 🔧|enforce having an additional empty line between React elements if one of them spreads multiple lines|
 |`react-prop-type`|enforce writing type definition for React props|
 |`react-sort-props` 🔧|enforce consistent React props sorting|
 |`require-name-after-file-name`|enforce naming an identifier after the file name of its `require` statement|
