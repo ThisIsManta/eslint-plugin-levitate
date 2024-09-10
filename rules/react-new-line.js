@@ -13,8 +13,8 @@ module.exports = {
     },
     fixable: 'whitespace',
     messages: {
-      add: 'Expected an additional empty line here for readability',
-      remove: 'Unexpected an empty line here',
+      add: 'Expected a new line here.',
+      remove: 'Unexpected a new line here.',
     },
   },
   create: function (context) {
@@ -102,7 +102,7 @@ module.exports = {
       },
     }
   },
-  tests: {
+  tests: process.env.TEST && {
     valid: [
       {
         code: `

@@ -13,8 +13,8 @@ module.exports = {
 		},
 		fixable: 'whitespace',
 		messages: {
-			add: 'Expected a new line here',
-			remove: 'Unexpected a new line here',
+			add: 'Expected a new line here.',
+			remove: 'Unexpected a new line here.',
 		},
 	},
 	create: function (context) {
@@ -34,50 +34,59 @@ module.exports = {
 			const params = 'arguments' in root
 				? root.arguments
 				: root.params
-
 			if (params.length === 0) {
 				return
 			}
 
 			const openParen = context.sourceCode.getTokenBefore(params[0])
-			const closeParen = context.sourceCode.getTokenAfter(params[params.length - 1], { filter: token => token.value === ')' })
-
-			if (!openParen || !closeParen) {
+			if (!openParen || openParen.type !== 'Punctuator' || openParen.value !== '(') {
+				// Skip `param => {}`
 				return
 			}
 
-			const multilineNeeded = (
-				context.sourceCode.commentsExistBetween(openParen, closeParen) ||
-				params.some((node, index, nodeList) => {
-					const prevNode = nodeList[index - 1]
-					if (!prevNode) {
-						return false
-					}
+			const closeParen = context.sourceCode.getTokenAfter(params[params.length - 1], { filter: token => token.type === 'Punctuator' && token.value === ')' })
+			if (!closeParen) {
+				return
+			}
 
-					return prevNode.loc?.end.line !== node.loc?.start.line
-				})
-			)
-
-			for (let index = 0; index <= params.length; index++) {
-				const prevNode = index === params.length
-					? context.sourceCode.getTokenBefore(closeParen)
-					: context.sourceCode.getTokenBefore(params[index])
-				const nextNode = index === params.length
-					? closeParen
-					: context.sourceCode.getFirstToken(params[index])
-
-				if (
-					!prevNode || !prevNode.loc || !prevNode.range ||
-					!nextNode || !nextNode.loc || !nextNode.range
-				) {
-					continue
+			const multilineNeeded = params.some((node, index, nodeList) => {
+				const prevNode = nodeList[index - 1]
+				if (prevNode && prevNode.loc?.end.line !== node.loc?.start.line) {
+					return true
 				}
 
-				if (multilineNeeded) {
+				const prevToken = context.sourceCode.getTokenBefore(node, { includeComments: true })
+				if (prevToken?.type === 'Line' || prevToken?.type === 'Block') {
+					return true
+				}
+
+				const nextToken = context.sourceCode.getTokenAfter(node, { includeComments: true })
+				if (nextToken?.type === 'Line' || nextToken?.type === 'Block') {
+					return true
+				}
+
+				return false
+			})
+
+			if (multilineNeeded) {
+				for (let index = 0; index <= params.length; index++) {
+					const prevToken = index === params.length
+						? context.sourceCode.getTokenBefore(closeParen)
+						: context.sourceCode.getTokenBefore(params[index])
+					const paramToken = index === params.length
+						? closeParen
+						: context.sourceCode.getFirstToken(params[index])
+					if (
+						!prevToken || !prevToken.loc || !prevToken.range ||
+						!paramToken || !paramToken.loc || !paramToken.range
+					) {
+						continue
+					}
+
 					const tokens = [
-						prevNode,
-						...context.sourceCode.getTokensBetween(prevNode, nextNode, { includeComments: true }),
-						nextNode,
+						prevToken,
+						...context.sourceCode.getTokensBetween(prevToken, paramToken, { includeComments: true }),
+						paramToken,
 					]
 
 					for (let index = 1; index < tokens.length; index++) {
@@ -92,15 +101,16 @@ module.exports = {
 						}
 
 						const newLineCount = nextToken.loc.start.line - prevToken.loc.end.line
-
 						if (newLineCount === 0) {
+							const range = nextToken.range
+
 							context.report({
 								loc: { start: nextToken.loc.start, end: nextToken.loc.start },
 								messageId: 'add',
-								fix: (fixer) => fixer.insertTextBefore((/** @type {import('eslint').AST.Token} */ (nextToken)), '\n'),
+								fix: (fixer) => fixer.insertTextBeforeRange(range, '\n'),
 							})
 
-						} else if (newLineCount > 1) {
+						} else if (newLineCount >= 2) {
 							/** @type {import('eslint').AST.Range} */
 							const range = [
 								prevToken.range[1],
@@ -114,26 +124,50 @@ module.exports = {
 							})
 						}
 					}
+				}
 
-				} else {
-					if (prevNode.loc.end.line !== nextNode.loc.start.line) {
-						/** @type {import('eslint').AST.Range} */
-						const range = [
-							prevNode.value === ',' ? prevNode.range[0] : prevNode.range[1],
-							nextNode.range[0]
-						]
+			} else {
+				const firstParam = params[0]
+				if (
+					firstParam && firstParam.loc && firstParam.range &&
+					firstParam.loc.start.line !== openParen.loc.end.line
+				) {
+					/** @type {import('eslint').AST.Range} */
+					const range = [
+						openParen.range[1],
+						firstParam.range[0]
+					]
 
-						context.report({
-							loc: { start: context.sourceCode.getLocFromIndex(range[0]), end: context.sourceCode.getLocFromIndex(range[1]) },
-							messageId: 'remove',
-							fix: (fixer) => fixer.replaceTextRange(range, ''),
-						})
-					}
+					context.report({
+						loc: { start: openParen.loc.end, end: firstParam.loc.start },
+						messageId: 'remove',
+						fix: (fixer) => fixer.removeRange(range),
+					})
+				}
+
+				const prevToken = context.sourceCode.getTokenBefore(closeParen)
+				if (
+					prevToken && prevToken.loc && prevToken.range &&
+					prevToken.loc.end.line !== closeParen.loc.start.line
+				) {
+					/** @type {import('eslint').AST.Range} */
+					const range = [
+						prevToken.type === 'Punctuator' && prevToken.value === ','
+							? prevToken.range[0]
+							: prevToken.range[1],
+						closeParen.range[0]
+					]
+
+					context.report({
+						loc: { start: prevToken.loc.end, end: openParen.loc.start },
+						messageId: 'remove',
+						fix: (fixer) => fixer.removeRange(range),
+					})
 				}
 			}
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `
@@ -188,7 +222,19 @@ module.exports = {
 				})
 				it('test title', () => {
 				}, { timeout: 30000 })
-        `,
+				after(
+					// Comment
+					() => {}
+				)
+				`,
+			},
+			{
+				code: `
+				sortBy(
+					identifiers,
+					item => item
+				)
+				`
 			},
 		],
 		invalid: [
@@ -198,7 +244,7 @@ module.exports = {
 				c) {}
 				f(a, b,
 				c)
-        `,
+				`,
 				errors: [
 					{ messageId: 'add', line: 2, column: 16 },
 					{ messageId: 'add', line: 2, column: 19 },
@@ -218,27 +264,31 @@ a,
 b,
 				c
 )
-        `,
+				`,
 			},
 			{
 				code: `
 				function f(
-					a,
+					a, b, c = ()=>{
+					},
 				) {}
 				f(
-					a,
+					a, b, ()=>{
+					},
 				)
-        `,
+				`,
 				errors: [
 					{ messageId: 'remove', line: 2, column: 16 },
-					{ messageId: 'remove', line: 3, column: 7 },
-					{ messageId: 'remove', line: 5, column: 7 },
+					{ messageId: 'remove', line: 4, column: 8 },
 					{ messageId: 'remove', line: 6, column: 7 },
+					{ messageId: 'remove', line: 8, column: 8 },
 				],
 				output: `
-				function f(a) {}
-				f(a)
-        `,
+				function f(a, b, c = ()=>{
+					}) {}
+				f(a, b, ()=>{
+					})
+				`,
 			},
 			{
 				code: `

@@ -13,8 +13,8 @@ module.exports = {
 		},
 		fixable: 'whitespace',
 		messages: {
-			add: 'Expected an empty line before here',
-			remove: 'Expected no empty lines before here'
+			add: 'Expected an empty line before here.',
+			remove: 'Unexpected an empty line before here.'
 		},
 	},
 	create: function (context) {
@@ -161,7 +161,7 @@ module.exports = {
 			},
 		}
 	},
-	tests: {
+	tests: process.env.TEST && {
 		valid: [
 			{
 				code: `

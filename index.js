@@ -99,8 +99,8 @@ var require_consecutive_block_new_line = __commonJS({
         },
         fixable: "whitespace",
         messages: {
-          add: "Expected an empty line before here",
-          remove: "Expected no empty lines before here"
+          add: "Expected an empty line before here.",
+          remove: "Unexpected an empty line before here."
         }
       },
       create: function(context) {
@@ -216,151 +216,7 @@ var require_consecutive_block_new_line = __commonJS({
           }
         };
       },
-      tests: {
-        valid: [
-          {
-            code: `
-				function f() {}
-				function g() {
-				}
-				function h() {
-
-				}
-				function i() {
-					// Comment
-				}
-				function j() { // Comment
-				}
-				`
-          },
-          {
-            code: `
-				if (a) {}
-				if (a) {
-				}
-				if (a) {
-					// Comment
-				}
-				`
-          },
-          {
-            code: `
-				if (a) {
-					// Comment
-
-				} else {
-					// Comment
-				}
-				`
-          },
-          {
-            code: `
-				try {
-					// Comment
-
-				} catch {
-					// Comment
-				}
-				`
-          }
-        ],
-        invalid: [
-          {
-            code: `
-				if (a) {
-					// Comment
-				} else {
-					// Comment
-
-				}
-				`,
-            errors: [
-              { messageId: "add", line: 4, column: 5 },
-              { messageId: "remove", line: 6, column: 1 }
-            ],
-            output: `
-				if (a) {
-					// Comment
-
-				} else {
-					// Comment
-				}
-				`
-          },
-          {
-            code: `
-				try {
-					// Comment
-				} catch {
-					// Comment
-
-				}
-				`,
-            errors: [
-              { messageId: "add", line: 4, column: 5 },
-              { messageId: "remove", line: 6, column: 1 }
-            ],
-            output: `
-				try {
-					// Comment
-
-				} catch {
-					// Comment
-				}
-				`
-          },
-          {
-            code: `
-				function f() {
-
-					// Comment
-				
-				}
-				`,
-            errors: [
-              { messageId: "remove", line: 3, column: 1 },
-              { messageId: "remove", line: 5, column: 1 }
-            ],
-            output: `
-				function f() {
-					// Comment
-				}
-				`
-          },
-          {
-            code: `
-				switch (a) {
-					case 1: // Comment
-
-					case 2: {
-						// Comment
-					} // Comment
-					default: {
-						// Comment
-
-					}
-				}
-				`,
-            errors: [
-              { messageId: "remove", line: 4, column: 1 },
-              { messageId: "add", line: 7, column: 6 },
-              { messageId: "remove", line: 10, column: 1 }
-            ],
-            output: `
-				switch (a) {
-					case 1: // Comment
-					case 2: {
-						// Comment
-
-					} // Comment
-					default: {
-						// Comment
-					}
-				}
-				`
-          }
-        ]
-      }
+      tests: void 0
     };
   }
 });
@@ -1125,8 +981,8 @@ var require_parameter_new_line = __commonJS({
         },
         fixable: "whitespace",
         messages: {
-          add: "Expected a new line here",
-          remove: "Unexpected a new line here"
+          add: "Expected a new line here.",
+          remove: "Unexpected a new line here."
         }
       },
       create: function(context) {
@@ -1143,267 +999,96 @@ var require_parameter_new_line = __commonJS({
             return;
           }
           const openParen = context.sourceCode.getTokenBefore(params[0]);
-          const closeParen = context.sourceCode.getTokenAfter(params[params.length - 1], { filter: (token) => token.value === ")" });
-          if (!openParen || !closeParen) {
+          if (!openParen || openParen.type !== "Punctuator" || openParen.value !== "(") {
             return;
           }
-          const multilineNeeded = context.sourceCode.commentsExistBetween(openParen, closeParen) || params.some((node, index, nodeList) => {
+          const closeParen = context.sourceCode.getTokenAfter(params[params.length - 1], { filter: (token) => token.type === "Punctuator" && token.value === ")" });
+          if (!closeParen) {
+            return;
+          }
+          const multilineNeeded = params.some((node, index, nodeList) => {
             const prevNode = nodeList[index - 1];
-            if (!prevNode) {
-              return false;
+            if (prevNode && prevNode.loc?.end.line !== node.loc?.start.line) {
+              return true;
             }
-            return prevNode.loc?.end.line !== node.loc?.start.line;
+            const prevToken = context.sourceCode.getTokenBefore(node, { includeComments: true });
+            if (prevToken?.type === "Line" || prevToken?.type === "Block") {
+              return true;
+            }
+            const nextToken = context.sourceCode.getTokenAfter(node, { includeComments: true });
+            if (nextToken?.type === "Line" || nextToken?.type === "Block") {
+              return true;
+            }
+            return false;
           });
-          for (let index = 0; index <= params.length; index++) {
-            const prevNode = index === params.length ? context.sourceCode.getTokenBefore(closeParen) : context.sourceCode.getTokenBefore(params[index]);
-            const nextNode = index === params.length ? closeParen : context.sourceCode.getFirstToken(params[index]);
-            if (!prevNode || !prevNode.loc || !prevNode.range || !nextNode || !nextNode.loc || !nextNode.range) {
-              continue;
-            }
-            if (multilineNeeded) {
+          if (multilineNeeded) {
+            for (let index = 0; index <= params.length; index++) {
+              const prevToken = index === params.length ? context.sourceCode.getTokenBefore(closeParen) : context.sourceCode.getTokenBefore(params[index]);
+              const paramToken = index === params.length ? closeParen : context.sourceCode.getFirstToken(params[index]);
+              if (!prevToken || !prevToken.loc || !prevToken.range || !paramToken || !paramToken.loc || !paramToken.range) {
+                continue;
+              }
               const tokens = [
-                prevNode,
-                ...context.sourceCode.getTokensBetween(prevNode, nextNode, { includeComments: true }),
-                nextNode
+                prevToken,
+                ...context.sourceCode.getTokensBetween(prevToken, paramToken, { includeComments: true }),
+                paramToken
               ];
               for (let index2 = 1; index2 < tokens.length; index2++) {
-                const prevToken = tokens[index2 - 1];
+                const prevToken2 = tokens[index2 - 1];
                 const nextToken = tokens[index2];
-                if (!prevToken.loc || !prevToken.range || !nextToken.loc || !nextToken.range) {
+                if (!prevToken2.loc || !prevToken2.range || !nextToken.loc || !nextToken.range) {
                   continue;
                 }
-                const newLineCount = nextToken.loc.start.line - prevToken.loc.end.line;
+                const newLineCount = nextToken.loc.start.line - prevToken2.loc.end.line;
                 if (newLineCount === 0) {
+                  const range = nextToken.range;
                   context.report({
                     loc: { start: nextToken.loc.start, end: nextToken.loc.start },
                     messageId: "add",
-                    fix: (fixer) => fixer.insertTextBefore(
-                      /** @type {import('eslint').AST.Token} */
-                      nextToken,
-                      "\n"
-                    )
+                    fix: (fixer) => fixer.insertTextBeforeRange(range, "\n")
                   });
-                } else if (newLineCount > 1) {
+                } else if (newLineCount >= 2) {
                   const range = [
-                    prevToken.range[1],
+                    prevToken2.range[1],
                     nextToken.range[0]
                   ];
                   context.report({
-                    loc: { start: prevToken.loc.end, end: nextToken.loc.start },
+                    loc: { start: prevToken2.loc.end, end: nextToken.loc.start },
                     messageId: "remove",
                     fix: (fixer) => fixer.replaceTextRange(range, "\n")
                   });
                 }
               }
-            } else {
-              if (prevNode.loc.end.line !== nextNode.loc.start.line) {
-                const range = [
-                  prevNode.value === "," ? prevNode.range[0] : prevNode.range[1],
-                  nextNode.range[0]
-                ];
-                context.report({
-                  loc: { start: context.sourceCode.getLocFromIndex(range[0]), end: context.sourceCode.getLocFromIndex(range[1]) },
-                  messageId: "remove",
-                  fix: (fixer) => fixer.replaceTextRange(range, "")
-                });
-              }
+            }
+          } else {
+            const firstParam = params[0];
+            if (firstParam && firstParam.loc && firstParam.range && firstParam.loc.start.line !== openParen.loc.end.line) {
+              const range = [
+                openParen.range[1],
+                firstParam.range[0]
+              ];
+              context.report({
+                loc: { start: openParen.loc.end, end: firstParam.loc.start },
+                messageId: "remove",
+                fix: (fixer) => fixer.removeRange(range)
+              });
+            }
+            const prevToken = context.sourceCode.getTokenBefore(closeParen);
+            if (prevToken && prevToken.loc && prevToken.range && prevToken.loc.end.line !== closeParen.loc.start.line) {
+              const range = [
+                prevToken.type === "Punctuator" && prevToken.value === "," ? prevToken.range[0] : prevToken.range[1],
+                closeParen.range[0]
+              ];
+              context.report({
+                loc: { start: prevToken.loc.end, end: openParen.loc.start },
+                messageId: "remove",
+                fix: (fixer) => fixer.removeRange(range)
+              });
             }
           }
         }
       },
-      tests: {
-        valid: [
-          {
-            code: `
-				function f() {}
-				f()
-				new Goo()
-        `
-          },
-          {
-            code: `
-				function f(a, b, c) {}
-				const g = function (a, b, c) {}
-				const h = (a, b, c) => {}
-				f(a, b, c)
-				new Goo(a, b, c)
-        `
-          },
-          {
-            code: `
-				function f(
-					a,
-					b,
-					c,
-				) {}
-				f(
-					a,
-					b,
-					c,
-				)
-				new Goo(
-					a,
-					b,
-					c,
-				)
-        `
-          },
-          {
-            code: `
-				function f(
-					// Comment
-					a,
-				) {}
-				f(
-					// Comment
-					a,
-				)
-        `
-          },
-          {
-            code: `
-				beforeEach(() => {
-				})
-				it('test title', () => {
-				}, { timeout: 30000 })
-        `
-          }
-        ],
-        invalid: [
-          {
-            code: `
-				function f(a, b,
-				c) {}
-				f(a, b,
-				c)
-        `,
-            errors: [
-              { messageId: "add", line: 2, column: 16 },
-              { messageId: "add", line: 2, column: 19 },
-              { messageId: "add", line: 3, column: 6 },
-              { messageId: "add", line: 4, column: 7 },
-              { messageId: "add", line: 4, column: 10 },
-              { messageId: "add", line: 5, column: 6 }
-            ],
-            output: `
-				function f(
-a, 
-b,
-				c
-) {}
-				f(
-a, 
-b,
-				c
-)
-        `
-          },
-          {
-            code: `
-				function f(
-					a,
-				) {}
-				f(
-					a,
-				)
-        `,
-            errors: [
-              { messageId: "remove", line: 2, column: 16 },
-              { messageId: "remove", line: 3, column: 7 },
-              { messageId: "remove", line: 5, column: 7 },
-              { messageId: "remove", line: 6, column: 7 }
-            ],
-            output: `
-				function f(a) {}
-				f(a)
-        `
-          },
-          {
-            code: `
-				function f(// Comment
-					a) {}
-				f(// Comment
-					a)
-				`,
-            errors: [
-              { messageId: "add", line: 2, column: 16 },
-              { messageId: "add", line: 3, column: 7 },
-              { messageId: "add", line: 4, column: 7 },
-              { messageId: "add", line: 5, column: 7 }
-            ],
-            output: `
-				function f(
-// Comment
-					a
-) {}
-				f(
-// Comment
-					a
-)
-				`
-          },
-          {
-            code: `
-				function f(/* Comment */a
-				) {}
-				f(/* Comment */a
-				)
-        `,
-            errors: [
-              { messageId: "add", line: 2, column: 16 },
-              { messageId: "add", line: 2, column: 29 },
-              { messageId: "add", line: 4, column: 7 },
-              { messageId: "add", line: 4, column: 20 }
-            ],
-            output: `
-				function f(
-/* Comment */
-a
-				) {}
-				f(
-/* Comment */
-a
-				)
-        `
-          },
-          {
-            code: `
-				function f(/* Comment */
-
-				// Comment
-				
-				a) {}
-				f(/* Comment */
-
-				// Comment
-
-				a)
-        `,
-            errors: [
-              { messageId: "add", line: 2, column: 16 },
-              { messageId: "remove", line: 2, column: 29 },
-              { messageId: "remove", line: 4, column: 15 },
-              { messageId: "add", line: 6, column: 6 },
-              { messageId: "add", line: 7, column: 7 },
-              { messageId: "remove", line: 7, column: 20 },
-              { messageId: "remove", line: 9, column: 15 },
-              { messageId: "add", line: 11, column: 6 }
-            ],
-            output: `
-				function f(
-/* Comment */
-// Comment
-a
-) {}
-				f(
-/* Comment */
-// Comment
-a
-)
-        `
-          }
-        ]
-      }
+      tests: void 0
     };
   }
 });
@@ -1659,8 +1344,8 @@ var require_react_new_line = __commonJS({
         },
         fixable: "whitespace",
         messages: {
-          add: "Expected an additional empty line here for readability",
-          remove: "Unexpected an empty line here"
+          add: "Expected a new line here.",
+          remove: "Unexpected a new line here."
         }
       },
       create: function(context) {
@@ -1730,164 +1415,7 @@ var require_react_new_line = __commonJS({
           }
         };
       },
-      tests: {
-        valid: [
-          {
-            code: `
-        function Component() {
-          return <div />
-        }
-        `,
-            languageOptions: {
-              parserOptions: {
-                ecmaFeatures: { jsx: true }
-              }
-            }
-          },
-          {
-            code: `
-        function Component() {
-          return (
-            <div>
-              <p>
-                text
-              </p>
-            </div>
-          )
-        }
-        `,
-            languageOptions: {
-              parserOptions: {
-                ecmaFeatures: { jsx: true }
-              }
-            }
-          },
-          {
-            code: `
-        function Component() {
-          return (
-            <div>
-              <span></span>
-              <span></span>
-            </div>
-          )
-        }
-        `,
-            languageOptions: {
-              parserOptions: {
-                ecmaFeatures: { jsx: true }
-              }
-            }
-          },
-          {
-            code: `
-        function Component() {
-          return (
-            <div>
-              <i /> <i />
-
-              <p>
-                text
-              </p>
-            </div>
-          )
-        }
-        `,
-            languageOptions: {
-              parser: require("@typescript-eslint/parser"),
-              parserOptions: {
-                ecmaFeatures: { jsx: true }
-              }
-            }
-          },
-          {
-            code: `
-        function Component() {
-          return (
-            <div>
-              <i />{' '}
-              <p>
-                text
-              </p>
-            </div>
-          )
-        }
-        `,
-            languageOptions: {
-              parser: require("@typescript-eslint/parser"),
-              parserOptions: {
-                ecmaFeatures: { jsx: true }
-              }
-            }
-          }
-        ],
-        invalid: [
-          {
-            code: `
-        function Component() {
-          return (
-            <div>
-              <i /> <i />
-              <p>
-                text
-              </p>
-            </div>
-          )
-        }
-        `,
-            languageOptions: {
-              parser: require("@typescript-eslint/parser"),
-              parserOptions: {
-                ecmaFeatures: { jsx: true }
-              }
-            },
-            errors: [{ messageId: "add", line: 5, column: 26 }],
-            output: `
-        function Component() {
-          return (
-            <div>
-              <i /> <i />
-
-              <p>
-                text
-              </p>
-            </div>
-          )
-        }
-        `
-          },
-          {
-            code: `
-        function Component() {
-          return (
-            <div>
-              <span></span>
-
-              <span></span>
-            </div>
-          )
-        }
-        `,
-            languageOptions: {
-              parser: require("@typescript-eslint/parser"),
-              parserOptions: {
-                ecmaFeatures: { jsx: true }
-              }
-            },
-            errors: [{ messageId: "remove", line: 6 }],
-            output: `
-        function Component() {
-          return (
-            <div>
-              <span></span>
-              <span></span>
-            </div>
-          )
-        }
-        `
-          }
-        ]
-      }
+      tests: void 0
     };
   }
 });
