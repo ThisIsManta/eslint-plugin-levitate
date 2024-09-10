@@ -4,10 +4,14 @@ const fs = require('fs')
 const _ = require('lodash')
 
 const getNodeAPIs = _.memoize(() => {
-	const text = fs.readFileSync('node_modules/@types/node/index.d.ts', 'utf-8')
-	return text.match(/^\/\/\/ \<reference path="(.+?)"/gm)
-		?.map(line => line.match(/path="(.+?)\.d\.ts"/)?.[1])
-		.filter(/** @return {name is string} */(name) => typeof name === 'string' && name !== 'globals.global') || []
+	try {
+		const text = fs.readFileSync('node_modules/@types/node/index.d.ts', 'utf-8')
+		return _.compact(
+			text.match(/^\/\/\/ \<reference path="(.+?)"/gm)?.map(line => line.match(/path="(.+?)\.d\.ts"/)?.[1])
+		).filter(name => name !== 'globals.global')
+	} catch {
+		return []
+	}
 })
 
 /**
@@ -15,7 +19,7 @@ const getNodeAPIs = _.memoize(() => {
  * @return {string}
  */
 function getImportPath(node) {
-	return String(node.source.value)
+	return String(node.source.value || '')
 }
 
 /**
@@ -76,13 +80,9 @@ module.exports = {
 
 		return {
 			Program: function (root) {
-				if (root.sourceType !== 'module' || root.body.length === 0) {
-					return null
-				}
-
 				const totalImportList = root.body.filter(/** @return {node is import('estree').ImportDeclaration} */(node) => node.type === 'ImportDeclaration')
 				if (totalImportList.length === 0) {
-					return null
+					return
 				}
 
 				for (const thisNode of totalImportList) {
