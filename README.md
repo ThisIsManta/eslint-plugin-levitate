@@ -26,6 +26,6 @@ Note that 🔧 indicates the rule is [auto-fixable](https://eslint.org/docs/late
 |`test-case-new-line` 🔧|enforce having a new line between `it`, `test`, `describe` and before `expect` function calls; this applies to _*.{test,spec}_ files only|
 |`test-case-title`|enforce writing consistent test case titles for `it` and `test` function calls; the allowed pattern of the test case title is `"(does not) return/render/call/fetch/set/throw(s) ... (, given ...)"`; this also disallows writing some vague words, such proper, correct, appropriate, accurate, perfect|
 |`typescript-enum-name`|enforce naming enumerations consistently; the possible options are `"PascalCase"` (default), `"camelCase"`, `"UPPERCASE"`, `"SNAKE_CASE"`|
-|`typescript-explicit-return-type`|enforce writing an explicit return type for exported functions|
+|`typescript-explicit-return-type`|enforce functions to have explicit function return types|
 |`typescript-exported-interface`|enforce exporting an `interface`, unless it is inside a `declare` block|
 |`typescript-method-type` 🔧|enforce writing function types using arrow notation|

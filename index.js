@@ -2489,101 +2489,110 @@ var require_typescript_enum_name = __commonJS({
 // rules/typescript-explicit-return-type.js
 var require_typescript_explicit_return_type = __commonJS({
   "rules/typescript-explicit-return-type.js"(exports2, module2) {
-    var CONDITION = "onlyIfMoreThanOneReturns";
     module2.exports = {
       meta: {
         type: "problem",
         docs: {
-          description: "enforce writing an explicit return type for exported functions"
+          description: "enforce functions to have explicit function return types"
         },
         schema: [
           {
-            enum: [null, CONDITION],
-            default: null
-          }
-        ]
-      },
-      create: function(context) {
-        const untypedFunctionHash = {};
-        return {
-          ExportNamedDeclaration: function(root) {
-            if (!root.declaration) {
-              return null;
-            }
-            if (root.declaration.type === "FunctionDeclaration" && !("returnType" in root.declaration && root.declaration.returnType) && checkForReturnViolation(root.declaration)) {
-              return context.report({
-                node: root.declaration,
-                message: `Expected an exported function must have a return type.`
-              });
-            }
-            if (root.declaration.type === "VariableDeclaration" && root.declaration.declarations) {
-              for (const node of root.declaration.declarations) {
-                if (node.type !== "VariableDeclarator") {
-                  continue;
-                }
-                if ("typeAnnotation" in node.id && node.id.typeAnnotation) {
-                  continue;
-                }
-                if (!node.init || node.init.type !== "ArrowFunctionExpression" && node.init.type !== "FunctionExpression") {
-                  continue;
-                }
-                if ("returnType" in node.init && node.init.returnType) {
-                  continue;
-                }
-                if (checkForReturnViolation(node.init)) {
-                  context.report({
-                    node,
-                    message: `Expected an exported function must have a return type.`
-                  });
-                }
+            type: "object",
+            properties: {
+              allowNonExports: {
+                type: "boolean",
+                description: "Whether to ignore non-exported functions."
+              },
+              allowSingleValueReturns: {
+                type: "boolean",
+                description: "Whether to ignore functions that have zero or one non-void return statement."
               }
             }
-          },
+          }
+        ],
+        messages: {
+          error: "Expected this function to have an explicit return type."
+        }
+      },
+      create: function(context) {
+        const { allowNonExports, allowSingleValueReturns } = Object.assign(
+          { allowNonExports: false, allowSingleValueReturns: false },
+          context.options[0]
+        );
+        return {
           FunctionDeclaration: function(root) {
-            if (root.id && root.id.type === "Identifier" && !("returnType" in root && root.returnType) && checkForReturnViolation(root)) {
-              untypedFunctionHash[root.id.name] = root;
+            if ("returnType" in root && root.returnType) {
+              return;
             }
+            if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root)) {
+              return;
+            }
+            if (allowNonExports && !(root.parent.type === "ExportDefaultDeclaration" || root.parent.type === "ExportNamedDeclaration" || context.sourceCode.getDeclaredVariables(root)[0]?.references.some(
+              ({ identifier }) => "parent" in identifier && typeof identifier.parent === "object" && identifier.parent && "type" in identifier.parent && (identifier.parent?.type === "ExportDefaultDeclaration" || identifier.parent?.type === "ExportSpecifier")
+            ))) {
+              return;
+            }
+            if (!root.loc) {
+              return;
+            }
+            context.report({
+              loc: context.sourceCode.getTokenBefore(root.body, { includeComments: false })?.loc ?? root.loc,
+              messageId: "error"
+            });
           },
           VariableDeclarator: function(root) {
-            if (root.id && root.id.type === "Identifier" && !("typeAnnotation" in root.id && root.id.typeAnnotation) && root.init && (root.init.type === "FunctionExpression" || root.init.type === "ArrowFunctionExpression") && !("returnType" in root.init && root.init.returnType) && checkForReturnViolation(root.init)) {
-              untypedFunctionHash[root.id.name] = root.init;
+            if (!root.init) {
+              return;
             }
-          },
-          ExportDefaultDeclaration: function(root) {
-            if (root.declaration && root.declaration.type === "Identifier" && untypedFunctionHash[root.declaration.name]) {
-              context.report({
-                node: untypedFunctionHash[root.declaration.name],
-                message: `Expected an exported function must have a return type.`
-              });
+            if (!(root.init.type === "FunctionExpression" || root.init.type === "ArrowFunctionExpression")) {
+              return;
             }
+            if ("returnType" in root.init && root.init.returnType) {
+              return;
+            }
+            if (root.id && root.id.type === "Identifier" && ("typeAnnotation" in root.id && root.id.typeAnnotation)) {
+              return;
+            }
+            if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root.init)) {
+              return;
+            }
+            if (allowNonExports && !(root.parent.parent.type === "ExportDefaultDeclaration" || root.parent.parent.type === "ExportNamedDeclaration" || context.sourceCode.getDeclaredVariables(root)[0]?.references.some(
+              ({ identifier }) => "parent" in identifier && typeof identifier.parent === "object" && identifier.parent && "type" in identifier.parent && (identifier.parent?.type === "ExportDefaultDeclaration" || identifier.parent?.type === "ExportSpecifier")
+            ))) {
+              return;
+            }
+            if (!root.id.loc) {
+              return;
+            }
+            context.report({
+              loc: context.sourceCode.getTokenBefore(root.init.body, { filter: (token) => token.type === "Punctuator" && token.value === ")" })?.loc ?? root.id.loc,
+              messageId: "error"
+            });
           }
         };
-        function checkForReturnViolation(node) {
-          if (context.options[0] !== CONDITION) {
-            return true;
-          }
-          if (node.body.type !== "BlockStatement") {
-            return false;
-          }
-          const returnNodes = getReturnStatements(node.body);
-          if (returnNodes.length === 0) {
-            return false;
-          }
-          const mainReturnNode = node.body.body.find((node2) => node2.type === "ReturnStatement");
-          const earlyReturnNodes = returnNodes.filter((node2) => node2 !== mainReturnNode);
-          if (earlyReturnNodes.length === 0) {
-            return false;
-          }
-          if (earlyReturnNodes.every(
-            (node2) => !node2.argument || node2.argument.type === "Identifier" && node2.argument.name === "undefined" || node2.argument.type === "UnaryExpression" && node2.argument.operator === "void"
-          )) {
-            return false;
-          }
-          return true;
-        }
       },
       tests: void 0
     };
+    function hasMultipleNonVoidReturns(node) {
+      if (node.body.type !== "BlockStatement") {
+        return false;
+      }
+      const returnNodes = getReturnStatements(node.body);
+      if (returnNodes.length === 0) {
+        return false;
+      }
+      const primaryReturnNode = node.body.body.find((node2) => node2.type === "ReturnStatement");
+      const earlyReturnNodes = returnNodes.filter((node2) => node2 !== primaryReturnNode);
+      if (earlyReturnNodes.length === 0) {
+        return false;
+      }
+      if (earlyReturnNodes.every(
+        (node2) => !node2.argument || node2.argument.type === "Identifier" && node2.argument.name === "undefined" || node2.argument.type === "UnaryExpression" && node2.argument.operator === "void"
+      )) {
+        return false;
+      }
+      return true;
+    }
     function getReturnStatements(node) {
       if (!node) {
         return [];

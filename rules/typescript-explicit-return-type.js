@@ -1,7 +1,5 @@
 // @ts-check
 
-const CONDITION = 'onlyIfMoreThanOneReturns'
-
 /**
  * @type {import('eslint').Rule.RuleModule}
  */
@@ -9,139 +7,114 @@ module.exports = {
 	meta: {
 		type: 'problem',
 		docs: {
-			description: 'enforce writing an explicit return type for exported functions',
+			description: 'enforce functions to have explicit function return types',
 		},
 		schema: [
 			{
-				enum: [null, CONDITION],
-				default: null,
+				type: 'object',
+				properties: {
+					allowNonExports: {
+						type: 'boolean',
+						description: 'Whether to ignore non-exported functions.',
+					},
+					allowSingleValueReturns: {
+						type: 'boolean',
+						description: 'Whether to ignore functions that have zero or one non-void return statement.',
+					}
+				},
 			}
 		],
+		messages: {
+			error: 'Expected this function to have an explicit return type.',
+		}
 	},
 	create: function (context) {
-		const untypedFunctionHash = {}
+		const { allowNonExports, allowSingleValueReturns } = Object.assign(
+			{ allowNonExports: false, allowSingleValueReturns: false },
+			context.options[0]
+		)
+
 		return {
-			ExportNamedDeclaration: function (root) {
-				if (!root.declaration) {
-					return null
-				}
-
-				if (
-					root.declaration.type === 'FunctionDeclaration' &&
-					!('returnType' in root.declaration && root.declaration.returnType) &&
-					checkForReturnViolation(root.declaration)
-				) {
-					return context.report({
-						node: root.declaration,
-						message: `Expected an exported function must have a return type.`,
-					})
-				}
-
-				if (
-					root.declaration.type === 'VariableDeclaration' &&
-					root.declaration.declarations
-				) {
-					for (const node of root.declaration.declarations) {
-						if (node.type !== 'VariableDeclarator') {
-							continue
-						}
-
-						if ('typeAnnotation' in node.id && node.id.typeAnnotation) {
-							continue
-						}
-
-						if (
-							!node.init ||
-							node.init.type !== 'ArrowFunctionExpression' && node.init.type !== 'FunctionExpression'
-						) {
-							continue
-						}
-
-						if ('returnType' in node.init && node.init.returnType) {
-							continue
-						}
-
-						if (checkForReturnViolation(node.init)) {
-							context.report({
-								node: node,
-								message: `Expected an exported function must have a return type.`,
-							})
-						}
-					}
-				}
-			},
 			FunctionDeclaration: function (root) {
-				if (
-					root.id &&
-					root.id.type === 'Identifier' &&
-					!('returnType' in root && root.returnType) &&
-					checkForReturnViolation(root)
-				) {
-					untypedFunctionHash[root.id.name] = root
+				if ('returnType' in root && root.returnType) {
+					return
 				}
+
+				if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root)) {
+					return
+				}
+
+				if (allowNonExports && !(
+					root.parent.type === 'ExportDefaultDeclaration' ||
+					root.parent.type === 'ExportNamedDeclaration' ||
+					context.sourceCode.getDeclaredVariables(root)[0]?.references.some(({ identifier }) =>
+						'parent' in identifier &&
+						typeof identifier.parent === 'object' &&
+						identifier.parent &&
+						'type' in identifier.parent &&
+						(identifier.parent?.type === 'ExportDefaultDeclaration' || identifier.parent?.type === 'ExportSpecifier')
+					)
+				)) {
+					return
+				}
+
+				if (!root.loc) {
+					return
+				}
+
+				context.report({
+					loc: context.sourceCode.getTokenBefore(root.body, { includeComments: false })?.loc ?? root.loc,
+					messageId: 'error',
+				})
 			},
 			VariableDeclarator: function (root) {
+				if (!root.init) {
+					return
+				}
+
+				if (!(root.init.type === 'FunctionExpression' || root.init.type === 'ArrowFunctionExpression')) {
+					return
+				}
+
+				if ('returnType' in root.init && root.init.returnType) {
+					return
+				}
+
 				if (
 					root.id &&
 					root.id.type === 'Identifier' &&
-					!('typeAnnotation' in root.id && root.id.typeAnnotation) &&
-					root.init &&
-					(root.init.type === 'FunctionExpression' || root.init.type === 'ArrowFunctionExpression') &&
-					!('returnType' in root.init && root.init.returnType) &&
-					checkForReturnViolation(root.init)
+					('typeAnnotation' in root.id && root.id.typeAnnotation)
 				) {
-					untypedFunctionHash[root.id.name] = root.init
+					return
 				}
-			},
-			ExportDefaultDeclaration: function (root) {
-				if (
-					root.declaration &&
-					root.declaration.type === 'Identifier' &&
-					untypedFunctionHash[root.declaration.name]
-				) {
-					context.report({
-						node: untypedFunctionHash[root.declaration.name],
-						message: `Expected an exported function must have a return type.`,
-					})
+
+				if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root.init)) {
+					return
 				}
+
+				if (allowNonExports && !(
+					root.parent.parent.type === 'ExportDefaultDeclaration' ||
+					root.parent.parent.type === 'ExportNamedDeclaration' ||
+					context.sourceCode.getDeclaredVariables(root)[0]?.references.some(({ identifier }) =>
+						'parent' in identifier &&
+						typeof identifier.parent === 'object' &&
+						identifier.parent &&
+						'type' in identifier.parent &&
+						(identifier.parent?.type === 'ExportDefaultDeclaration' || identifier.parent?.type === 'ExportSpecifier')
+					)
+				)) {
+					return
+				}
+
+				if (!root.id.loc) {
+					return
+				}
+
+				context.report({
+					loc: context.sourceCode.getTokenBefore(root.init.body, { filter: token => token.type === 'Punctuator' && token.value === ')' })?.loc ?? root.id.loc,
+					messageId: 'error',
+				})
 			},
-		}
-
-		/**
-		 * Returns true, if and only if it violates the option
-		 * @param {import('estree').FunctionDeclaration | import('estree').FunctionExpression | import('estree').ArrowFunctionExpression} node
-		 * @return {boolean}
-		 */
-		function checkForReturnViolation(node) {
-			if (context.options[0] !== CONDITION) {
-				return true
-			}
-
-			if (node.body.type !== 'BlockStatement') {
-				return false
-			}
-
-			const returnNodes = getReturnStatements(node.body)
-			if (returnNodes.length === 0) {
-				return false
-			}
-
-			const mainReturnNode = node.body.body.find(node => node.type === 'ReturnStatement')
-			const earlyReturnNodes = returnNodes.filter(node => node !== mainReturnNode)
-
-			if (earlyReturnNodes.length === 0) {
-				return false
-			}
-
-			if (earlyReturnNodes.every(node =>
-				!node.argument ||
-				node.argument.type === 'Identifier' && node.argument.name === 'undefined' ||
-				node.argument.type === 'UnaryExpression' && node.argument.operator === 'void'
-			)) {
-				return false
-			}
-
-			return true
 		}
 	},
 	tests: process.env.TEST && {
@@ -150,6 +123,7 @@ module.exports = {
 				code: `
 					function x() {}
 				`,
+				options: [{ allowNonExports: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
@@ -166,7 +140,7 @@ module.exports = {
 				code: `
 					export function x() { return '' }
 				`,
-				options: [CONDITION],
+				options: [{ allowSingleValueReturns: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
@@ -190,8 +164,18 @@ module.exports = {
 			},
 			{
 				code: `
+					function x(): string {}
+					export default x
+				`,
+				languageOptions: {
+					parser: require('@typescript-eslint/parser'),
+				},
+			},
+			{
+				code: `
 					const x = () => {}
 				`,
+				options: [{ allowNonExports: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
@@ -200,7 +184,7 @@ module.exports = {
 				code: `
 					export const x = () => ''
 				`,
-				options: [CONDITION],
+				options: [{ allowSingleValueReturns: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
@@ -209,7 +193,7 @@ module.exports = {
 				code: `
 					export const x = () => { return '' }
 				`,
-				options: [CONDITION],
+				options: [{ allowSingleValueReturns: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
@@ -218,7 +202,16 @@ module.exports = {
 				code: `
 					export const x = (): string => { if (1) { return '' } return '' }
 				`,
-				options: [CONDITION],
+				options: [{ allowSingleValueReturns: true }],
+				languageOptions: {
+					parser: require('@typescript-eslint/parser'),
+				},
+			},
+			{
+				code: `
+					export default function x() { return '' }
+				`,
+				options: [{ allowSingleValueReturns: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
@@ -258,7 +251,7 @@ module.exports = {
 						return 1
 					}
 				`,
-				options: [CONDITION],
+				options: [{ allowSingleValueReturns: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
@@ -267,22 +260,31 @@ module.exports = {
 		invalid: [
 			{
 				code: `
+          function x() {}
+				`,
+				languageOptions: {
+					parser: require('@typescript-eslint/parser'),
+				},
+				errors: [{ messageId: 'error', column: 22, endColumn: 23 }],
+			},
+			{
+				code: `
 					export function x() {}
 				`,
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
 			},
 			{
 				code: `
 					export function x() { if (true) return 1; else return 2; }
 				`,
-				options: [CONDITION],
+				options: [{ allowSingleValueReturns: false }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
 			},
 			{
 				code: `
@@ -292,7 +294,7 @@ module.exports = {
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
 			},
 			{
 				code: `
@@ -301,16 +303,26 @@ module.exports = {
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
 			},
 			{
 				code: `
-					export const x = () => {}
+					const x = () => ''
+					export { x }
 				`,
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
+			},
+			{
+				code: `
+          export const x = () => {}
+				`,
+				languageOptions: {
+					parser: require('@typescript-eslint/parser'),
+				},
+				errors: [{ messageId: 'error', column: 29, endColumn: 30 }],
 			},
 			{
 				code: `
@@ -319,7 +331,7 @@ module.exports = {
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
 			},
 			{
 				code: `
@@ -328,7 +340,7 @@ module.exports = {
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
 			},
 			{
 				code: `
@@ -338,7 +350,7 @@ module.exports = {
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
 			},
 			{
 				code: `
@@ -348,14 +360,47 @@ module.exports = {
 						return 3
 					}
 				`,
-				options: [CONDITION],
+				options: [{ allowSingleValueReturns: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ message: 'Expected an exported function must have a return type.' }],
+				errors: [{ messageId: 'error' }],
 			},
 		],
 	},
+}
+
+/**
+ * Returns true, if and only if it violates the option
+ * @param {import('estree').FunctionDeclaration | import('estree').FunctionExpression | import('estree').ArrowFunctionExpression} node
+ * @return {boolean}
+ */
+function hasMultipleNonVoidReturns(node) {
+	if (node.body.type !== 'BlockStatement') {
+		return false
+	}
+
+	const returnNodes = getReturnStatements(node.body)
+	if (returnNodes.length === 0) {
+		return false
+	}
+
+	const primaryReturnNode = node.body.body.find(node => node.type === 'ReturnStatement')
+	const earlyReturnNodes = returnNodes.filter(node => node !== primaryReturnNode)
+
+	if (earlyReturnNodes.length === 0) {
+		return false
+	}
+
+	if (earlyReturnNodes.every(node =>
+		!node.argument ||
+		node.argument.type === 'Identifier' && node.argument.name === 'undefined' ||
+		node.argument.type === 'UnaryExpression' && node.argument.operator === 'void'
+	)) {
+		return false
+	}
+
+	return true
 }
 
 /**
