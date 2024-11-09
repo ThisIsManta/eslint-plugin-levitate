@@ -9,7 +9,7 @@ module.exports = {
   meta: {
     docs: {
       description:
-        'enforce having an additional empty line between React elements if one of them spreads multiple lines',
+        'enforce having an additional empty line between two React elements if both of them occupy multiple lines',
     },
     fixable: 'whitespace',
     messages: {
@@ -39,7 +39,7 @@ module.exports = {
               return null
             }
 
-            if (node.type === 'JSXText' && node.value.trim().length === 0) {
+            if (node.type === 'JSXText' && node.raw.trim().length === 0) {
               const prevNode = array[index - 1]
               const nextNode = array[index + 1]
               return { prevNode, node, nextNode }
@@ -51,26 +51,34 @@ module.exports = {
 
         for (const { prevNode, node, nextNode } of spacingNodes) {
           // Skip an actual whitespace
-          if (node.value === ' ') {
+          // Use `raw` instead of `value` to avoid converting &nbsp;
+          if (node.raw === ' ') {
             continue
           }
 
-          // Avoid conflicting with Prettier
-          if (
-            prevNode.type === 'JSXExpressionContainer' &&
-            prevNode.expression.type === 'Literal' &&
-            typeof prevNode.expression.value === 'string' &&
-            /^\s+$/.test(prevNode.expression.value)
-          ) {
+          if (prevNode.type === 'JSXExpressionContainer' || nextNode.type === 'JSXExpressionContainer') {
             continue
           }
 
-          const newLineCount = node.value.match(/\n/g)?.length ?? 0
+          const firstNewLineIndex = node.raw.indexOf('\n')
+          const lastNewLineIndex = node.raw.lastIndexOf('\n')
           if (
-            prevNode.loc.start.line === prevNode.loc.end.line &&
-            nextNode.loc.start.line === nextNode.loc.end.line
+            // Keep this logic consistent with Prettier
+            prevNode.loc.end.line - prevNode.loc.start.line > 1 &&
+            nextNode.loc.end.line - nextNode.loc.start.line > 1
           ) {
-            if (newLineCount > 1) {
+            if (firstNewLineIndex >= 0 && firstNewLineIndex === lastNewLineIndex) {
+              context.report({
+                loc: {
+                  start: nextNode.loc.start,
+                  end: nextNode.loc.start,
+                },
+                messageId: 'add',
+                fix: (fixer) => fixer.insertTextBefore(node, '\n'),
+              })
+            }
+          } else {
+            if (firstNewLineIndex !== lastNewLineIndex) {
               context.report({
                 loc: {
                   start: { line: node.loc.start.line + 1, column: 0 },
@@ -83,18 +91,8 @@ module.exports = {
                     context.sourceCode
                       .getText(/** @type {any} */(node))
                       .replace(/^[ \t]*\n/, '')
+                      .replace(/^[ ]+/g, ' ')
                   ),
-              })
-            }
-          } else {
-            if (newLineCount === 1) {
-              context.report({
-                loc: {
-                  start: node.loc.start,
-                  end: node.loc.start,
-                },
-                messageId: 'add',
-                fix: (fixer) => fixer.insertTextBefore(node, '\n'),
               })
             }
           }
@@ -157,7 +155,6 @@ module.exports = {
           return (
             <div>
               <i /> <i />
-
               <p>
                 text
               </p>
@@ -199,7 +196,9 @@ module.exports = {
         function Component() {
           return (
             <div>
-              <i /> <i />
+              <p>
+                text
+              </p>
               <p>
                 text
               </p>
@@ -213,12 +212,14 @@ module.exports = {
             ecmaFeatures: { jsx: true },
           }
         },
-        errors: [{ messageId: 'add', line: 5, column: 26 }],
+        errors: [{ messageId: 'add', line: 8, column: 15 }],
         output: `
         function Component() {
           return (
             <div>
-              <i /> <i />
+              <p>
+                text
+              </p>
 
               <p>
                 text

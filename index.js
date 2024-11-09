@@ -1340,7 +1340,7 @@ var require_react_new_line = __commonJS({
     module2.exports = {
       meta: {
         docs: {
-          description: "enforce having an additional empty line between React elements if one of them spreads multiple lines"
+          description: "enforce having an additional empty line between two React elements if both of them occupy multiple lines"
         },
         fixable: "whitespace",
         messages: {
@@ -1366,7 +1366,7 @@ var require_react_new_line = __commonJS({
                 if (index === 0 || index === array.length - 1) {
                   return null;
                 }
-                if (node.type === "JSXText" && node.value.trim().length === 0) {
+                if (node.type === "JSXText" && node.raw.trim().length === 0) {
                   const prevNode = array[index - 1];
                   const nextNode = array[index + 1];
                   return { prevNode, node, nextNode };
@@ -1375,15 +1375,30 @@ var require_react_new_line = __commonJS({
               })
             );
             for (const { prevNode, node, nextNode } of spacingNodes) {
-              if (node.value === " ") {
+              if (node.raw === " ") {
                 continue;
               }
-              if (prevNode.type === "JSXExpressionContainer" && prevNode.expression.type === "Literal" && typeof prevNode.expression.value === "string" && /^\s+$/.test(prevNode.expression.value)) {
+              if (prevNode.type === "JSXExpressionContainer" || nextNode.type === "JSXExpressionContainer") {
                 continue;
               }
-              const newLineCount = node.value.match(/\n/g)?.length ?? 0;
-              if (prevNode.loc.start.line === prevNode.loc.end.line && nextNode.loc.start.line === nextNode.loc.end.line) {
-                if (newLineCount > 1) {
+              const firstNewLineIndex = node.raw.indexOf("\n");
+              const lastNewLineIndex = node.raw.lastIndexOf("\n");
+              if (
+                // Keep this logic consistent with Prettier
+                prevNode.loc.end.line - prevNode.loc.start.line > 1 && nextNode.loc.end.line - nextNode.loc.start.line > 1
+              ) {
+                if (firstNewLineIndex >= 0 && firstNewLineIndex === lastNewLineIndex) {
+                  context.report({
+                    loc: {
+                      start: nextNode.loc.start,
+                      end: nextNode.loc.start
+                    },
+                    messageId: "add",
+                    fix: (fixer) => fixer.insertTextBefore(node, "\n")
+                  });
+                }
+              } else {
+                if (firstNewLineIndex !== lastNewLineIndex) {
                   context.report({
                     loc: {
                       start: { line: node.loc.start.line + 1, column: 0 },
@@ -1395,19 +1410,8 @@ var require_react_new_line = __commonJS({
                       context.sourceCode.getText(
                         /** @type {any} */
                         node
-                      ).replace(/^[ \t]*\n/, "")
+                      ).replace(/^[ \t]*\n/, "").replace(/^[ ]+/g, " ")
                     )
-                  });
-                }
-              } else {
-                if (newLineCount === 1) {
-                  context.report({
-                    loc: {
-                      start: node.loc.start,
-                      end: node.loc.start
-                    },
-                    messageId: "add",
-                    fix: (fixer) => fixer.insertTextBefore(node, "\n")
                   });
                 }
               }

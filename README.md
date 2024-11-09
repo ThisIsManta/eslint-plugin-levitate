@@ -16,7 +16,7 @@ Note that 🔧 indicates the rule is [auto-fixable](https://eslint.org/docs/late
 |`parameter-new-line` 🔧|enforce having consistent new lines between parameters|
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`|
 |`react-export-default` 🔧|enforce writing React components consistently|
-|`react-new-line` 🔧|enforce having an additional empty line between React elements if one of them spreads multiple lines|
+|`react-new-line` 🔧|enforce having an additional empty line between two React elements if both of them occupy multiple lines|
 |`react-prop-type`|enforce writing type definition for React props|
 |`react-sort-props` 🔧|enforce consistent React props sorting|
 |`require-name-after-file-name`|enforce naming an identifier after the file name of its `require` statement|
