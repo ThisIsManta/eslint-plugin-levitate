@@ -13,6 +13,10 @@ module.exports = {
 			{
 				type: 'object',
 				properties: {
+					allowJSX: {
+						type: 'boolean',
+						description: 'Whether to ignore functions that return JSX.',
+					},
 					allowNonExports: {
 						type: 'boolean',
 						description: 'Whether to ignore non-exported functions.',
@@ -29,14 +33,18 @@ module.exports = {
 		}
 	},
 	create: function (context) {
-		const { allowNonExports, allowSingleValueReturns } = Object.assign(
-			{ allowNonExports: false, allowSingleValueReturns: false },
+		const { allowJSX, allowNonExports, allowSingleValueReturns } = Object.assign(
+			{ allowJSX: false, allowNonExports: false, allowSingleValueReturns: false },
 			context.options[0]
 		)
 
 		return {
 			FunctionDeclaration: function (root) {
 				if ('returnType' in root && root.returnType) {
+					return
+				}
+
+				if (allowJSX && hasJSXReturned(root)) {
 					return
 				}
 
@@ -88,6 +96,10 @@ module.exports = {
 					return
 				}
 
+				if (allowJSX && hasJSXReturned(root.init)) {
+					return
+				}
+
 				if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root.init)) {
 					return
 				}
@@ -121,7 +133,50 @@ module.exports = {
 		valid: [
 			{
 				code: `
-					function x() {}
+					const a = 1
+					export const b = 2
+				`,
+				languageOptions: {
+					parser: require('@typescript-eslint/parser'),
+				},
+			},
+			{
+				code: `
+					function a() { return <div /> }
+					const b = function () { return <div /> }
+					const c = () => { return <div /> }
+					const d = () => <div />
+					const e = () => {
+						if (true) return <div />
+						else return ''
+					}
+				`,
+				options: [{ allowJSX: true }],
+				languageOptions: {
+					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
+				},
+			},
+			{
+				code: `
+					function a(): string {}
+					const b = function (): string {}
+					const c = (): string => {}
+					const d: () => string = () => {}
+					const e = (): string => ''
+				`,
+				languageOptions: {
+					parser: require('@typescript-eslint/parser'),
+				},
+			},
+			{
+				code: `
+					function a() {}
+					const b = function () {}
+					const c = () => {}
+					const d = () => ''
 				`,
 				options: [{ allowNonExports: true }],
 				languageOptions: {
@@ -130,114 +185,12 @@ module.exports = {
 			},
 			{
 				code: `
-					export function x(): string {}
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					export function x() { return '' }
+					function a() { return '' }
+					const b = function () { return '' }
+					const c = () => { return '' }
+					const d = () => ''
 				`,
 				options: [{ allowSingleValueReturns: true }],
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					export const x = 1
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					const x = function(): string {}
-					export default x
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					function x(): string {}
-					export default x
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					const x = () => {}
-				`,
-				options: [{ allowNonExports: true }],
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					export const x = () => ''
-				`,
-				options: [{ allowSingleValueReturns: true }],
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					export const x = () => { return '' }
-				`,
-				options: [{ allowSingleValueReturns: true }],
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					export const x = (): string => { if (1) { return '' } return '' }
-				`,
-				options: [{ allowSingleValueReturns: true }],
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					export default function x() { return '' }
-				`,
-				options: [{ allowSingleValueReturns: true }],
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					export const x: () => string = () => {}
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					const x: () => string = () => {}
-					export default x
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-			},
-			{
-				code: `
-					const x = (): () => string => ''
-					export default x
-				`,
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
@@ -260,104 +213,56 @@ module.exports = {
 		invalid: [
 			{
 				code: `
-          function x() {}
+					function a() { return <div /> }
+					const b = function () { return <div /> }
+					const c = () => { return <div /> }
+					const d = () => <div />
+					const e = () => {
+						if (true) return <div />
+						else return ''
+					}
 				`,
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
+					parserOptions: {
+						ecmaFeatures: { jsx: true },
+					}
 				},
-				errors: [{ messageId: 'error', column: 22, endColumn: 23 }],
+				errors: [
+					{ messageId: 'error', line: 2, column: 17, endColumn: 18 },
+					{ messageId: 'error', line: 3 },
+					{ messageId: 'error', line: 4 },
+					{ messageId: 'error', line: 5 },
+					{ messageId: 'error', line: 6 },
+				],
 			},
 			{
 				code: `
-					export function x() {}
+					export function a() {}
+					export const b = function () {}
+					export const c = () => {}
+					export const d = () => ''
+					const e = () => {}
+					export { e }
 				`,
+				options: [{ allowNonExports: true }],
 				languageOptions: {
 					parser: require('@typescript-eslint/parser'),
 				},
-				errors: [{ messageId: 'error' }],
+				errors: [
+					{ messageId: 'error', line: 2 },
+					{ messageId: 'error', line: 3 },
+					{ messageId: 'error', line: 4 },
+					{ messageId: 'error', line: 5 },
+					{ messageId: 'error', line: 6 },
+				],
 			},
 			{
 				code: `
-					export function x() { if (true) return 1; else return 2; }
-				`,
-				options: [{ allowSingleValueReturns: false }],
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-				errors: [{ messageId: 'error' }],
-			},
-			{
-				code: `
-					const x = function() {}
-					export default x
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-				errors: [{ messageId: 'error' }],
-			},
-			{
-				code: `
-					export const x = () => ''
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-				errors: [{ messageId: 'error' }],
-			},
-			{
-				code: `
-					const x = () => ''
-					export { x }
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-				errors: [{ messageId: 'error' }],
-			},
-			{
-				code: `
-          export const x = () => {}
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-				errors: [{ messageId: 'error', column: 29, endColumn: 30 }],
-			},
-			{
-				code: `
-					export const x = () => { return '' }
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-				errors: [{ messageId: 'error' }],
-			},
-			{
-				code: `
-					export const x = () => { if (1) { return '' } return '' }
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-				errors: [{ messageId: 'error' }],
-			},
-			{
-				code: `
-					const x = () => {}
-					export default x
-				`,
-				languageOptions: {
-					parser: require('@typescript-eslint/parser'),
-				},
-				errors: [{ messageId: 'error' }],
-			},
-			{
-				code: `
-					export function x() {
-						if (a) return
-						if (b) return 2
-						return 3
+					function a() { return 1; }
+					function b() {
+						if (true) return 1;
+						else return 2;
 					}
 				`,
 				options: [{ allowSingleValueReturns: true }],
@@ -366,8 +271,43 @@ module.exports = {
 				},
 				errors: [{ messageId: 'error' }],
 			},
+			{
+				code: `
+					export default function a() {}
+					const b = function () {}
+					export default b
+				`,
+				options: [{ allowNonExports: true }],
+				languageOptions: {
+					parser: require('@typescript-eslint/parser'),
+				},
+				errors: [
+					{ messageId: 'error', line: 2 },
+					{ messageId: 'error', line: 3 },
+				],
+			},
 		],
 	},
+}
+
+/**
+ * @return {boolean}
+ */
+function hasJSXReturned(node) {
+	if (node.body.type === 'JSXElement') {
+		return true
+	}
+
+	if (node.body.type !== 'BlockStatement') {
+		return false
+	}
+
+	const returnNodes = getReturnStatements(node.body)
+	if (returnNodes.length === 0) {
+		return false
+	}
+
+	return returnNodes.some(node => (/** @type {string} */ (node.argument?.type)) === 'JSXElement')
 }
 
 /**
@@ -427,7 +367,7 @@ function getReturnStatements(node) {
 			continue
 		}
 
-		if (typeof node[key] === 'object') {
+		if (typeof node[key] === 'object' && node[key] !== null) {
 			results = results.concat(getReturnStatements(node[key]))
 		}
 	}

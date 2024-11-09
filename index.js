@@ -2499,6 +2499,10 @@ var require_typescript_explicit_return_type = __commonJS({
           {
             type: "object",
             properties: {
+              allowJSX: {
+                type: "boolean",
+                description: "Whether to ignore functions that return JSX."
+              },
               allowNonExports: {
                 type: "boolean",
                 description: "Whether to ignore non-exported functions."
@@ -2515,13 +2519,16 @@ var require_typescript_explicit_return_type = __commonJS({
         }
       },
       create: function(context) {
-        const { allowNonExports, allowSingleValueReturns } = Object.assign(
-          { allowNonExports: false, allowSingleValueReturns: false },
+        const { allowJSX, allowNonExports, allowSingleValueReturns } = Object.assign(
+          { allowJSX: false, allowNonExports: false, allowSingleValueReturns: false },
           context.options[0]
         );
         return {
           FunctionDeclaration: function(root) {
             if ("returnType" in root && root.returnType) {
+              return;
+            }
+            if (allowJSX && hasJSXReturned(root)) {
               return;
             }
             if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root)) {
@@ -2553,6 +2560,9 @@ var require_typescript_explicit_return_type = __commonJS({
             if (root.id && root.id.type === "Identifier" && ("typeAnnotation" in root.id && root.id.typeAnnotation)) {
               return;
             }
+            if (allowJSX && hasJSXReturned(root.init)) {
+              return;
+            }
             if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root.init)) {
               return;
             }
@@ -2573,6 +2583,22 @@ var require_typescript_explicit_return_type = __commonJS({
       },
       tests: void 0
     };
+    function hasJSXReturned(node) {
+      if (node.body.type === "JSXElement") {
+        return true;
+      }
+      if (node.body.type !== "BlockStatement") {
+        return false;
+      }
+      const returnNodes = getReturnStatements(node.body);
+      if (returnNodes.length === 0) {
+        return false;
+      }
+      return returnNodes.some((node2) => (
+        /** @type {string} */
+        node2.argument?.type === "JSXElement"
+      ));
+    }
     function hasMultipleNonVoidReturns(node) {
       if (node.body.type !== "BlockStatement") {
         return false;
@@ -2606,7 +2632,7 @@ var require_typescript_explicit_return_type = __commonJS({
         if (key === "loc" || key === "range" || key == "parent") {
           continue;
         }
-        if (typeof node[key] === "object") {
+        if (typeof node[key] === "object" && node[key] !== null) {
           results = results.concat(getReturnStatements(node[key]));
         }
       }
