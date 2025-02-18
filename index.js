@@ -479,7 +479,9 @@ var require_import_convention = __commonJS({
               modulePath,
               namespaceNode: namespaceNode ? namespaceNode.local : void 0,
               defaultNode: defaultNode ? defaultNode.local : void 0,
-              namedWrappers: namedNodes.map((node) => ({ originalNode: node.imported, givenNode: node.local }))
+              namedWrappers: _.compact(
+                namedNodes.map((node) => node.imported.type === "Identifier" && { originalNode: node.imported, givenNode: node.local })
+              )
             });
           },
           CallExpression: function(root) {
@@ -1761,7 +1763,7 @@ var require_require_name_after_file_name = __commonJS({
   "rules/require-name-after-file-name.js"(exports2, module2) {
     var _ = require("lodash");
     var fp = require("path");
-    var glob = require("glob").sync;
+    var { globSync } = require("glob");
     module2.exports = {
       meta: {
         type: "suggestion",
@@ -1798,7 +1800,7 @@ var require_require_name_after_file_name = __commonJS({
               let index = -1;
               let found = false;
               while (++index < context.options[0].length) {
-                const testPaths = glob(context.options[0][index]).map((item) => fp.resolve(item));
+                const testPaths = globSync(context.options[0][index]).map((item) => fp.resolve(item));
                 if (testPaths.some((item) => item === fullPath)) {
                   found = true;
                   break;

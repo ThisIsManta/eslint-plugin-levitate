@@ -240,7 +240,9 @@ module.exports = {
 					modulePath,
 					namespaceNode: namespaceNode ? namespaceNode.local : undefined,
 					defaultNode: defaultNode ? defaultNode.local : undefined,
-					namedWrappers: namedNodes.map(node => ({ originalNode: node.imported, givenNode: node.local })),
+					namedWrappers: _.compact(
+						namedNodes.map(node => node.imported.type === 'Identifier' && ({ originalNode: node.imported, givenNode: node.local }))
+					),
 				})
 			},
 			CallExpression: function (root) {

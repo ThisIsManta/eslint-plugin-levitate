@@ -2,7 +2,7 @@
 
 const _ = require('lodash')
 const fp = require('path')
-const glob = require('glob').sync
+const { globSync } = require('glob')
 
 /**
  * @type {import('eslint').Rule.RuleModule}
@@ -53,7 +53,7 @@ module.exports = {
 					let index = -1
 					let found = false
 					while (++index < context.options[0].length) {
-						const testPaths = glob(context.options[0][index]).map(item => fp.resolve(item))
+						const testPaths = globSync(context.options[0][index]).map(item => fp.resolve(item))
 						if (testPaths.some(item => item === fullPath)) {
 							found = true
 							break
