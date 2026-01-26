@@ -5,7 +5,7 @@ const _ = require('lodash')
 const rules = fs.readdirSync('./rules', { withFileTypes: true })
 	.map(file => ({
 		name: fp.basename(file.name, fp.extname(file.name)),
-		path: './' + file.path + '/' + file.name
+		path: file.parentPath + '/' + file.name
 	}))
 
 module.exports.rules = rules
