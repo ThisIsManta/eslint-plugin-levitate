@@ -12,7 +12,7 @@
   "scripts": {
     "build": "node build.js",
     "test": "env TEST=1 eslint-rule-tester rules/*.js",
-    "version": "npm publish"
+    "version": "npm publish --provenance --access public"
   },
   "repository": {
     "type": "git",
