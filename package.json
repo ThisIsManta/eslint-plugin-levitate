@@ -10,8 +10,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "node build.js",
-    "test": "env TEST=1 eslint-rule-tester rules/*.js",
+    "build": "node build.mjs",
+    "test": "eslint-rule-tester ./rules",
     "version": "npm publish --provenance --access public"
   },
   "repository": {
@@ -39,7 +39,7 @@
     "@typescript-eslint/parser": "^8.58.1",
     "esbuild": "^0.28.0",
     "eslint": "^10.2.0",
-    "eslint-rule-tester": "^3.0.0",
+    "eslint-rule-tester": "^11.1.0",
     "lefthook": "^2.1.5",
     "typescript": "*"
   },
