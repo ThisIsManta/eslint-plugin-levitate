@@ -13,7 +13,7 @@ var require_comment = __commonJS({
     var FIXME = /^\s*FIXME\W\s*/i;
     var NOTE = /^\s*(Note\W)\s/i;
     var URL = /^\s(?:See\s*:\s*)?(\w+:\/\/.+)/i;
-    var ESLINT = /^eslint-(disable|enable)/;
+    var ESLINT = /^(es|ox)lint-(disable|enable)/;
     module2.exports = {
       meta: {
         type: "suggestion",

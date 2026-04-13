@@ -6,7 +6,7 @@ const TODO = /^\s*TODO\W\s*/i
 const FIXME = /^\s*FIXME\W\s*/i
 const NOTE = /^\s*(Note\W)\s/i
 const URL = /^\s(?:See\s*:\s*)?(\w+:\/\/.+)/i
-const ESLINT = /^eslint-(disable|enable)/
+const ESLINT = /^(es|ox)lint-(disable|enable)/
 
 /**
  * @type {import('eslint').Rule.RuleModule}
@@ -103,6 +103,8 @@ module.exports = {
 			{ code: '// HACK: lorem' },
 			{ code: '// TODO: lorem' },
 			{ code: '// Lorem' },
+			{ code: '// eslint-disable' },
+			{ code: '// oxlint-disable' },
 		],
 		invalid: [
 			{
