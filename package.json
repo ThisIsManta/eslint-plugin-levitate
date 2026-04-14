@@ -12,7 +12,8 @@
   "scripts": {
     "build": "node build.mjs",
     "test": "eslint-rule-tester ./rules",
-    "version": "npm publish --provenance --access public"
+    "version": "npm run build",
+    "postversion": "npm publish --provenance --access public"
   },
   "repository": {
     "type": "git",
