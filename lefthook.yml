@@ -3,6 +3,7 @@ commit-msg:
     lint:
       run: npx lint-commit-message {1}
 pre-commit:
+  parallel: true
   commands:
     test:
       run: npm run test

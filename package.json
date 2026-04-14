@@ -12,7 +12,7 @@
   "scripts": {
     "build": "node build.mjs",
     "test": "eslint-rule-tester ./rules",
-    "version": "npm run build",
+    "version": "npm run --silent build && git add README.md",
     "postversion": "npm publish --provenance --access public"
   },
   "repository": {
