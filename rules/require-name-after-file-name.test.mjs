@@ -12,12 +12,12 @@ export default test(
 			{ code: 'var JamesArthur = require("./james-arthur")' },
 			{
 				code: 'var JamesArthur = require("./james-arthur")',
-				filename: './rules/use-require-name-after-file-path.mjs',
+				filename: import.meta.filename,
 				options: [['./rules/*.mjs']],
 			},
 			{
 				code: 'var something = require("./james-arthur")',
-				filename: './rules/use-require-name-after-file-path.mjs',
+				filename: import.meta.filename,
 				options: [['./nada.mjs']],
 			},
 		],
@@ -28,7 +28,7 @@ export default test(
 			},
 			{
 				code: 'var something = require("./james-arthur")',
-				filename: './rules/require-name-after-file-name.mjs',
+				filename: import.meta.filename,
 				options: [['./rules/*.mjs']],
 				errors: [{ message: 'Expected "something" to be "JamesArthur".', }]
 			},

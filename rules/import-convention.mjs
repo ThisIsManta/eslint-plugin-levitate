@@ -46,6 +46,9 @@ export default {
 		},
 	},
 	create(context) {
+		/**
+		 * @type {Array<{ path: RegExp; default: boolean | string; namespace: boolean | string; named: boolean | Array<{ name: RegExp; rename?: string; forbidden?: boolean }> }>}
+		 */
 		const rules = context.options.map(({ path, named, ...rest }) => ({
 			...rest,
 			path: new RegExp(path),
@@ -118,8 +121,8 @@ export default {
 						rule.default === true &&
 						!modulePath.startsWith('.') &&
 						!modulePath.startsWith('/') &&
-						context.parserPath &&
-						context.parserPath.includes('@typescript-eslint/parser'.replace('/', fp.sep))
+						// See https://github.com/typescript-eslint/typescript-eslint/blob/c4b4d1075d0e5fa92a0adbdfb1bed912e86eabfb/packages/parser/src/index.ts#L16C10-L16C34
+						context.languageOptions.parser?.meta?.name === 'typescript-eslint/parser'
 					) {
 						try {
 							const name = findType(modulePath, fp.dirname(context.filename))
@@ -148,7 +151,7 @@ export default {
 							.map((node) => {
 								const identifier = /** @type {import('eslint').Rule.Node} */ (node.identifier)
 								return (
-									identifier.parent.type === 'MemberExpression' &&
+									identifier.parent?.type === 'MemberExpression' &&
 									identifier.parent.property.type === 'Identifier'
 								) ? identifier.parent.property : null
 							})
@@ -204,7 +207,7 @@ export default {
 					}
 
 					if (givenNode && givenNode.type === 'Identifier') {
-						if (subrule.rename === false && originalNode.name !== givenNode.name) {
+						if (!subrule.rename && originalNode.name !== givenNode.name) {
 							context.report({
 								node: givenNode,
 								message: `Expected the named import to be "${originalNode.name}".`,
@@ -381,6 +384,9 @@ const findType = _.memoize(
 	(...params) => params.join('|')
 )
 
+/**
+ * @param {string} name
+ */
 function normalizeIdentifierName(name) {
 	return name
 		.trim()
