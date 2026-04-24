@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "node build.mjs",
-    "test": "eslint-rule-tester ./rules",
+    "test": "eslint-rule-tester",
     "version": "npm run --silent build && git add README.md",
     "postversion": "npm publish --provenance --access public"
   },
@@ -34,14 +34,14 @@
     "eslint": "^10.0.0"
   },
   "devDependencies": {
-    "@thisismanta/semantic-version": "^11.2.0",
+    "@thisismanta/semantic-version": "^11.2.1",
     "@types/lodash": "^4.17.24",
     "@types/react": "^18.3.28",
-    "@typescript-eslint/parser": "^8.58.1",
+    "@typescript-eslint/parser": "^8.59.0",
     "esbuild": "^0.28.0",
-    "eslint": "^10.2.0",
-    "eslint-rule-tester": "^11.1.0",
-    "lefthook": "^2.1.5",
+    "eslint": "^10.2.1",
+    "eslint-rule-tester": "^11.3.0",
+    "lefthook": "^2.1.6",
     "typescript": "*"
   },
   "dependencies": {
