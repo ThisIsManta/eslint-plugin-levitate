@@ -17,18 +17,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ThisIsManta/eslint-plugin-levitate.git"
+    "url": "git+https://github.com/taskworld/eslint-plugin-levitate.git"
   },
   "keywords": [
     "eslint",
     "eslint-plugin"
   ],
-  "author": "Anantachai Saothong <thisismanta@gmail.com>",
+  "author": "engineer@taskworld.com",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ThisIsManta/eslint-plugin-levitate/issues"
+    "url": "https://github.com/taskworld/eslint-plugin-levitate/issues"
   },
-  "homepage": "https://github.com/ThisIsManta/eslint-plugin-levitate#readme",
+  "homepage": "https://github.com/taskworld/eslint-plugin-levitate#readme",
   "peerDependencies": {
     "@types/node": "*",
     "typescript": ">=5.0.0"
