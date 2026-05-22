@@ -15,35 +15,11 @@ export default {
      * @param {import('estree').FunctionExpression} root
      */
     function check(root) {
-      const parentNodes = context.sourceCode.getAncestors(root)
-      const lastParentNode = parentNodes.at(-1)
-
       if (
         root.type === 'FunctionExpression' &&
-        lastParentNode &&
-        lastParentNode.type === 'MethodDefinition' &&
-        lastParentNode.key.type === 'Identifier' &&
-        lastParentNode.key.name === 'constructor'
-      ) {
-        return
-      }
-
-      if (
-        parentNodes.some(node =>
-          node.type === 'CallExpression' &&
-          node.callee.type === 'Identifier' &&
-          node.callee.name === 'compose'
-        )
-      ) {
-        return
-      }
-
-      if (
-        parentNodes.some(node =>
-          node.type === 'VariableDeclarator' &&
-          node.id.type === 'Identifier' &&
-          node.id.name === 'enhance'
-        )
+        root.parent.type === 'MethodDefinition' &&
+        root.parent.key.type === 'Identifier' &&
+        root.parent.key.name === 'constructor'
       ) {
         return
       }
