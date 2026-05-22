@@ -39,15 +39,15 @@
     }
   },
   "devDependencies": {
-    "@thisismanta/semantic-version": "^11.2.1",
+    "@thisismanta/semantic-version": "^11.3.0",
     "@types/lodash": "^4.17.24",
-    "@types/node": "^24.12.2",
-    "@types/react": "^18.3.28",
-    "@typescript-eslint/parser": "^8.59.1",
+    "@types/node": "^24.12.4",
+    "@types/react": "^18.3.29",
+    "@typescript-eslint/parser": "^8.59.4",
     "esbuild": "^0.28.0",
-    "eslint": "^10.2.1",
+    "eslint": "^10.4.0",
     "eslint-rule-tester": "^11.3.1",
-    "lefthook": "^2.1.6",
+    "lefthook": "^2.1.8",
     "typescript": "^6.0.3"
   },
   "dependencies": {
