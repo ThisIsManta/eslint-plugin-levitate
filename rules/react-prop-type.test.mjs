@@ -30,21 +30,31 @@ export default test(
         }
         `,
 			},
-			{
-				code: `
-        compose(withSelectors(props => ({})))
-        `,
-			},
-			{
-				code: `
-        const enhance = props => {}
-        `,
-			},
 		],
 		invalid: [
 			{
 				code: `
         function A(props) {}
+        `,
+				errors: [
+					{
+						message: 'Expected to have type definition',
+					},
+				],
+			},
+			{
+				code: `
+        compose(withSelectors(props => ({})))
+        `,
+				errors: [
+					{
+						message: 'Expected to have type definition',
+					},
+				],
+			},
+			{
+				code: `
+        const enhance = props => {}
         `,
 				errors: [
 					{
