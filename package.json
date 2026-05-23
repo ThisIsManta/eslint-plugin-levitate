@@ -30,13 +30,7 @@
   },
   "homepage": "https://github.com/taskworld/eslint-plugin-levitate#readme",
   "peerDependencies": {
-    "@types/node": "*",
     "typescript": ">=5.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@types/node": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@thisismanta/semantic-version": "^11.3.0",
