@@ -21,17 +21,50 @@ export default test(
 				code: `import AAA from '../aaa'`,
 			},
 			{
-				code: `import XXX from './index'`,
+				code: `
+				import AAA from './index'
+				import BBB from './index.js'
+				import CCC from './index.jsx'
+				import DDD from './index.mjs'
+				import EEE from './index.cjs'
+				import FFF from './index.ts'
+				import GGG from './index.tsx'
+				import HHH from './index.mts'
+				import III from './index.cts'
+				`,
 			},
 			{
-				code: `import XXX from '../../../index'`,
+				code: `
+				import AAA from '../../../index'
+				import BBB from '../../../index.js'
+				import CCC from '../../../index.jsx'
+				import DDD from '../../../index.mjs'
+				import EEE from '../../../index.cjs'
+				import FFF from '../../../index.ts'
+				import GGG from '../../../index.tsx'
+				import HHH from '../../../index.mts'
+				import III from '../../../index.cts'
+				`,
 			},
 		],
 		invalid: [
 			{
 				code: `import XXX from '../src/index'`,
-				errors: [{ message: 'Expected "../src/index" to be "../src".' }],
+				errors: [
+					{
+						message: 'Unexpected /index here.'
+					}
+				],
 				output: `import XXX from '../src'`,
+			},
+			{
+				code: `import XXX from '.'`,
+				errors: [
+					{
+						message: 'Expected /index here.'
+					}
+				],
+				output: `import XXX from './index'`,
 			},
 		]
 	}

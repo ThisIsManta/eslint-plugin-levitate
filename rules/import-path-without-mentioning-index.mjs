@@ -2,15 +2,14 @@
 
 import { defineRule } from '@oxlint/plugins'
 
-const INDEX = /\/index(\.\w+)?$/
-
-const INDEX_INTERNAL = /^\.\.?(\/\.\.)*\/index/
+const index = /\/index(\.(m|c)?(j|t)sx?)?$/
+const indexInSubdirectory = /^\.\.?(\/\.\.)*\/index/
 
 export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
-			description: 'enforce writing an import path to an index file without mentioning "index.js"',
+			description: 'enforce writing an import path pointing to an index file without mentioning "index", unless both are in the same directory',
 		},
 		fixable: 'code',
 	},
@@ -18,21 +17,45 @@ export default defineRule({
 		return {
 			ImportDeclaration(root) {
 				const path = root.source.value
-				const quote = root.source.raw?.charAt(0)
-				if (
-					typeof path === 'string' &&
-					path.startsWith('.') &&
-					typeof quote === 'string' &&
-					INDEX.test(path) &&
-					INDEX_INTERNAL.test(path) === false
-				) {
-					const expectedPath = path.replace(INDEX, '')
+				if (!path.startsWith('.')) {
+					return
+				}
+
+				if (path === '.') {
 					context.report({
 						node: root.source,
-						message: `Expected "${path}" to be "${expectedPath}".`,
-						fix: fixer => fixer.replaceText(root.source, quote + expectedPath + quote)
+						message: `Expected /index here.`,
+						fix: fixer => fixer.insertTextAfter(
+							{
+								range: [
+									root.source.range[1] - 1,
+									root.source.range[1] - 1
+								]
+							},
+							'/index'
+						)
 					})
+					return
 				}
+
+				if (!index.test(path) || indexInSubdirectory.test(path)) {
+					return
+				}
+
+				const expectedPath = path.replace(index, '')
+				context.report({
+					node: root.source,
+					message: `Unexpected ${path.match(index)?.[0]} here.`,
+					fix: fixer => fixer.replaceText(
+						{
+							range: [
+								root.source.range[0] + 1,
+								root.source.range[1] - 1
+							]
+						},
+						expectedPath
+					)
+				})
 			}
 		}
 	}

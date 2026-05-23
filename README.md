@@ -10,7 +10,7 @@ Note that 🔧 indicates the rule is [auto-fixable](https://eslint.org/docs/late
 |`import-convention`|enforce naming imported identifiers after the user-defined list|
 |`import-name-after-file-name`|enforce naming a default imported identifier after the file or the directory name (for an index file)|
 |`import-path-from-closest-index`|enforce writing an import path pointing to the closest index file|
-|`import-path-without-mentioning-index` 🔧|enforce writing an import path to an index file without mentioning "index.js"|
+|`import-path-without-mentioning-index` 🔧|enforce writing an import path pointing to an index file without mentioning "index", unless both are in the same directory|
 |`no-shortened-identifier`|enforce naming an identifier without the user-defined abbreviations|
 |`parameter-new-line` 🔧|enforce having consistent new lines between parameters|
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`|
