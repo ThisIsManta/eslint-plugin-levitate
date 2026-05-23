@@ -1,13 +1,11 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
 const focusedAPI = /^(it|test|describe|(after|before)(All|Each))$/
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -15,27 +13,21 @@ export default {
 		},
 		fixable: 'code',
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			Program: check,
 			BlockStatement: check,
 		}
 
 		/**
-		 * @param {import('estree').Program | import('estree').BlockStatement} root
+		 * @param {import('@oxlint/plugins').ESTree.Program | import('@oxlint/plugins').ESTree.BlockStatement} root
 		 */
 		function check(root) {
-			const nodeList = root.body.map(
-				/**
-				 * @param {import('estree').ModuleDeclaration | import('estree').Statement | import('estree').Directive} node
-				 * @param {number} rank
-				 */
-				(node, rank) => ({
-					node,
-					rank,
-					name: node.type === 'ExpressionStatement' && getLeftMostIdentifier(node.expression) || ''
-				})
-			)
+			const nodeList = root.body.map((node, rank) => ({
+				node,
+				rank,
+				name: node.type === 'ExpressionStatement' && getLeftMostIdentifier(node.expression) || ''
+			}))
 
 			for (const { node, rank, name } of nodeList) {
 				const prev = nodeList[rank - 1]
@@ -111,10 +103,10 @@ export default {
 			}
 		}
 	}
-}
+})
 
 /**
- * @param {import('estree').Node} root
+ * @param {import('@oxlint/plugins').ESTree.Node} root
  * @return {string | null}
  */
 function getLeftMostIdentifier(root) {

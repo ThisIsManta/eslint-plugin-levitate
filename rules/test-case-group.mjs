@@ -1,13 +1,11 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
 import { getText } from './test-case-title.mjs'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -19,7 +17,7 @@ export default {
 		},
 		fixable: 'code',
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			ExpressionStatement(root) {
 				if (
@@ -44,7 +42,7 @@ export default {
 				const currentScope = context.sourceCode.getScope(describeNameNode)
 
 				/**
-				 * @param {import('eslint').Scope.Scope} [scope=currentScope]
+				 * @param {import('@oxlint/plugins').Scope} [scope=currentScope]
 				 * @return {Array<string>}
 				 */
 				function getAllVariables(scope = currentScope) {
@@ -75,11 +73,11 @@ export default {
 						}
 
 						return [
-							propertyAccessorNames.reduce((object, name) => ({
+							propertyAccessorNames.reduce((/** @type {NodeLike} */object, name) => ({
 								type: 'MemberExpression',
 								object,
 								property: { type: 'Identifier', name }
-							}), /** @type {NodeLike} */({ type: 'Identifier', name: objectName }))
+							}), { type: 'Identifier', name: objectName })
 						]
 					}
 
@@ -92,7 +90,7 @@ export default {
 				const describeBlockScope = context.sourceCode.getScope(describeBlockNode)
 
 				/**
-				 * @param {import('eslint').Scope.Scope} scope
+				 * @param {import('@oxlint/plugins').Scope} scope
 				 * @return {boolean}
 				 */
 				function isUsedInDescribeBlock(scope) {
@@ -141,14 +139,14 @@ export default {
 			},
 		}
 	}
-}
+})
 
 /**
- * @typedef {Pick<import('estree').Identifier, 'type' | 'name'> | Pick<import('estree').Node, 'type'> | { type: 'MemberExpression', object: NodeLike, property: NodeLike }} NodeLike
+ * @typedef {Pick<import('@oxlint/plugins').ESTree.BindingIdentifier, 'type' | 'name'> | Pick<import('@oxlint/plugins').ESTree.Node, 'type'> | { type: 'MemberExpression', object: NodeLike, property: NodeLike }} NodeLike
  */
 
 /**
- * @param {import('estree').Node} node
+ * @param {import('@oxlint/plugins').ESTree.Node} node
  * @return {NodeLike}
  */
 function getNodeLike(node) {
@@ -180,7 +178,7 @@ function getObjectName(node) {
 }
 
 /**
- * @param {import('eslint').Scope.Scope} scope
+ * @param {import('@oxlint/plugins').Scope} scope
  * @param {string} name
  */
 function getVariable(scope, name) {

@@ -1,11 +1,9 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
   meta: {
     type: 'suggestion',
     docs: {
@@ -13,40 +11,29 @@ export default {
     },
     fixable: 'code',
   },
-  create(context) {
+  createOnce(context) {
     return {
-      /**
-       * @param {import('@typescript-eslint/types').TSESTree.TSMethodSignature} root
-       */
       TSMethodSignature(root) {
         context.report({
-          node: cast(root),
+          node: root,
           message: 'Expected to be using arrow notation',
           fix: fixer => fixer.replaceText(
-            cast(root),
-            context.sourceCode.getText(cast(root.key)) +
+            root,
+            context.sourceCode.getText(root.key) +
             (root.optional ? '?' : '') +
             ': ' +
-            (root.typeParameters ? context.sourceCode.getText(cast(root.typeParameters)) : '') +
+            (root.typeParameters ? context.sourceCode.getText(root.typeParameters) : '') +
             '(' +
-            _.map(root.params, node => context.sourceCode.getText(cast(node))).join(
+            _.map(root.params, node => context.sourceCode.getText(node)).join(
               ', '
             ) +
             ') => ' +
             (root.returnType
-              ? context.sourceCode.getText(cast(root.returnType)).replace(/^:\s*/, '')
+              ? context.sourceCode.getText(root.returnType).replace(/^:\s*/, '')
               : 'void')
           ),
         })
       },
     }
   },
-}
-
-/**
- * @param {*} node
- * @return {import('eslint').Rule.Node}
- */
-function cast(node) {
-  return node
-}
+})

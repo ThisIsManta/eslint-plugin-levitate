@@ -1,11 +1,14 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './import-name-after-file-name.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'import-name-after-file-name': rule },
-	},
+	}),
 	{
 		valid: [
 			{

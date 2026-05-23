@@ -1,12 +1,10 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import fp from 'path'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -14,43 +12,69 @@ export default {
 		},
 		fixable: 'code',
 	},
-	create(context) {
-		const componentName = _.startCase(
-			fp
-				.basename(context.filename)
-				.replace(/\..+/, '')
-		).replace(/\s/g, '')
+	createOnce(context) {
+		let componentName = ''
 
-		let defaultExportNode = null
+		/**
+		 * @type {import('@oxlint/plugins').ESTree.ExportDefaultDeclaration | undefined}
+		 */
+		let defaultExportNode = undefined
+
+		/**
+		 * @type {Array<{ name: string, type: import('@oxlint/plugins').DefinitionType, node: import('@oxlint/plugins').ESTree.Node }>}
+		 */
 		let topLevelDeclarations = []
-		let primaryComponentNode = null
+
+		/**
+		 * @type {import('@oxlint/plugins').ESTree.Node | undefined}
+		 */
+		let primaryComponentNode = undefined
+
 		let primaryComponentIsUsed = false
 
 		/**
-		 * @param {import('estree').Identifier & import('eslint').Rule.NodeParentExtension} root
+		 * @param {Pick<import('@oxlint/plugins').ESTree.BindingIdentifier, 'name' | 'parent'>} node
 		 */
-		function setIfPrimaryComponentIsUsed(root) {
-			if (root.name !== componentName) {
+		function setIfPrimaryComponentIsUsed(node) {
+			if (node.name !== componentName) {
 				return
 			}
 
 			if (defaultExportNode) {
-				let node = root.parent
-				while (node) {
-					if (node === defaultExportNode) {
+				/**
+				 * @type {import('@oxlint/plugins').ESTree.Node | null}
+				 */
+				let stub = node.parent
+				while (stub) {
+					if (stub === defaultExportNode) {
 						primaryComponentIsUsed = true
 						break
 					}
-					node = node.parent
+					stub = stub.parent
 				}
 			}
 		}
 
 		return {
+			before() {
+				componentName = _.startCase(
+					fp
+						.basename(context.filename)
+						.replace(/\..+/, '')
+				).replace(/\s/g, '')
+
+				defaultExportNode = undefined
+
+				topLevelDeclarations = []
+
+				primaryComponentNode = undefined
+
+				primaryComponentIsUsed = false
+			},
 			Program(root) {
 				defaultExportNode = root.body.find(node => node.type === 'ExportDefaultDeclaration')
 
-				const reactImport = root.body.reduce((output, node) => {
+				const reactImport = root.body.reduce((/** @type {Partial<{ Default: string, Component: string, PureComponent: string }>} */output, node) => {
 					if (
 						node.type === 'ImportDeclaration' &&
 						node.source.type === 'Literal' &&
@@ -59,20 +83,29 @@ export default {
 					) {
 						return {
 							Default: node.specifiers.find(specifier =>
-								_.isMatch(specifier, { type: 'ImportDefaultSpecifier' })
+								specifier.type === 'ImportDefaultSpecifier'
 							)?.local.name,
 							Component: node.specifiers.find(specifier =>
-								_.isMatch(specifier, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'Component' } })
+								specifier.type === 'ImportSpecifier' &&
+								specifier.imported.type === 'Identifier' &&
+								specifier.imported.name === 'Component'
 							)?.local.name,
 							PureComponent: node.specifiers.find(specifier =>
-								_.isMatch(specifier, { type: 'ImportSpecifier', imported: { type: 'Identifier', name: 'PureComponent' } })
+								specifier.type === 'ImportSpecifier' &&
+								specifier.imported.type === 'Identifier' &&
+								specifier.imported.name === 'PureComponent'
 							)?.local.name,
 						}
 
 					} else if (node.type === 'VariableDeclaration') {
 						for (const stub of node.declarations) {
 							if (
-								_.isMatch(stub, { type: 'VariableDeclarator', init: { type: 'CallExpression', callee: { type: 'Identifier', name: 'require' }, arguments: [{ type: 'Literal', value: 'react' }] } })
+								stub.type === 'VariableDeclarator' &&
+								stub.init?.type === 'CallExpression' &&
+								stub.init.callee.type === 'Identifier' &&
+								stub.init.callee.name === 'require' &&
+								stub.init.arguments[0]?.type === 'Literal' &&
+								stub.init.arguments[0]?.value === 'react'
 							) {
 								if (stub.id.type === 'Identifier') {
 									output.Default = stub.id.name
@@ -98,15 +131,15 @@ export default {
 					}
 
 					return output
-				}, /** @type {Partial<{ Default: string, Component: string, PureComponent: string }>} */({}))
+				}, {})
 
 				topLevelDeclarations = _.chain(root.body)
-					.map(/** @return {import('estree').Node} */(node) => {
+					.map(node => {
 						if (
 							(node.type === 'ExportDefaultDeclaration' || node.type === 'ExportNamedDeclaration') &&
 							node.declaration
 						) {
-							return /** @type {import('estree').Node} */ (node.declaration)
+							return node.declaration
 						}
 
 						return node
@@ -129,14 +162,17 @@ export default {
 							(
 								// Match `class ... extends React.[Component|PureComponent]`
 								reactImport.Default &&
-								_.isMatch(node.superClass, { type: 'MemberExpression', object: { type: 'Identifier', name: reactImport.Default }, property: { type: 'Identifier' } }) &&
+								node.superClass.type === 'MemberExpression' &&
+								node.superClass.object.type === 'Identifier' &&
+								node.superClass.object.name === reactImport.Default &&
+								node.superClass.property.type === 'Identifier' &&
 								(node.superClass.property.name === 'Component' || node.superClass.property.name === 'PureComponent') ||
 
 								// Match `class ... extends Component`
-								reactImport.Component && _.isMatch(node.superClass, { type: 'Identifier', name: reactImport.Component }) ||
+								(reactImport.Component && node.superClass.type === 'Identifier' && node.superClass.name === reactImport.Component) ||
 
 								// Match `class ... extends PureComponent`
-								reactImport.PureComponent && _.isMatch(node.superClass, { type: 'Identifier', name: reactImport.PureComponent })
+								(reactImport.PureComponent && node.superClass.type === 'Identifier' && node.superClass.name === reactImport.PureComponent)
 							)
 						) {
 							primaryComponentNode = node
@@ -149,7 +185,7 @@ export default {
 
 					if (type === 'Variable') {
 						if (
-							node.init &&
+							'init' in node && node.init &&
 							(node.init.type === 'ArrowFunctionExpression' || node.init.type === 'FunctionExpression') &&
 							isReactFunctionalComponent(node.init)
 						) {
@@ -162,17 +198,26 @@ export default {
 				}
 			},
 			Identifier(root) {
-				if (_.isMatch(root.parent, { type: 'CallExpression', arguments: [root] })) {
+				if (
+					root.parent?.type === 'CallExpression' &&
+					root.parent.arguments[0] === root
+				) {
 					setIfPrimaryComponentIsUsed(root)
 				}
 			},
-			JSXIdentifier: setIfPrimaryComponentIsUsed,
+			JSXIdentifier(root) {
+				setIfPrimaryComponentIsUsed(root)
+			},
 			FunctionExpression(root) {
 				if (!isReactFunctionalComponent(root)) {
 					return
 				}
 
-				if (root.parent && root.parent.type === 'CallExpression' && root.parent.arguments.includes(root)) {
+				if (
+					root.parent &&
+					root.parent.type === 'CallExpression' &&
+					root.parent.arguments.includes(root)
+				) {
 					context.report({
 						node: root,
 						message: 'Expected a React component argument to be written as an arrow function',
@@ -187,18 +232,25 @@ export default {
 				}
 
 				if (!primaryComponentNode) {
-					return context.report({
+					context.report({
 						loc: firstToken.loc,
 						message: `Expected to have a React component named "${componentName}"`,
 					})
+					return
 				}
 
 				const componentToken = context.sourceCode.getFirstToken(primaryComponentNode)
-				if (!defaultExportNode && componentToken) {
-					return context.report({
+				if (!componentToken) {
+					// Note that this should never happen but it is here for compile-time type checking only
+					return
+				}
+
+				if (!defaultExportNode) {
+					context.report({
 						loc: componentToken.loc,
 						message: 'Expected `export default` to be here',
 					})
+					return
 				}
 
 				if (defaultExportNode.declaration === primaryComponentNode) {
@@ -212,14 +264,17 @@ export default {
 					primaryComponentNode.type !== 'VariableDeclarator' &&
 					componentToken
 				) {
-					return context.report({
+					const a = primaryComponentNode
+					const b = defaultExportNode
+					context.report({
 						loc: componentToken.loc,
 						message: 'Expected `export default` to be here',
-						fix: primaryComponentNode.parent.type === 'ExportNamedDeclaration' ? undefined : fixer => [
-							fixer.insertTextBefore(primaryComponentNode, 'export default '),
-							fixer.removeRange(defaultExportNode.range),
+						fix: primaryComponentNode.parent?.type === 'ExportNamedDeclaration' ? undefined : fixer => [
+							fixer.insertTextBefore(a, 'export default '),
+							fixer.removeRange(b.range),
 						]
 					})
+					return
 				}
 
 				// Skip reporting `export default enhance(MyComponent)`
@@ -256,10 +311,10 @@ export default {
 			},
 		}
 	}
-}
+})
 
 /**
- * @param {import('estree').Function | null | undefined} node
+ * @param {import('@oxlint/plugins').ESTree.Function | import('@oxlint/plugins').ESTree.ArrowFunctionExpression | null | undefined} node
  * @return {boolean}
  */
 function isReactFunctionalComponent(node) {
@@ -268,18 +323,17 @@ function isReactFunctionalComponent(node) {
 	}
 
 	if (node.type === 'ArrowFunctionExpression' && node.expression) {
-		const type = /** @type {string} */ (node.body.type)
-		return type === 'JSXElement' || type === 'JSXFragment'
+		return node.body.type === 'JSXElement' || node.body.type === 'JSXFragment'
 	}
 
 	return (
-		node.body &&
+		!!node.body &&
 		node.body.type === 'BlockStatement' &&
 		node.body.body.some(stub =>
 			stub.type === 'ReturnStatement' &&
 			stub.argument && (
-				/** @type {string} */(stub.argument.type) === 'JSXElement' ||
-				/** @type {string} */(stub.argument.type) === 'JSXFragment'
+				stub.argument.type === 'JSXElement' ||
+				stub.argument.type === 'JSXFragment'
 			)
 		)
 	)

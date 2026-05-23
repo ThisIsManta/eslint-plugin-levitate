@@ -1,28 +1,27 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import fp from 'path'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		docs: {
 			description: 'enforce sorting ESLint rules alphabetically in the configuration files.',
 		},
 	},
-	create(context) {
-		const fileName = fp.basename(context.filename)
-		if (
-			'oxlint.config.ts' !== fileName &&
-			!/^eslint\.config\.(m|c)?(js|ts)$/.test(fileName) &&
-			!/^\.eslintrc\.c?js?$/.test(fileName)
-		) {
-			return {}
-		}
-
+	createOnce(context) {
 		return {
+			before() {
+				const fileName = fp.basename(context.filename)
+				if (
+					'oxlint.config.ts' !== fileName &&
+					!/^eslint\.config\.(m|c)?(js|ts)$/.test(fileName) &&
+					!/^\.eslintrc\.c?js?$/.test(fileName)
+				) {
+					return false
+				}
+			},
 			Property(root) {
 				if (
 					root.key.type !== 'Identifier' ||
@@ -134,4 +133,4 @@ export default {
 			},
 		}
 	},
-}
+})

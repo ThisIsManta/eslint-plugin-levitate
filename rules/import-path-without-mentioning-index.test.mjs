@@ -1,11 +1,14 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './import-path-without-mentioning-index.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'import-path-without-mentioning-index': rule },
-	},
+	}),
 	{
 		valid: [
 			{

@@ -1,12 +1,15 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import parser from '@typescript-eslint/parser'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './react-new-line.mjs'
 
 export default test(
-  {
+  eslintCompatPlugin({
     rules: { 'react-new-line': rule },
-  },
+  }),
   {
     valid: [
       {

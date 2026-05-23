@@ -1,14 +1,12 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 import fs from 'fs'
 import fp from 'path'
 import ts from 'typescript'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -45,28 +43,152 @@ export default {
 			}
 		},
 	},
-	create(context) {
-		/**
-		 * @type {Array<{ path: RegExp; default: boolean | string; namespace: boolean | string; named: boolean | Array<{ name: RegExp; rename?: string; forbidden?: boolean }> }>}
-		 */
-		const rules = context.options.map(({ path, named, ...rest }) => ({
-			...rest,
-			path: new RegExp(path),
-			named: Array.isArray(named)
-				? named.map(({ name, ...rest }) => ({ ...rest, name: new RegExp(name) }))
-				: named
-		}))
+	createOnce(context) {
+		const getRules = _.memoize(
+			/**
+			 * @param {ReadonlyArray<unknown>} options
+			 * @return {Array<{ path: RegExp; default?: boolean | string; namespace?: boolean | string; named?: boolean | Array<{ name: RegExp; rename?: string; forbidden: boolean }> }>}
+			 */
+			(options) => options.flatMap((entry) => {
+				if (
+					typeof entry !== 'object' ||
+					entry === null ||
+					!('path' in entry) ||
+					typeof entry.path !== 'string'
+				) {
+					return []
+				}
+
+				const default$ = (() => {
+					if ('default' in entry) {
+						if (typeof entry.default === 'string' || typeof entry.default === 'boolean') {
+							return entry.default
+						}
+					}
+				})()
+
+				const namespace$ = (() => {
+					if ('namespace' in entry) {
+						if (typeof entry.namespace === 'string' || typeof entry.namespace === 'boolean') {
+							return entry.namespace
+						}
+					}
+				})()
+
+				const named = (() => {
+					if ('named' in entry) {
+						if (typeof entry.named === 'boolean') {
+							return entry.named
+						}
+
+						if (Array.isArray(entry.named)) {
+							return entry.named.map(({ name, rename, forbidden }) => ({
+								name: new RegExp(name),
+								rename: typeof rename === 'string' ? rename : undefined,
+								forbidden: Boolean(forbidden),
+							}))
+						}
+					}
+				})()
+
+				return [{
+					path: new RegExp(entry.path),
+					default: default$,
+					namespace: namespace$,
+					named,
+				}]
+			})
+		)
+
+		const findType = _.memoize(
+			/**
+			 * @param {string} moduleName
+			 * @param {string} workingDirectoryPath
+			 * @return {string | null}
+			 */
+			(moduleName, workingDirectoryPath) => {
+				const typeDefinitionPath = (() => {
+					const directoryParts = _.trim(workingDirectoryPath, fp.sep).split(/\\|\//g)
+					for (let index = directoryParts.length; index > 1; index--) {
+						const basePath = directoryParts.slice(0, index)
+
+						const directModulePath = fp.join(...basePath, 'node_modules', moduleName)
+						if (fs.existsSync(directModulePath) && fs.lstatSync(directModulePath).isDirectory()) {
+							const packagePath = fp.join(directModulePath, 'package.json')
+							if (fs.existsSync(packagePath)) {
+								const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8'))
+								if (typeof packageJson.types === 'string') {
+									return fp.resolve(directModulePath, packageJson.types)
+								}
+								if (typeof packageJson.typings === 'string') {
+									return fp.resolve(directModulePath, packageJson.typings)
+								}
+							}
+						}
+
+						const typeModulePath = fp.join(...basePath, 'node_modules', '@types', moduleName)
+						if (fs.existsSync(typeModulePath) && fs.lstatSync(typeModulePath).isDirectory()) {
+							return fp.join(typeModulePath, 'index.d.ts')
+						}
+					}
+				})()
+
+				if (!typeDefinitionPath) {
+					return null
+				}
+
+				const root = ts.createSourceFile(typeDefinitionPath, fs.readFileSync(typeDefinitionPath, 'utf-8'), ts.ScriptTarget.Latest)
+
+				// Match `declare module "x" {}`
+				const scopedModules = _.compact(
+					root.statements.map(node =>
+						ts.isModuleDeclaration(node) &&
+							node.body &&
+							ts.isModuleBlock(node.body)
+							? node.body
+							: null
+					)
+				)
+
+				const statements = root.statements.concat(...scopedModules.map(node => node.statements))
+
+				// Match `export = X;`
+				for (const node of statements) {
+					if (
+						ts.isExportAssignment(node) &&
+						ts.isIdentifier(node.expression) &&
+						typeof node.expression.escapedText === 'string'
+					) {
+						return node.expression.escapedText
+					}
+				}
+
+				// Match `export as namespace X;`
+				for (const node of statements) {
+					if (
+						ts.isNamespaceExportDeclaration(node) &&
+						ts.isIdentifier(node.name) &&
+						typeof node.name.escapedText === 'string'
+					) {
+						return node.name.escapedText
+					}
+				}
+
+				return null
+			},
+			(...params) => params.join('|')
+		)
 
 		/**
-		 * @param {Object} options
-		 * @param {import('estree').Node} options.root
+		 * @param {object} options
+		 * @param {import('@oxlint/plugins').ESTree.Node} options.root
 		 * @param {string} options.modulePath
-		 * @param {import('estree').Identifier} [options.namespaceNode]
-		 * @param {import('estree').Identifier} [options.defaultNode]
-		 * @param {Array<{ originalNode: import('estree').Identifier, givenNode?: import('estree').Identifier }>} [options.namedWrappers]
+		 * @param {import('@oxlint/plugins').ESTree.BindingIdentifier} [options.namespaceNode]
+		 * @param {import('@oxlint/plugins').ESTree.BindingIdentifier} [options.defaultNode]
+		 * @param {Array<{ originalNode: import('@oxlint/plugins').ESTree.BindingIdentifier, givenNode?: import('@oxlint/plugins').ESTree.BindingIdentifier }>} [options.namedWrappers]
 		 */
 		function check({ root, modulePath, namespaceNode, defaultNode, namedWrappers }) {
-			const rule = rules.find(({ path }) => path.test(modulePath))
+			const rule = getRules(context.options).find(({ path }) => path.test(modulePath))
 			if (!rule) {
 				return
 			}
@@ -122,7 +244,11 @@ export default {
 						!modulePath.startsWith('.') &&
 						!modulePath.startsWith('/') &&
 						// See https://github.com/typescript-eslint/typescript-eslint/blob/c4b4d1075d0e5fa92a0adbdfb1bed912e86eabfb/packages/parser/src/index.ts#L16C10-L16C34
-						context.languageOptions.parser?.meta?.name === 'typescript-eslint/parser'
+						'meta' in context.languageOptions.parser &&
+						typeof context.languageOptions.parser.meta === 'object' &&
+						context.languageOptions.parser.meta &&
+						'name' in context.languageOptions.parser.meta &&
+						context.languageOptions.parser.meta.name === 'typescript-eslint/parser'
 					) {
 						try {
 							const name = findType(modulePath, fp.dirname(context.filename))
@@ -145,16 +271,13 @@ export default {
 
 				// Forbid writing `default.xxx` where `xxx` is in named import list
 				if ((rule.named === true || Array.isArray(rule.named)) && 'parent' in defaultNode) {
-					const parentNode = /** @type {import('estree').Node} */ (defaultNode.parent)
 					const accessors = _.compact(
-						context.sourceCode.getDeclaredVariables(parentNode)[0].references
-							.map((node) => {
-								const identifier = /** @type {import('eslint').Rule.Node} */ (node.identifier)
-								return (
-									identifier.parent?.type === 'MemberExpression' &&
-									identifier.parent.property.type === 'Identifier'
-								) ? identifier.parent.property : null
-							})
+						context.sourceCode.getDeclaredVariables(defaultNode.parent)[0].references
+							.map((node) =>
+								node.identifier.parent?.type === 'MemberExpression' &&
+									node.identifier.parent.property.type === 'Identifier'
+									? node.identifier.parent.property : null
+							)
 					)
 
 					for (const accessor of accessors) {
@@ -236,8 +359,8 @@ export default {
 			ImportDeclaration(root) {
 				const modulePath = String(root.source.value)
 				const namespaceNode = root.specifiers.find((node) => node.type === 'ImportNamespaceSpecifier')
-				const defaultNode = root.specifiers.find(/** @return {node is import('estree').ImportDefaultSpecifier} */(node) => node.type === 'ImportDefaultSpecifier')
-				const namedNodes = root.specifiers.filter(/** @return {node is import('estree').ImportSpecifier} */(node) => node.type === 'ImportSpecifier')
+				const defaultNode = root.specifiers.find(/** @return {node is import('@oxlint/plugins').ESTree.ImportDefaultSpecifier} */(node) => node.type === 'ImportDefaultSpecifier')
+				const namedNodes = root.specifiers.filter(/** @return {node is import('@oxlint/plugins').ESTree.ImportSpecifier} */(node) => node.type === 'ImportSpecifier')
 
 				check({
 					root,
@@ -303,89 +426,11 @@ export default {
 			},
 		}
 	}
-}
-
-const findType = _.memoize(
-	/**
-	 * @param {string} moduleName
-	 * @param {string} workingDirectoryPath
-	 * @return {string | null}
-	 */
-	(moduleName, workingDirectoryPath) => {
-		const typeDefinitionPath = (() => {
-			const directoryParts = _.trim(workingDirectoryPath, fp.sep).split(/\\|\//g)
-			for (let index = directoryParts.length; index > 1; index--) {
-				const basePath = directoryParts.slice(0, index)
-
-				const directModulePath = fp.join(...basePath, 'node_modules', moduleName)
-				if (fs.existsSync(directModulePath) && fs.lstatSync(directModulePath).isDirectory()) {
-					const packagePath = fp.join(directModulePath, 'package.json')
-					if (fs.existsSync(packagePath)) {
-						const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8'))
-						if (typeof packageJson.types === 'string') {
-							return fp.resolve(directModulePath, packageJson.types)
-						}
-						if (typeof packageJson.typings === 'string') {
-							return fp.resolve(directModulePath, packageJson.typings)
-						}
-					}
-				}
-
-				const typeModulePath = fp.join(...basePath, 'node_modules', '@types', moduleName)
-				if (fs.existsSync(typeModulePath) && fs.lstatSync(typeModulePath).isDirectory()) {
-					return fp.join(typeModulePath, 'index.d.ts')
-				}
-			}
-		})()
-
-		if (!typeDefinitionPath) {
-			return null
-		}
-
-		const root = ts.createSourceFile(typeDefinitionPath, fs.readFileSync(typeDefinitionPath, 'utf-8'), ts.ScriptTarget.Latest)
-
-		// Match `declare module "x" {}`
-		const scopedModules = _.compact(
-			root.statements.map(node =>
-				ts.isModuleDeclaration(node) &&
-					node.body &&
-					ts.isModuleBlock(node.body)
-					? node.body
-					: null
-			)
-		)
-
-		const statements = root.statements.concat(...scopedModules.map(node => node.statements))
-
-		// Match `export = X;`
-		for (const node of statements) {
-			if (
-				ts.isExportAssignment(node) &&
-				ts.isIdentifier(node.expression) &&
-				typeof node.expression.escapedText === 'string'
-			) {
-				return node.expression.escapedText
-			}
-		}
-
-		// Match `export as namespace X;`
-		for (const node of statements) {
-			if (
-				ts.isNamespaceExportDeclaration(node) &&
-				ts.isIdentifier(node.name) &&
-				typeof node.name.escapedText === 'string'
-			) {
-				return node.name.escapedText
-			}
-		}
-
-		return null
-	},
-	(...params) => params.join('|')
-)
+})
 
 /**
  * @param {string} name
+ * @return {string}
  */
 function normalizeIdentifierName(name) {
 	return name

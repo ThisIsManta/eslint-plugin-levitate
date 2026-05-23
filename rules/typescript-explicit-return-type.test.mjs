@@ -1,12 +1,15 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import parser from '@typescript-eslint/parser'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './typescript-explicit-return-type.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'typescript-explicit-return-type': rule },
-	},
+	}),
 	{
 		valid: [
 			{
@@ -22,7 +25,7 @@ export default test(
 					const c = () => { return <div /> }
 					const d = () => <div />
 					const e = () => {
-						if (true) return <div />
+						if (f(() => { return true })) return <div />
 						else return ''
 					}
 				`,

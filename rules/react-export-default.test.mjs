@@ -1,11 +1,14 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './react-export-default.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'react-export-default': rule },
-	},
+	}),
 	{
 		valid: [
 			{

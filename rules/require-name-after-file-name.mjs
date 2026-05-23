@@ -1,13 +1,11 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import fp from 'path'
 import _ from 'lodash'
 import { globSync } from 'glob'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -22,7 +20,7 @@ export default {
 			}
 		],
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			VariableDeclarator(root) {
 				if (
@@ -48,12 +46,16 @@ export default {
 				const actualName = root.id.name
 				const properName = _.chain(filePath.split('/')).last().camelCase().value().replace(/^\w/, char => char.toUpperCase())
 
-				if (context.options.length > 0 && context.options[0].length > 0) {
+				if (Array.isArray(context.options[0])) {
 					const fullPath = fp.resolve(context.filename)
 					let index = -1
 					let found = false
 					while (++index < context.options[0].length) {
-						const testPaths = globSync(context.options[0][index]).map(item => fp.resolve(item))
+						const entry = context.options[0][index]
+						if (typeof entry !== 'string') {
+							continue
+						}
+						const testPaths = globSync(entry).map(item => fp.resolve(item))
 						if (testPaths.some(item => item === fullPath)) {
 							found = true
 							break
@@ -73,4 +75,4 @@ export default {
 			}
 		}
 	}
-}
+})

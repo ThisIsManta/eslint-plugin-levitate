@@ -1,11 +1,9 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -14,57 +12,83 @@ export default {
 		schema: [
 			{
 				type: 'object',
+				additionalProperties: {
+					type: 'string'
+				}
 			}
 		],
 		hasSuggestions: true,
 	},
-	create(context) {
-		const bannedHash = context.options[0]
-		if (_.isEmpty(bannedHash)) {
-			return {}
-		}
+	createOnce(context) {
+		/**
+		 * @type {Record<string, string>}
+		 */
+		let dictionary = {}
+
+		const getDictionary = _.memoize((input) => {
+			/**
+			 * @type {Record<string, string>}
+			 */
+			const output = {}
+			if (typeof input === 'object' && input !== null && !Array.isArray(input)) {
+				for (const word in input) {
+					if (typeof input[word] === 'string') {
+						output[word] = input[word]
+					}
+				}
+			}
+			return output
+		})
 
 		return {
+			before() {
+				dictionary = getDictionary(context.options[0])
+
+				if (_.isEmpty(dictionary)) {
+					return false
+				}
+			},
 			FunctionDeclaration: checkFunctionLike,
 			FunctionExpression: checkFunctionLike,
 			ArrowFunctionExpression: checkFunctionLike,
 			VariableDeclarator(root) {
 				if ('name' in root.id) {
-					check(root.id)
+					checkIdentifier(root.id)
 				}
 			},
 			TSTypeAliasDeclaration(root) {
-				check(root.id)
+				checkIdentifier(root.id)
 			},
 			TSEnumDeclaration(root) {
-				check(root.id)
+				checkIdentifier(root.id)
 			},
 		}
 
 		/**
-		 * @param {import('estree').FunctionDeclaration} root
+		 * @param {import('@oxlint/plugins').ESTree.Function | import('@oxlint/plugins').ESTree.ArrowFunctionExpression} root
 		 */
 		function checkFunctionLike(root) {
-			check(root.id)
+			if (root.id) {
+				checkIdentifier(root.id)
+			}
 
 			for (const node of root.params) {
 				if ('name' in node) {
-					check(node)
+					checkIdentifier(node)
 				}
 			}
 		}
 
 		/**
-		 * @param {import('estree').Node & { name: string }} node 
+		 * @param {import('@oxlint/plugins').ESTree.BindingIdentifier} node 
 		 */
-		function check(node) {
+		function checkIdentifier(node) {
 			if (!node) {
 				return
 			}
 
 			const words = _.words(node.name).map(word => {
-				const bannedWord = bannedHash[word.toLowerCase()]
-				const suggestedWord = sameCase(word, bannedWord)
+				const suggestedWord = sameCase(word, dictionary[word.toLowerCase()])
 				return { word, suggestedWord }
 			})
 
@@ -99,7 +123,7 @@ export default {
 					}
 
 					const optionalTypeAnnotation = 'typeAnnotation' in node && node.typeAnnotation
-						? context.sourceCode.getText(/** @type {import('estree').Node} */(node.typeAnnotation))
+						? context.sourceCode.getText(node.typeAnnotation)
 						: ''
 					return [{
 						desc: `Did you mean "${suggestedName}"?`,
@@ -109,7 +133,7 @@ export default {
 			})
 		}
 	}
-}
+})
 
 /**
  * @param {string} referenceWord

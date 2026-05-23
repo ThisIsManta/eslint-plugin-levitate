@@ -1,32 +1,36 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
 			description: 'enforce naming an identifier after the user-defined list of its `require` statement',
 		},
 		schema: [
-			{ type: 'object' }
+			{
+				type: 'object',
+				additionalProperties: {
+					type: 'string'
+				}
+			}
 		],
 		fixable: 'code',
 	},
-	create(context) {
-		/**
-		 * @type {Array<[string, RegExp]>}
-		 */
-		const ruleList = Object.entries(context.options?.[0] || [])
-			.map(([variableName, requirePath]) => {
-				const matcher = requirePath.startsWith('/')
-					? new RegExp(requirePath.substring(1, requirePath.lastIndexOf('/'), requirePath.substring(requirePath.lastIndexOf('/') + 1)))
-					: new RegExp('^' + _.escapeRegExp(requirePath) + '$')
-				return [variableName, matcher]
-			})
+	createOnce(context) {
+		const getRuleList = _.memoize(
+			/**
+			 * @return {Array<[string, RegExp]>} hash
+			 */
+			(hash) => Object.entries(hash ?? {})
+				.map(([variableName, requirePath]) => {
+					const matcher = requirePath.startsWith('/')
+						? new RegExp(requirePath.substring(1, requirePath.lastIndexOf('/'), requirePath.substring(requirePath.lastIndexOf('/') + 1)))
+						: new RegExp('^' + _.escapeRegExp(requirePath) + '$')
+					return [variableName, matcher]
+				}))
 
 		return {
 			VariableDeclarator(root) {
@@ -48,7 +52,7 @@ export default {
 				const actualVariableName = root.id.type === 'Identifier' ? root.id.name : context.sourceCode.getText(root.id)
 				const requirePath = firstArgument.value.replace(/\.(c|m)?jsx?$/, '')
 
-				for (const [variableName, requirePathMatcher] of ruleList) {
+				for (const [variableName, requirePathMatcher] of getRuleList(context.options[0])) {
 					if (requirePathMatcher.test(requirePath)) {
 						const expectVariableName = /\$\d/.test(variableName)
 							? requirePath.replace(requirePathMatcher, variableName)
@@ -68,4 +72,4 @@ export default {
 			}
 		}
 	}
-}
+})

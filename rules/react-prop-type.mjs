@@ -1,18 +1,23 @@
 // @ts-check
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+import { defineRule } from '@oxlint/plugins'
+
+export default defineRule({
   meta: {
     type: 'problem',
     docs: {
       description: 'enforce writing type definition for React props',
     },
   },
-  create(context) {
+  createOnce(context) {
+    return {
+      FunctionDeclaration: check,
+      FunctionExpression: check,
+      ArrowFunctionExpression: check,
+    }
+
     /**
-     * @param {import('estree').FunctionExpression} root
+     * @param {import('@oxlint/plugins').ESTree.Function | import('@oxlint/plugins').ESTree.ArrowFunctionExpression} root
      */
     function check(root) {
       if (
@@ -30,17 +35,11 @@ export default {
         root.params[0].name === 'props' &&
         (!('typeAnnotation' in root.params[0]) || !root.params[0].typeAnnotation)
       ) {
-        return context.report({
+        context.report({
           node: root.params[0],
-          message: 'Expected to have type definition',
+          message: 'Expected to have type definition.',
         })
       }
     }
-
-    return {
-      FunctionDeclaration: check,
-      FunctionExpression: check,
-      ArrowFunctionExpression: check,
-    }
   }
-}
+})

@@ -1,11 +1,9 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
   meta: {
     docs: {
       description:
@@ -17,15 +15,11 @@ export default {
       remove: 'Unexpected a new line here.',
     },
   },
-  create(context) {
+  createOnce(context) {
     return {
-      /**
-       *
-       * @param {import('@typescript-eslint/types').TSESTree.JSXElement} root
-       */
       JSXElement(root) {
         const nonSpacingNodes = root.children.filter(
-          (node) => node.type !== 'JSXText' || node.raw.trim().length > 0
+          (node) => node.type !== 'JSXText' || (node.raw && node.raw.trim().length > 0)
         )
 
         if (nonSpacingNodes.length < 2) {
@@ -39,7 +33,7 @@ export default {
               return null
             }
 
-            if (node.type === 'JSXText' && node.raw.trim().length === 0) {
+            if (node.type === 'JSXText' && node.raw && node.raw.trim().length === 0) {
               const prevNode = array[index - 1]
               const nextNode = array[index + 1]
               return { prevNode, node, nextNode }
@@ -60,8 +54,8 @@ export default {
             continue
           }
 
-          const firstNewLineIndex = node.raw.indexOf('\n')
-          const lastNewLineIndex = node.raw.lastIndexOf('\n')
+          const firstNewLineIndex = node.raw?.indexOf('\n') ?? -1
+          const lastNewLineIndex = node.raw?.lastIndexOf('\n') ?? -1
           if (
             // Keep this logic consistent with Prettier
             prevNode.loc.end.line - prevNode.loc.start.line > 1 &&
@@ -100,4 +94,4 @@ export default {
       },
     }
   }
-}
+})

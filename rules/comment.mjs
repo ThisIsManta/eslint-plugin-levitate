@@ -1,5 +1,7 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
+
 const FORMAL = /^\s(HACK|TODO):(\s\S|$)/
 const HACK = /^\s*(HACK|XXX)\W\s*/i
 const TODO = /^\s*TODO\W\s*/i
@@ -8,17 +10,14 @@ const NOTE = /^\s*(Note\W)\s/i
 const URL = /^\s(?:See\s*:\s*)?(\w+:\/\/.+)/i
 const ESLINT = /^(es|ox)lint-(disable|enable)/
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
 			description: 'enforce starting a single-line comment with either `TODO:`, `HACK:`, `See {url}`, or a first-capitalized word',
 		},
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			Program(root) {
 				const commentNodes = (root.comments || []).filter(node => node.type === 'Line')
@@ -29,36 +28,40 @@ export default {
 					}
 
 					if (FORMAL.test(node.value)) {
-						return null
+						return
 					}
 
 					if (HACK.test(node.value)) {
-						return context.report({
+						context.report({
 							loc: node.loc,
 							message: `Expected the comment to be written as "HACK: ..."`,
 						})
+						return
 					}
 
 					if (TODO.test(node.value)) {
-						return context.report({
+						context.report({
 							loc: node.loc,
 							message: `Expected the comment to be written as "TODO: ..."`,
 						})
+						return
 					}
 
 					if (FIXME.test(node.value)) {
-						return context.report({
+						context.report({
 							loc: node.loc,
 							message: `Expected the comment to be written as "TODO: ..."`,
 						})
+						return
 					}
 
 					const [, url] = node.value.match(URL) || []
 					if (url) {
-						return context.report({
+						context.report({
 							loc: node.loc,
 							message: `Expected the comment to be written as "See ${url}"`,
 						})
+						return
 					}
 
 					const [, note] = node.value.match(NOTE) || []
@@ -74,7 +77,7 @@ export default {
 						index > 0 &&
 						node.loc.start.line === (commentNodes[index - 1].loc?.start.line ?? 0) + 1
 					) {
-						return null
+						return
 					}
 
 					// Skip if this is a single word or an ESLint directive
@@ -83,19 +86,20 @@ export default {
 						text.includes(' ') === false ||
 						ESLINT.test(text)
 					) {
-						return null
+						return
 					}
 
 					// Capitalize the first word
 					const firstChar = text.charAt(0)
 					if (firstChar !== firstChar.toUpperCase()) {
-						return context.report({
+						context.report({
 							loc: node.loc,
 							message: `Expected the comment to start with a capital letter`,
 						})
+						return
 					}
 				}
 			},
 		}
 	}
-}
+})

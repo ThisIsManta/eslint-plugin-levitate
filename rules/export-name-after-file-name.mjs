@@ -1,19 +1,17 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import fp from 'path'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
 			description: 'enforce naming a default exported identifier after the file name',
 		},
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			ExportNamedDeclaration(root) {
 				if (
@@ -25,8 +23,15 @@ export default {
 					return
 				}
 
-				const defaultNode = root.specifiers.find(node => _.isMatch(node, EXPORT_DEFAULT))
+				const defaultNode = root.specifiers.find(node =>
+					node.local.type === 'Identifier' &&
+					node.local.name === 'default'
+				)
 				if (!defaultNode) {
+					return
+				}
+
+				if (defaultNode.exported.type !== 'Identifier') {
 					return
 				}
 
@@ -49,15 +54,4 @@ export default {
 			},
 		}
 	}
-}
-
-const EXPORT_DEFAULT = {
-	type: 'ExportSpecifier',
-	local: {
-		type: 'Identifier',
-		name: 'default',
-	},
-	exported: {
-		type: 'Identifier',
-	},
-}
+})

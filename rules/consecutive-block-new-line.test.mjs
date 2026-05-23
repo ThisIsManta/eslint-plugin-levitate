@@ -1,11 +1,14 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './consecutive-block-new-line.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'consecutive-block-new-line': rule },
-	},
+	}),
 	{
 		valid: [
 			{

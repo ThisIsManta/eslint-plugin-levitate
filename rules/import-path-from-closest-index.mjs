@@ -1,31 +1,32 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 import fs from 'fs'
 import fp from 'path'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
 			description: 'enforce writing an import path pointing to the closest index file',
 		},
 	},
-	create(context) {
+	createOnce(context) {
 		return {
+			before() {
+				// TODO: memoize fs.existsSync
+			},
 			ImportDeclaration(root) {
 				const importRelativePath = String(root.source.value)
 				if (importRelativePath.startsWith('.') === false) {
-					return null
+					return
 				}
 
 				const currentFullPath = context.filename
 				const importFullPath = getImportFullPath(currentFullPath, importRelativePath)
 				if (importFullPath === null) {
-					return null
+					return
 				}
 
 				const supportedExtensions = getSupportedExtensions(importFullPath)
@@ -38,33 +39,34 @@ export default {
 					const workPath = pathList.slice(0, count).join(fp.sep)
 					for (const extension of supportedExtensions) {
 						const indexFullPath = fp.join(repositoryPath, workPath, 'index' + extension)
-						if (fs.existsSync(indexFullPath)) {
-							if (currentFullPath.startsWith(fp.dirname(indexFullPath))) {
-								return null
-							}
+						if (!fs.existsSync(indexFullPath)) {
+							continue
+						}
 
-							if (indexFullPath !== importFullPath) {
-								const unixPath = _.trim(indexFullPath.substring(repositoryPath.length).replace(/\\/, '/'), '/')
-								return context.report({
-									node: root.source,
-									message: `Expected to import "${unixPath}".`,
-								})
-							}
+						if (currentFullPath.startsWith(fp.dirname(indexFullPath))) {
+							return
+						}
 
-							break
+						if (indexFullPath !== importFullPath) {
+							const unixPath = _.trim(indexFullPath.substring(repositoryPath.length).replace(/\\/, '/'), '/')
+							context.report({
+								node: root.source,
+								message: `Expected to import "${unixPath}".`,
+							})
+							return
 						}
 					}
 				}
 			}
 		}
 	}
-}
+})
 
 /**
  * @param {string} currentFullPath
  * @return {Array<string>}
  */
-export function getSupportedExtensions(currentFullPath) {
+function getSupportedExtensions(currentFullPath) {
 	return fp.extname(currentFullPath) === '.ts'
 		? ['.ts', '.tsx', '.js', '.jsx']
 		: ['.js', '.jsx', '.ts', '.tsx']

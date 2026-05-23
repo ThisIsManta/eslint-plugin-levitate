@@ -1,11 +1,14 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './test-case-title.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'test-case-title': rule },
-	},
+	}),
 	{
 		valid: [
 			{

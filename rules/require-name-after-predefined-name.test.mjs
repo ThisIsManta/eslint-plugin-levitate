@@ -1,11 +1,14 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './require-name-after-predefined-name.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'require-name-after-predefined-name': rule },
-	},
+	}),
 	{
 		valid: [
 			{
