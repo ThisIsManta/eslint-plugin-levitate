@@ -12,7 +12,6 @@ Note that 🔧 indicates the rule is [auto-fixable](https://eslint.org/docs/late
 |`import-path-from-closest-index`|enforce writing an import path pointing to the closest index file|
 |`import-path-without-mentioning-index` 🔧|enforce writing an import path to an index file without mentioning "index.js"|
 |`no-shortened-identifier`|enforce naming an identifier without the user-defined abbreviations|
-|`no-top-level-require`|enforce writing no top-level `require`|
 |`parameter-new-line` 🔧|enforce having consistent new lines between parameters|
 |`promise-all-with-static-array`|enforce passing a static array to `Promise.all()`|
 |`react-export-default` 🔧|enforce writing React components consistently|
