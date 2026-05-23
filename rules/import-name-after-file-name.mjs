@@ -1,5 +1,6 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import fp from 'path'
 import _ from 'lodash'
 import { getImportFullPath } from './import-path-from-closest-index.mjs'
@@ -8,10 +9,7 @@ import pluralize from 'pluralize'
 const validIdentifierPattern = /^[A-Z_$][0-9A-Z_$]*$/i
 const acronym = /^(https?|xhr|html|xml|yml|url|pwa|io|ui|api|sdk)$/i
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -21,33 +19,50 @@ export default {
 			{ type: 'string' }
 		],
 	},
-	create(context) {
-		const stripper = new RegExp(context.options[0] || '')
+	createOnce(context) {
+		/**
+		 * @param {unknown} option
+		 * @return {RegExp}
+		 */
+		const getStripper = _.memoize((option) =>
+			typeof option === 'string'
+				? new RegExp(option)
+				: new RegExp('')
+		)
 
-		const takenNames = new Set()
+		const topLevelIdentifierNames = new Set()
 
-		const reports = []
+		/**
+		 * @type {Array<{ node: import('@oxlint/plugins').ESTree.BindingIdentifier, expectedNames: Array<string> }>}
+		 */
+		let reports = []
 
 		return {
+			before() {
+			},
+			after() {
+				topLevelIdentifierNames.clear()
+				reports = []
+			},
 			Program(root) {
-				_.chain(root.body)
-					.flatMap(node => {
-						if (node.type === 'ExportNamedDeclaration' && node.declaration) {
-							return context.sourceCode.getDeclaredVariables(node.declaration)
-						}
-						if (node.type === 'ExportDefaultDeclaration' && node.declaration) {
-							// TODO: fix the bug where `MaybeNamedFunctionDeclaration` is not part of `NodeMap` from estree
-							const declaration = /** @type {any} */ (node.declaration)
-							return context.sourceCode.getDeclaredVariables(declaration)
-						}
-						return context.sourceCode.getDeclaredVariables(node)
-					})
-					.map(variable => variable.name)
-					.compact()
-					.value()
-					.forEach(name => {
-						takenNames.add(name)
-					})
+				const variables = root.body.flatMap(node => {
+					if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+						return context.sourceCode.getDeclaredVariables(node.declaration)
+					}
+
+					if (node.type === 'ExportDefaultDeclaration') {
+						// TODO: fix the bug where `MaybeNamedFunctionDeclaration` is not part of `NodeMap` from estree
+						return context.sourceCode.getDeclaredVariables(node.declaration)
+					}
+
+					return context.sourceCode.getDeclaredVariables(node)
+				})
+
+				for (const { name } of variables) {
+					if (name) {
+						topLevelIdentifierNames.add(name)
+					}
+				}
 			},
 			ImportDeclaration(root) {
 				if (!root.specifiers || root.specifiers.length === 0) {
@@ -59,11 +74,15 @@ export default {
 					return
 				}
 
-				const workNode = root.specifiers.find(node => node.type === 'ImportNamespaceSpecifier' || node.type === 'ImportDefaultSpecifier')
+				const workNode = root.specifiers.find(node =>
+					node.type === 'ImportNamespaceSpecifier' ||
+					node.type === 'ImportDefaultSpecifier'
+				)
 				if (workNode === undefined) {
 					return
 				}
 
+				const stripper = getStripper(context.options[0])
 				const absoluteFilePath = getImportFullPath(context.filename, workPath) || workPath
 				const strippedFileName = fp.basename(absoluteFilePath).replace(stripper, '').replace(/\..+/, '')
 				const strippedDirectoryName = fp.basename(fp.dirname(absoluteFilePath)).replace(stripper, '')
@@ -89,7 +108,7 @@ export default {
 				})()))
 
 				// Do nothing if one of the expected names is conflicting with the existing names in the same file
-				if (expectedNames.some(name => takenNames.has(name))) {
+				if (expectedNames.some(name => topLevelIdentifierNames.has(name))) {
 					return
 				}
 
@@ -101,6 +120,9 @@ export default {
 				}
 			},
 			'Program:exit'() {
+				/**
+				 * @type {Record<string, Array<import('@oxlint/plugins').ESTree.BindingIdentifier>>}
+				 */
 				const expectedNameToReportedNodes = {}
 				for (const { node, expectedNames } of reports) {
 					for (const name of expectedNames) {
@@ -124,8 +146,12 @@ export default {
 			},
 		}
 	}
-}
+})
 
+/**
+ * @param {string} text
+ * @return {string}
+ */
 function upperEach(text) {
 	return _.words(text).map(word => _.upperFirst(word)).join('')
 }

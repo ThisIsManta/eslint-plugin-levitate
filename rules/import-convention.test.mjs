@@ -1,14 +1,16 @@
-import fp from 'path'
+// @ts-check
 
+import { eslintCompatPlugin } from '@oxlint/plugins'
+import fp from 'path'
 import parser from '@typescript-eslint/parser'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './import-convention.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'import-convention': rule },
-	},
+	}),
 	{
 		valid: [
 			{

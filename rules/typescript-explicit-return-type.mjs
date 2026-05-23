@@ -1,9 +1,10 @@
 // @ts-check
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+import { defineRule } from '@oxlint/plugins'
+import _ from 'lodash'
+import { tryParseBoolean } from '../utils.mjs'
+
+export default defineRule({
 	meta: {
 		type: 'problem',
 		docs: {
@@ -32,23 +33,27 @@ export default {
 			error: 'Expected this function to have an explicit return type.',
 		}
 	},
-	create(context) {
-		const { allowJSX, allowNonExports, allowSingleValueReturns } = Object.assign(
-			{ allowJSX: false, allowNonExports: false, allowSingleValueReturns: false },
-			context.options[0]
-		)
+	createOnce(context) {
+		let allowJSX = false
+		let allowNonExports = false
+		let allowSingleValueReturns = false
 
 		return {
+			before() {
+				allowJSX = tryParseBoolean(context.options[0], 'allowJSX') ?? false
+				allowNonExports = tryParseBoolean(context.options[0], 'allowNonExports') ?? false
+				allowSingleValueReturns = tryParseBoolean(context.options[0], 'allowSingleValueReturns') ?? false
+			},
 			FunctionDeclaration(root) {
 				if ('returnType' in root && root.returnType) {
 					return
 				}
 
-				if (allowJSX && hasJSXReturned(root)) {
+				if (allowJSX && hasJSXReturned(root, context.sourceCode.visitorKeys)) {
 					return
 				}
 
-				if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root)) {
+				if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root, context.sourceCode.visitorKeys)) {
 					return
 				}
 
@@ -66,7 +71,7 @@ export default {
 					return
 				}
 
-				if (!root.loc) {
+				if (!root.loc || !root.body) {
 					return
 				}
 
@@ -96,17 +101,17 @@ export default {
 					return
 				}
 
-				if (allowJSX && hasJSXReturned(root.init)) {
+				if (allowJSX && hasJSXReturned(root.init, context.sourceCode.visitorKeys)) {
 					return
 				}
 
-				if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root.init)) {
+				if (allowSingleValueReturns && !hasMultipleNonVoidReturns(root.init, context.sourceCode.visitorKeys)) {
 					return
 				}
 
 				if (allowNonExports && !(
-					root.parent.parent.type === 'ExportDefaultDeclaration' ||
-					root.parent.parent.type === 'ExportNamedDeclaration' ||
+					root.parent?.parent?.type === 'ExportDefaultDeclaration' ||
+					root.parent?.parent?.type === 'ExportNamedDeclaration' ||
 					context.sourceCode.getDeclaredVariables(root)[0]?.references.some(({ identifier }) =>
 						'parent' in identifier &&
 						typeof identifier.parent === 'object' &&
@@ -118,7 +123,7 @@ export default {
 					return
 				}
 
-				if (!root.id.loc) {
+				if (!root.id.loc || !root.init.body) {
 					return
 				}
 
@@ -129,12 +134,18 @@ export default {
 			},
 		}
 	},
-}
+})
 
 /**
+ * @param {import('@oxlint/plugins').ESTree.Function | import('@oxlint/plugins').ESTree.ArrowFunctionExpression} node
+ * @param {import('@oxlint/plugins').SourceCode['visitorKeys']} visitorKeys
  * @return {boolean}
  */
-function hasJSXReturned(node) {
+function hasJSXReturned(node, visitorKeys) {
+	if (!node.body) {
+		return false
+	}
+
 	if (node.body.type === 'JSXElement') {
 		return true
 	}
@@ -143,7 +154,7 @@ function hasJSXReturned(node) {
 		return false
 	}
 
-	const returnNodes = getReturnStatements(node.body)
+	const returnNodes = getReturnStatements(node.body, visitorKeys)
 	if (returnNodes.length === 0) {
 		return false
 	}
@@ -153,15 +164,16 @@ function hasJSXReturned(node) {
 
 /**
  * Returns true, if and only if it violates the option
- * @param {import('estree').FunctionDeclaration | import('estree').FunctionExpression | import('estree').ArrowFunctionExpression} node
+ * @param {import('@oxlint/plugins').ESTree.Function | import('@oxlint/plugins').ESTree.ArrowFunctionExpression} node
+ * @param {import('@oxlint/plugins').SourceCode['visitorKeys']} visitorKeys
  * @return {boolean}
  */
-function hasMultipleNonVoidReturns(node) {
-	if (node.body.type !== 'BlockStatement') {
+function hasMultipleNonVoidReturns(node, visitorKeys) {
+	if (node.body?.type !== 'BlockStatement') {
 		return false
 	}
 
-	const returnNodes = getReturnStatements(node.body)
+	const returnNodes = getReturnStatements(node.body, visitorKeys)
 	if (returnNodes.length === 0) {
 		return false
 	}
@@ -185,32 +197,44 @@ function hasMultipleNonVoidReturns(node) {
 }
 
 /**
- * @param {import('estree').Node} node
- * @return {Array<import('estree').ReturnStatement>}
+ * @param {import('@oxlint/plugins').ESTree.Node} node
+ * @param {import('@oxlint/plugins').SourceCode['visitorKeys']} visitorKeys
+ * @return {Array<import('@oxlint/plugins').ESTree.ReturnStatement>}
  */
-function getReturnStatements(node) {
-	if (!node) {
+function getReturnStatements(node, visitorKeys) {
+	if (typeof node !== 'object' || node === null || !('type' in node)) {
 		return []
+	}
 
-	} else if (node.type === 'ReturnStatement') {
+	if (node.type === 'ReturnStatement') {
 		return [node]
+	}
 
-	} else if (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
+	if (
+		node.type === 'FunctionDeclaration' ||
+		node.type === 'FunctionExpression' ||
+		node.type === 'ArrowFunctionExpression'
+	) {
 		return []
 	}
 
-	/**
-	 * @type {ReturnType<typeof getReturnStatements>}
-	 */
-	let results = []
-	for (const key in node) {
-		if (key === 'loc' || key === 'range' || key == 'parent') {
-			continue
+	if (node.type in visitorKeys) {
+		/**
+		 * @type {Array<import('@oxlint/plugins').ESTree.ReturnStatement>}
+		 */
+		const output = []
+		for (const key of visitorKeys[node.type]) {
+			if (key in node) {
+				const child = /** @type {*} */(node)[key]
+				if (Array.isArray(child)) {
+					output.push(...child.flatMap(stub => getReturnStatements(stub, visitorKeys)))
+				} else if (child) {
+					output.push(...getReturnStatements(child, visitorKeys))
+				}
+			}
 		}
-
-		if (typeof node[key] === 'object' && node[key] !== null) {
-			results = results.concat(getReturnStatements(node[key]))
-		}
+		return output
 	}
-	return results
+
+	return []
 }

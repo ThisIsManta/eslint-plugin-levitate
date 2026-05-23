@@ -1,11 +1,14 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './promise-all-with-static-array.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'promise-all-with-static-array': rule },
-	},
+	}),
 	{
 		valid: [
 			{ code: 'Promise.all()' },

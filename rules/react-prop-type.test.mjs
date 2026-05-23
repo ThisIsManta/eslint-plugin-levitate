@@ -1,12 +1,15 @@
+// @ts-check
+
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import parser from '@typescript-eslint/parser'
 import { test } from 'eslint-rule-tester'
 
 import { default as rule } from './react-prop-type.mjs'
 
 export default test(
-	{
+	eslintCompatPlugin({
 		rules: { 'react-prop-type': rule },
-	},
+	}),
 	{
 		valid: [
 			{
@@ -38,7 +41,7 @@ export default test(
         `,
 				errors: [
 					{
-						message: 'Expected to have type definition',
+						message: 'Expected to have type definition.',
 					},
 				],
 			},
@@ -48,7 +51,7 @@ export default test(
         `,
 				errors: [
 					{
-						message: 'Expected to have type definition',
+						message: 'Expected to have type definition.',
 					},
 				],
 			},
@@ -58,7 +61,7 @@ export default test(
         `,
 				errors: [
 					{
-						message: 'Expected to have type definition',
+						message: 'Expected to have type definition.',
 					},
 				],
 			},

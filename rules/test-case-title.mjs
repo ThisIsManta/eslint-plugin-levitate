@@ -1,15 +1,13 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
 const ALLOWED_TEST_PATTERN = /^(returns|renders|calls|fetches|sets|throws|does not (return|render|call|fetch|set|throw) )/
 const DISALLOWED_WORDS = ['proper', 'correct', 'appropriate', 'accurate', 'perfect']
 const DISALLOWED_PATTERN = new RegExp('\\W((' + DISALLOWED_WORDS.join('|') + ')(ly)?)(\\W|$)', 'i')
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -21,7 +19,7 @@ export default {
 			direct: 'Expected the description title to be the direct reference of the function (removing the string quotes)',
 		},
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			ExpressionStatement(root) {
 				if (
@@ -64,10 +62,10 @@ export default {
 			},
 		}
 	},
-}
+})
 
 /**
- * @param {import('estree').Node} node
+ * @param {import('@oxlint/plugins').ESTree.Node} node
  * @return {string | undefined}
  */
 export function getText(node) {

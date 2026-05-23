@@ -1,5 +1,6 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
 /**
@@ -23,10 +24,7 @@ const STYLES = {
 const options = Object.keys(STYLES)
 const defaultOption = options[0]
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -39,14 +37,11 @@ export default {
 			}
 		],
 	},
-	create(context) {
+	createOnce(context) {
 		return {
-			/**
-			 * @param {import('@typescript-eslint/types').TSESTree.TSEnumDeclaration} root
-			 */
 			TSEnumDeclaration(root) {
-				if (!context.options || !STYLES[context.options[0]]) {
-					return null
+				if (typeof context.options[0] !== 'string' || !(context.options[0] in STYLES)) {
+					return
 				}
 
 				const expectedName = STYLES[context.options[0]](root.id.name)
@@ -59,4 +54,4 @@ export default {
 			}
 		}
 	},
-}
+})

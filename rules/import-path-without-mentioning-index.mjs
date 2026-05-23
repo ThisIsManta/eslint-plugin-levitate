@@ -1,13 +1,12 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
+
 const INDEX = /\/index(\.\w+)?$/
 
 const INDEX_INTERNAL = /^\.\.?(\/\.\.)*\/index/
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'suggestion',
 		docs: {
@@ -15,7 +14,7 @@ export default {
 		},
 		fixable: 'code',
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			ImportDeclaration(root) {
 				const path = root.source.value
@@ -28,7 +27,7 @@ export default {
 					INDEX_INTERNAL.test(path) === false
 				) {
 					const expectedPath = path.replace(INDEX, '')
-					return context.report({
+					context.report({
 						node: root.source,
 						message: `Expected "${path}" to be "${expectedPath}".`,
 						fix: fixer => fixer.replaceText(root.source, quote + expectedPath + quote)
@@ -37,4 +36,4 @@ export default {
 			}
 		}
 	}
-}
+})

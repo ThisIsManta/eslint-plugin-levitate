@@ -1,11 +1,9 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		docs: {
 			description:
@@ -17,7 +15,7 @@ export default {
 			remove: 'Unexpected a new line here.',
 		},
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			FunctionDeclaration: check,
 			FunctionExpression: check,
@@ -27,10 +25,9 @@ export default {
 		}
 
 		/**
-		 * @param {import('estree').CallExpression | import('estree').Function} root
+		 * @param {import('@oxlint/plugins').ESTree.CallExpression | import('@oxlint/plugins').ESTree.Function | import('@oxlint/plugins').ESTree.ArrowFunctionExpression | import('@oxlint/plugins').ESTree.NewExpression} root
 		 */
 		function check(root) {
-			/** @type {Array<import('estree').Node>} */
 			const params = 'arguments' in root
 				? root.arguments
 				: root.params
@@ -111,7 +108,7 @@ export default {
 							})
 
 						} else if (newLineCount >= 2) {
-							/** @type {import('eslint').AST.Range} */
+							/** @type {import('@oxlint/plugins').Range} */
 							const range = [
 								prevToken.range[1],
 								nextToken.range[0]
@@ -132,7 +129,7 @@ export default {
 					firstParam && firstParam.loc && firstParam.range &&
 					firstParam.loc.start.line !== openParen.loc.end.line
 				) {
-					/** @type {import('eslint').AST.Range} */
+					/** @type {import('@oxlint/plugins').Range} */
 					const range = [
 						openParen.range[1],
 						firstParam.range[0]
@@ -150,7 +147,7 @@ export default {
 					prevToken && prevToken.loc && prevToken.range &&
 					prevToken.loc.end.line !== closeParen.loc.start.line
 				) {
-					/** @type {import('eslint').AST.Range} */
+					/** @type {import('@oxlint/plugins').Range} */
 					const range = [
 						prevToken.type === 'Punctuator' && prevToken.value === ','
 							? prevToken.range[0]
@@ -167,4 +164,4 @@ export default {
 			}
 		}
 	}
-}
+})

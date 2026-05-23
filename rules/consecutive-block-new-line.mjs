@@ -1,11 +1,9 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		docs: {
 			description:
@@ -17,7 +15,7 @@ export default {
 			remove: 'Unexpected an empty line before here.'
 		},
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			BlockStatement(node) {
 				const openBrace = context.sourceCode.getFirstToken(node)
@@ -47,7 +45,7 @@ export default {
 
 				const leadingNewLineCount = nextToken.loc.end.line - openBrace.loc.end.line
 				if (leadingNewLineCount > 1) {
-					/** @type {import('eslint').AST.Range} */
+					/** @type {import('@oxlint/plugins').Range} */
 					const range = [
 						openBrace.range[1],
 						context.sourceCode.getIndexFromLoc({ line: nextToken.loc.start.line, column: 0 }) - 1
@@ -67,7 +65,7 @@ export default {
 					node.parent.type === 'SwitchCase' && node.parent.consequent.length === 1 && node.parent.consequent[0] === node && node.parent.parent.type === 'SwitchStatement' && node.parent.parent.cases.indexOf(node.parent) < node.parent.parent.cases.length - 1
 				) {
 					if (trailingNewLineCount === 1) {
-						/** @type {import('eslint').AST.Range} */
+						/** @type {import('@oxlint/plugins').Range} */
 						const range = [
 							prevToken.range[1],
 							prevToken.range[1]
@@ -82,7 +80,7 @@ export default {
 
 				} else {
 					if (trailingNewLineCount > 1) {
-						/** @type {import('eslint').AST.Range} */
+						/** @type {import('@oxlint/plugins').Range} */
 						const range = [
 							prevToken.range[1],
 							context.sourceCode.getIndexFromLoc({ line: closeBrace.loc.start.line, column: 0 }) - 1
@@ -129,7 +127,7 @@ export default {
 
 					if (node.consequent.length === 0 || index !== root.cases.length - 1) {
 						if (newLineCount > 1) {
-							/** @type {import('eslint').AST.Range} */
+							/** @type {import('@oxlint/plugins').Range} */
 							const range = [
 								lastToken.range[1],
 								context.sourceCode.getIndexFromLoc({ line: nextToken.loc.start.line, column: 0 }) - 1
@@ -144,7 +142,7 @@ export default {
 
 					} else {
 						if (newLineCount < 2) {
-							/** @type {import('eslint').AST.Range} */
+							/** @type {import('@oxlint/plugins').Range} */
 							const range = [
 								lastToken.range[1],
 								lastToken.range[1],
@@ -161,4 +159,4 @@ export default {
 			},
 		}
 	}
-}
+})

@@ -1,11 +1,9 @@
 // @ts-check
 
+import { defineRule } from '@oxlint/plugins'
 import _ from 'lodash'
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+export default defineRule({
 	meta: {
 		type: 'problem',
 		docs: {
@@ -15,7 +13,7 @@ export default {
 			error: 'Expected `Promise.all()` to have a argument of a static array.',
 		}
 	},
-	create(context) {
+	createOnce(context) {
 		return {
 			CallExpression(root) {
 				if ((
@@ -42,4 +40,4 @@ export default {
 			}
 		}
 	},
-}
+})
