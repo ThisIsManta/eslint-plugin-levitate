@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build": "node build.mjs",
+    "lint": "tsc",
     "test": "eslint-rule-tester",
     "version": "npm run --silent build && git add README.md",
     "postversion": "npm publish --provenance --access public"
@@ -37,6 +38,7 @@
     "@thisismanta/semantic-version": "^11.3.0",
     "@types/lodash": "^4.17.24",
     "@types/node": "^24.12.4",
+    "@types/pluralize": "^0.0.33",
     "@types/react": "^18.3.29",
     "@typescript-eslint/parser": "^8.59.4",
     "esbuild": "^0.28.0",
